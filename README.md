@@ -6,7 +6,7 @@
   <a href="https://enterpriseops-gym.github.io/"><img src="https://img.shields.io/badge/Website-green?logo=googlechrome&logoColor=white" /></a>
   <a href="https://arxiv.org/abs/2603.13594"><img src="https://img.shields.io/badge/Paper-blue?logo=arxiv&logoColor=white" /></a>
 <a href="https://huggingface.co/datasets/ServiceNow-AI/EnterpriseOps-Gym"><img src="https://img.shields.io/badge/🤗_Dataset-yellow" /></a>
-  <a href="https://github.com/ServiceNow/EnterpriseOps-Gym/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-CC%20BY--NC%204.0-lightgrey" /></a>
+  <a href="https://github.com/ServiceNow/EnterpriseOps-Gym/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-Apache%202-blue" /></a>
 </p>
 
 <p><i>EnterpriseOps-Gym is a containerized, resettable enterprise simulation benchmark for evaluating LLM agents on stateful, multi-step planning and tool use across realistic enterprise workflows</i></p>
