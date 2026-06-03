@@ -1,5 +1,6 @@
 conf/
-data/
+data/*
+!data/revised/
 Domain Wise DBs and Task-DB Mappings/
 results/
 logs/
