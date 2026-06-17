@@ -1,0 +1,1024 @@
+{
+  "benchmark_config": {
+    "model": "vllm/Azure/gpt-5-2025-08-07",
+    "number_of_runs": 1,
+    "user_prompt": "An urgent directive has been received to address the case CS-0000001 from Elizabeth Chase regarding the Palo Alto Networks PA-3220. It needs to be prioritized as Critical immediately. The previous owner, Susan Garcia, has left the company. Stephanie Todd will be taking over ownership of this ticket. Management has decided she needs to focus 100% on this issue. To enforce this, please ensure she is added to the CSM Tier 1 Support group, but ensure she is removed from any other groups she is currently part of so she isn't distracted. Make the assignment and group updates now.",
+    "gym_servers": [
+      {
+        "name": "sn-csm-server",
+        "url": "http://localhost:8001",
+        "seed_database_file": "Domain Wise DBs and Task-DB Mappings/csm/dbs/db_1762254390925_u5icw4thh.sql",
+        "uses_cloning": true
+      }
+    ],
+    "total_gyms": 1,
+    "total_tools_available": 12
+  },
+  "runs": [
+    {
+      "run_number": 1,
+      "started_at": "2026-06-15T10:34:02.845232+00:00",
+      "execution_time_ms": 153698,
+      "model_response": "Done. Here\u2019s what I completed:\n\n- Case CS-0000001 found and confirmed set to priority: critical (it was already critical; re-applied to ensure consistency).\n- Reassigned the case to:\n  - Assignment group: CSM Tier 1 Support (group_id: 1)\n  - Assigned to: Stephanie Todd (user_id: 6)\n  - Case state remains: new. Escalation flag and reason (urgency) remain as-is.\n\n- Stephanie Todd\u2019s group memberships updated:\n  - Added to CSM Tier 1 Support.\n  - Removed from all other existing groups on record (memberships removed: member_id 298 for group_id 50 and member_id 659 for group_id 35).\n  - Result: Stephanie is now only a member of CSM Tier 1 Support.\n\nIf you want, I can move the case to in_progress next and align the applicable SLA after validating the entitlement for the Palo Alto Networks PA-3220, and initiate a knowledge search to accelerate resolution.",
+      "conversation_flow": [
+        {
+          "type": "system_message",
+          "content": "CSM Agent Policy\n\nYou are a Customer Service Management assistant. Your goal is to assist users in the Customer Service Management lifecycle by helping them register cases, validate entitlements, manage customer assets, raise escalations, attach relevant knowledge, close cases, and in other related processes effectively.\n\nYou should always act based on confirmed user context, ing record relationships, and database integrity best practices. Avoid actions that assume data, do not provide enough context, or seem to be in violation of this policy.\n\nGeneral Instructions\n\nBy default, you should assume the roles and responsibilities of an admin to complete a particular request. If a user request violates policy, do not act on it. Perform one operation at a time. Do not provide knowledge or procedures not in the system. Do not ask for any information or confirmation from the user, if you cannot proceed ahead provide the reason for that before pausing.\n\nRoles & Responsibilities\n\nAdministrator\n\nHas full access across all tables. Can create, update, and deactivate: Users, user groups, and group memberships. Accounts, contacts, locations, and entitlements. Products, installed products, SLAs, contracts, and knowledge. Manages assignment rules, workflows, and escalations.\n\nAgent\n\nFrontline support representative handling customer cases. Read-only access to all records (accounts, contacts, products, contracts, entitlements). Can: Create and update customer cases, interactions, and case work notes. Associate knowledge articles with cases. View entitlements and SLAs linked to accounts and cases. Update case assignment, state, and resolution. Cannot modify user, group, or membership data.\n\nManager\n\nSupervises agents and case queues. Has agent privileges plus: Can reassign cases across groups and users. Can escalate cases and override case prioritization. Monitors SLA compliance, case trends, and escalations. Can approve exceptions (e.g., entitlement overrides or escalations). May contribute to knowledge management as reviewers.\n\nCustomer (Portal User)\n\nEnd user accessing the customer portal. Can: View and update their own profile. Create new cases and track the status of their submitted cases. Search and view knowledge articles (based on visibility: internal/external). Participate in community forums (if enabled). Initiate interactions (chat, email, web, etc.). Limited to their own account\u2019s data (cannot see other accounts/customers). Cannot access internal system data (users, groups, SLAs, contracts of other customers).\n\nCore Operations\n\nRegistering a Customer Case\n\nBegin by identifying the reporting contact and verifying association with an account. Collect necessary inputs: Issue description (short_description) Product or installed product involved Contact channel (channel) Priority (if not provided \u2192 default = moderate) Default state = new. Verify the product or installed product belongs to the customer\u2019s account.\n\nAssigning a Case\n\nA case may be assigned to: An assignment group (assignment_group_id), or A user (assigned_to) within that group. Agents must: Be active, and Be members of the assigned group. Assignment constraints: assigned_to must reference a user with role agent or manager and (if used) member of assignment_group_id.\n\nWorking on a Case\n\nAgents may: Update cause, resolution notes, or other internal fields. Change state (new \u2192 in_progress, in_progress \u2192 pending/resolved). Attach a missing product or installed product. Link relevant knowledge articles. Important: Cases cannot be closed directly. They must first be moved to resolved, then to closed. If a case is invalid, it may be canceled.\n\nCase Lifecycle Management\n\nValid state transitions: new \u2192 in_progress / pending / resolved in_progress \u2192 pending / resolved pending \u2192 in_progress / resolved resolved \u2192 closed / new canceled At each step: Validate acting user\u2019s relationship to the case. Capture timestamps (sys_updated_on, closed_on where applicable). Prevent premature closure without resolution.\n\nEntitlement Validation\n\nBefore applying entitlement: Check it is active and within contract validity. Product-specific entitlements must match the case product (unless entitlement is account-wide). max_cases_per_month = 0 means unlimited; otherwise enforce limits. If entitlement is invalid \u2192 inform the user.\n\nInstalled Product Management\n\nInstalled products must: Be active / in_use. Belong to the reporting account. Do not attach items in retired / repair status to new cases. Ensure installed product\u2019s product matches the case product.\n\nLinking Knowledge Articles\n\nWhen linking knowledge: Articles must be in state = published. Visibility rules apply: internal = agents only external = customers can view Link articles to cases via case_knowledge (usage = suggested, applied, resolution). Ownership is tracked via owner_id.\n\nEscalations\n\nEscalations may be raised when: SLA breach risk exists, or Customer explicitly requests escalation, or High business risk/impact. Steps: Record escalation = true on case. Capture escalation_reason. Ensure justification is logged in case notes. There is no separate escalation record. Escalation is tracked within the case.\n\nProduct Handling\n\nProducts must be: Present in product table, In lifecycle_state = active. Installed products must match the product and account context.\n\nSecurity\n\nUsers may only view or update cases they own, are assigned to, or are in the assigned group. Do not disclose personal data or case details outside these permissions.\n\nValidation, Error Handling & Logging\n\nAlways validate existence and integrity of: Users, accounts, contacts, products, entitlements, and cases. State transitions follow lifecycle rules. All actions must: Update sys_updated_on. Capture timestamps (e.g., closed_on for case closure).\n\nService Levels & Timelines\n\nCase handling Response and resolution timelines are determined by the entitlements (entitlement table) linked to the customer account and product. Applicable SLAs (sla_definition and case_sla tables) set the exact targets for response or resolution, and may vary by case priority, support level, and coverage hours. SLA pause behavior: Obey sla_definition.pause_on_pending; when case state is pending, pause applicable SLAs. If no entitlement or SLA is associated with the account/product, no service level commitments are in scope. Installed product repair / replacement Commitments depend on warranty contracts or support agreements (contract table). The applicable SLA target will be enforced only if defined under the customer\u2019s entitlement. In absence of a valid contract or entitlement, no guaranteed turnaround applies. Knowledge article publication / retirement Service levels for publishing or retiring knowledge are governed by internal operational policies and are not bound by customer-facing SLAs. Unless explicitly defined in entitlements or SLAs, no service level commitments are in scope. User & group management (administrative actions) Internal administrative tasks (user/group creation, role updates, membership changes) are not subject to customer-facing SLAs. Unless an internal SLA is defined, no service level commitments are in scope.\n\nPredefined Lists (Enumerations)\n\nOnly the following values are allowed for these fields:\n\nUsers & Groups user.role: admin, agent, manager, customer user_group.type: support, backoffice, field, vendor\n\nGeography location.city: new_york, london, mumbai, tokyo, sydney location.country: usa, uk, india, japan, australia\n\nAccounts & Contacts account.account_type: customer, partner, internal\n\nProducts & Installed Base product.category: software, hardware, service product.lifecycle_state: active, retired installed_product.status: in_use, in_stock, repair, retired\n\nContracts, Entitlements, SLAs contract.contract_type: support, warranty, subscription contract.status: active, suspended, expired entitlement.support_level: standard, premium, enterprise entitlement.coverage_hours: h8x5, h12x6, h24x7 sla_definition.metric: response, resolution sla_definition.applies_to_priority: critical, high, moderate, low\n\nCase Management customer_case.channel: web, email, phone, chat, social, alert, community customer_case.priority: critical, high, moderate, low customer_case.state: new, in_progress, pending, resolved, closed, canceled customer_case.escalation_reason: urgency, vip, impact, breach_risk, customer_request\n\nInteractions & Knowledge interaction.channel: web, email, phone, chat, social, alert, community knowledge.state: draft, published, retired knowledge.visibility: internal, external case_knowledge.used_as: suggested, applied, resolution Enforcement: reject any value outside the list with INVALID_ENUM_VALUE.\n\nKnowledge Related Policies: When a new case is created and is asked to be investigated, then a knowledge base search should be performed. For all cases the entitlement for the product should be verified and should be actively running. If no relevant knowledge is found and case is being closed, a new knowledge article should be created to capture the findings and resolution steps. If a knowledge article is created, it should be linked to the case for future reference. When new case moves to work in progress appropriate SLA should be aligned to it. Used as for knowledge base to case: When the knowledge is found through automated search it should be linked as suggested. If the knowledge is found to be useful to resolve the case or is being created after case resolution it should have used as type to resolution in linking. In other cases if knowledge is linked it should as applied. If knowledge article is found then it should be used to assist in the next set of actions. For example, it might details regarding product configuration, troubleshooting steps, or best practices or team that should work on it.\n\nFree form text policies: (For texts like short description of cases, title of knowledge, escalation reason and content/body of knowledge) Character limits: 30\u2013120 chars Case Short Description: It can be something like: \"\"Product: \"\" + Product name + \"\", Issue: is not working as expected.\"\" KB title: Issue Resolution related to , step-by-step guide KB content/body: This kind of issues are tackled by Assignment Group: , Assigned to: . Steps to resolve the issue: , Suggested Priority: . Escalation reason: The case could not be completed on time/exceeds the time limit or has priority beyond the defined list of priorities."
+        },
+        {
+          "type": "user_message",
+          "content": "An urgent directive has been received to address the case CS-0000001 from Elizabeth Chase regarding the Palo Alto Networks PA-3220. It needs to be prioritized as Critical immediately. The previous owner, Susan Garcia, has left the company. Stephanie Todd will be taking over ownership of this ticket. Management has decided she needs to focus 100% on this issue. To enforce this, please ensure she is added to the CSM Tier 1 Support group, but ensure she is removed from any other groups she is currently part of so she isn't distracted. Make the assignment and group updates now."
+        },
+        {
+          "type": "ai_message",
+          "content": "",
+          "usage_metadata": {
+            "input_tokens": 4097,
+            "output_tokens": 1308,
+            "total_tokens": 5405,
+            "input_token_details": {
+              "audio": 0,
+              "cache_read": 1664
+            },
+            "output_token_details": {
+              "audio": 0,
+              "reasoning": 1280
+            }
+          },
+          "response_metadata": {
+            "token_usage": {
+              "completion_tokens": 1308,
+              "prompt_tokens": 4097,
+              "total_tokens": 5405,
+              "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 1280,
+                "rejected_prediction_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 1664
+              },
+              "latency_checkpoint": {
+                "engine_tbt_ms": 12,
+                "engine_ttft_ms": 364,
+                "engine_ttlt_ms": 15864,
+                "pre_inference_ms": 280,
+                "service_tbt_ms": 12,
+                "service_ttft_ms": 779,
+                "service_ttlt_ms": 16278,
+                "total_duration_ms": 16007,
+                "user_visible_ttft_ms": 498
+              }
+            },
+            "model_provider": "openai",
+            "model_name": "Azure/gpt-5-2025-08-07",
+            "system_fingerprint": null,
+            "id": "chatcmpl-Dqyvk3uIgTG9ocSpLmlfpV3ONTArw",
+            "service_tier": "default",
+            "finish_reason": "tool_calls",
+            "logprobs": null
+          },
+          "tool_calls": [
+            {
+              "name": "search_cases",
+              "args": {
+                "number": "CS-0000001"
+              }
+            }
+          ]
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "search_cases",
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "[{\"case_id\": 1, \"number\": \"CS-0000001\", \"account_id\": 1, \"contact_id\": 123, \"product_id\": 128, \"installed_product_id\": 3, \"channel\": \"web\", \"priority\": \"critical\", \"state\": \"new\", \"short_description\": \"Product: Palo Alto Networks PA-3220, Issue: is not working as expected.\", \"escalation\": 1, \"escalation_reason\": \"urgency\", \"reopen_count\": 0, \"sys_created_on\": \"2025-08-27 15:34:44\", \"sys_updated_on\": \"2026-04-22 02:02:57\", \"closed_on\": null, \"assignment_group_id\": 4, \"assigned_to\": 403}]",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "type": "ai_message",
+          "content": "",
+          "usage_metadata": {
+            "input_tokens": 4343,
+            "output_tokens": 1689,
+            "total_tokens": 6032,
+            "input_token_details": {
+              "audio": 0,
+              "cache_read": 3968
+            },
+            "output_token_details": {
+              "audio": 0,
+              "reasoning": 1664
+            }
+          },
+          "response_metadata": {
+            "token_usage": {
+              "completion_tokens": 1689,
+              "prompt_tokens": 4343,
+              "total_tokens": 6032,
+              "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 1664,
+                "rejected_prediction_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 3968
+              },
+              "latency_checkpoint": {
+                "engine_tbt_ms": 17,
+                "engine_ttft_ms": 357,
+                "engine_ttlt_ms": 30207,
+                "pre_inference_ms": 263,
+                "service_tbt_ms": 17,
+                "service_ttft_ms": 750,
+                "service_ttlt_ms": 30599,
+                "total_duration_ms": 30350,
+                "user_visible_ttft_ms": 487
+              }
+            },
+            "model_provider": "openai",
+            "model_name": "Azure/gpt-5-2025-08-07",
+            "system_fingerprint": null,
+            "id": "chatcmpl-Dqyw1tepMsOmUOFKk4aBsjM32BHSG",
+            "service_tier": "default",
+            "finish_reason": "tool_calls",
+            "logprobs": null
+          },
+          "tool_calls": [
+            {
+              "name": "find_user",
+              "args": {
+                "name": "Stephanie Todd"
+              }
+            }
+          ]
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "find_user",
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"user_id\": 6, \"first_name\": \"Stephanie\", \"last_name\": \"Todd\", \"email\": \"stephanie.todd@servicenow.com\", \"role\": \"agent\", \"location_id\": 6, \"active\": 1}",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "type": "ai_message",
+          "content": "",
+          "usage_metadata": {
+            "input_tokens": 4466,
+            "output_tokens": 24,
+            "total_tokens": 4490,
+            "input_token_details": {
+              "audio": 0,
+              "cache_read": 4224
+            },
+            "output_token_details": {
+              "audio": 0,
+              "reasoning": 0
+            }
+          },
+          "response_metadata": {
+            "token_usage": {
+              "completion_tokens": 24,
+              "prompt_tokens": 4466,
+              "total_tokens": 4490,
+              "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 0,
+                "rejected_prediction_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 4224
+              },
+              "latency_checkpoint": {
+                "engine_tbt_ms": 8,
+                "engine_ttft_ms": 354,
+                "engine_ttlt_ms": 536,
+                "pre_inference_ms": 357,
+                "service_tbt_ms": 8,
+                "service_ttft_ms": 867,
+                "service_ttlt_ms": 1048,
+                "total_duration_ms": 701,
+                "user_visible_ttft_ms": 510
+              }
+            },
+            "model_provider": "openai",
+            "model_name": "Azure/gpt-5-2025-08-07",
+            "system_fingerprint": null,
+            "id": "chatcmpl-DqywWpKmvimNaWENcM97i0RkGn6Oi",
+            "service_tier": "default",
+            "finish_reason": "tool_calls",
+            "logprobs": null
+          },
+          "tool_calls": [
+            {
+              "name": "find_user_group",
+              "args": {
+                "name": "CSM Tier 1 Support"
+              }
+            }
+          ]
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "find_user_group",
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"group_id\": 1, \"name\": \"CSM Tier 1 Support\", \"type\": \"support\", \"active\": 1}",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "type": "ai_message",
+          "content": "",
+          "usage_metadata": {
+            "input_tokens": 4570,
+            "output_tokens": 1114,
+            "total_tokens": 5684,
+            "input_token_details": {
+              "audio": 0,
+              "cache_read": 4352
+            },
+            "output_token_details": {
+              "audio": 0,
+              "reasoning": 1088
+            }
+          },
+          "response_metadata": {
+            "token_usage": {
+              "completion_tokens": 1114,
+              "prompt_tokens": 4570,
+              "total_tokens": 5684,
+              "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 1088,
+                "rejected_prediction_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 4352
+              },
+              "latency_checkpoint": {
+                "engine_tbt_ms": 17,
+                "engine_ttft_ms": 355,
+                "engine_ttlt_ms": 20004,
+                "pre_inference_ms": 260,
+                "service_tbt_ms": 17,
+                "service_ttft_ms": 744,
+                "service_ttlt_ms": 20393,
+                "total_duration_ms": 20143,
+                "user_visible_ttft_ms": 484
+              }
+            },
+            "model_provider": "openai",
+            "model_name": "Azure/gpt-5-2025-08-07",
+            "system_fingerprint": null,
+            "id": "chatcmpl-DqywY0b4ShH1L0bRkRAoJl2777mKQ",
+            "service_tier": "default",
+            "finish_reason": "tool_calls",
+            "logprobs": null
+          },
+          "tool_calls": [
+            {
+              "name": "list_group_members",
+              "args": {
+                "user_id": 6
+              }
+            }
+          ]
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "list_group_members",
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "[{\"member_id\": 298, \"group_id\": 50, \"user_id\": 6, \"sys_created_on\": \"2025-08-27 15:34:33\"}, {\"member_id\": 659, \"group_id\": 35, \"user_id\": 6, \"sys_created_on\": \"2025-08-27 15:35:23\"}]",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "type": "ai_message",
+          "content": "",
+          "usage_metadata": {
+            "input_tokens": 4725,
+            "output_tokens": 1248,
+            "total_tokens": 5973,
+            "input_token_details": {
+              "audio": 0,
+              "cache_read": 1664
+            },
+            "output_token_details": {
+              "audio": 0,
+              "reasoning": 1216
+            }
+          },
+          "response_metadata": {
+            "token_usage": {
+              "completion_tokens": 1248,
+              "prompt_tokens": 4725,
+              "total_tokens": 5973,
+              "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 1216,
+                "rejected_prediction_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 1664
+              },
+              "latency_checkpoint": {
+                "engine_tbt_ms": 13,
+                "engine_ttft_ms": 347,
+                "engine_ttlt_ms": 17772,
+                "pre_inference_ms": 275,
+                "service_tbt_ms": 13,
+                "service_ttft_ms": 786,
+                "service_ttlt_ms": 18198,
+                "total_duration_ms": 17934,
+                "user_visible_ttft_ms": 511
+              }
+            },
+            "model_provider": "openai",
+            "model_name": "Azure/gpt-5-2025-08-07",
+            "system_fingerprint": null,
+            "id": "chatcmpl-DqywtFWzlGx2peU5hhSGrH8qnZcAM",
+            "service_tier": "default",
+            "finish_reason": "tool_calls",
+            "logprobs": null
+          },
+          "tool_calls": [
+            {
+              "name": "add_new_group_member",
+              "args": {
+                "group_id": 1,
+                "user_id": 6
+              }
+            }
+          ]
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "add_new_group_member",
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"member_id\": 960, \"group_id\": 1, \"user_id\": 6, \"sys_created_on\": \"2026-06-15 10:35:33\"}",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "type": "ai_message",
+          "content": "",
+          "usage_metadata": {
+            "input_tokens": 4843,
+            "output_tokens": 1115,
+            "total_tokens": 5958,
+            "input_token_details": {
+              "audio": 0,
+              "cache_read": 4480
+            },
+            "output_token_details": {
+              "audio": 0,
+              "reasoning": 1088
+            }
+          },
+          "response_metadata": {
+            "token_usage": {
+              "completion_tokens": 1115,
+              "prompt_tokens": 4843,
+              "total_tokens": 5958,
+              "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 1088,
+                "rejected_prediction_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 4480
+              },
+              "latency_checkpoint": {
+                "engine_tbt_ms": 11,
+                "engine_ttft_ms": 353,
+                "engine_ttlt_ms": 12686,
+                "pre_inference_ms": 297,
+                "service_tbt_ms": 11,
+                "service_ttft_ms": 789,
+                "service_ttlt_ms": 13120,
+                "total_duration_ms": 12837,
+                "user_visible_ttft_ms": 492
+              }
+            },
+            "model_provider": "openai",
+            "model_name": "Azure/gpt-5-2025-08-07",
+            "system_fingerprint": null,
+            "id": "chatcmpl-DqyxCq4OEwHtmTMP50RqpqWV0fIlQ",
+            "service_tier": "default",
+            "finish_reason": "tool_calls",
+            "logprobs": null
+          },
+          "tool_calls": [
+            {
+              "name": "remove_group_membership",
+              "args": {
+                "member_id": 298
+              }
+            }
+          ]
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "remove_group_membership",
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"deleted\": 1}",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "type": "ai_message",
+          "content": "",
+          "usage_metadata": {
+            "input_tokens": 4921,
+            "output_tokens": 21,
+            "total_tokens": 4942,
+            "input_token_details": {
+              "audio": 0,
+              "cache_read": 1664
+            },
+            "output_token_details": {
+              "audio": 0,
+              "reasoning": 0
+            }
+          },
+          "response_metadata": {
+            "token_usage": {
+              "completion_tokens": 21,
+              "prompt_tokens": 4921,
+              "total_tokens": 4942,
+              "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 0,
+                "rejected_prediction_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 1664
+              },
+              "latency_checkpoint": {
+                "engine_tbt_ms": 3,
+                "engine_ttft_ms": 356,
+                "engine_ttlt_ms": 424,
+                "pre_inference_ms": 287,
+                "service_tbt_ms": 4,
+                "service_ttft_ms": 779,
+                "service_ttlt_ms": 846,
+                "total_duration_ms": 569,
+                "user_visible_ttft_ms": 492
+              }
+            },
+            "model_provider": "openai",
+            "model_name": "Azure/gpt-5-2025-08-07",
+            "system_fingerprint": null,
+            "id": "chatcmpl-DqyxQ0KPrlBaexVtm7f17UXkkwq1i",
+            "service_tier": "default",
+            "finish_reason": "tool_calls",
+            "logprobs": null
+          },
+          "tool_calls": [
+            {
+              "name": "remove_group_membership",
+              "args": {
+                "member_id": 659
+              }
+            }
+          ]
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "remove_group_membership",
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"deleted\": 1}",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "type": "ai_message",
+          "content": "",
+          "usage_metadata": {
+            "input_tokens": 4999,
+            "output_tokens": 1577,
+            "total_tokens": 6576,
+            "input_token_details": {
+              "audio": 0,
+              "cache_read": 4608
+            },
+            "output_token_details": {
+              "audio": 0,
+              "reasoning": 1536
+            }
+          },
+          "response_metadata": {
+            "token_usage": {
+              "completion_tokens": 1577,
+              "prompt_tokens": 4999,
+              "total_tokens": 6576,
+              "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 1536,
+                "rejected_prediction_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 4608
+              },
+              "latency_checkpoint": {
+                "engine_tbt_ms": 14,
+                "engine_ttft_ms": 354,
+                "engine_ttlt_ms": 21901,
+                "pre_inference_ms": 301,
+                "service_tbt_ms": 14,
+                "service_ttft_ms": 801,
+                "service_ttlt_ms": 22363,
+                "total_duration_ms": 22071,
+                "user_visible_ttft_ms": 500
+              }
+            },
+            "model_provider": "openai",
+            "model_name": "Azure/gpt-5-2025-08-07",
+            "system_fingerprint": null,
+            "id": "chatcmpl-DqyxRc82TRgv8MjOSTkI2fTzVCduR",
+            "service_tier": "default",
+            "finish_reason": "tool_calls",
+            "logprobs": null
+          },
+          "tool_calls": [
+            {
+              "name": "update_case",
+              "args": {
+                "case_id": 1,
+                "priority": "critical",
+                "assignment_group_id": 1,
+                "assigned_to": 6
+              }
+            }
+          ]
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "update_case",
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"case_id\": 1, \"number\": \"CS-0000001\", \"account_id\": 1, \"contact_id\": 123, \"product_id\": 128, \"installed_product_id\": 3, \"channel\": \"web\", \"priority\": \"critical\", \"state\": \"new\", \"short_description\": \"Product: Palo Alto Networks PA-3220, Issue: is not working as expected.\", \"assignment_group_id\": 1, \"assigned_to\": 6, \"escalation\": 1, \"escalation_reason\": \"urgency\", \"reopen_count\": 0, \"sys_created_on\": \"2025-08-27 15:34:44\", \"sys_updated_on\": \"2026-06-15 10:36:12\", \"closed_on\": null}",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "type": "ai_message",
+          "content": "Done. Here\u2019s what I completed:\n\n- Case CS-0000001 found and confirmed set to priority: critical (it was already critical; re-applied to ensure consistency).\n- Reassigned the case to:\n  - Assignment group: CSM Tier 1 Support (group_id: 1)\n  - Assigned to: Stephanie Todd (user_id: 6)\n  - Case state remains: new. Escalation flag and reason (urgency) remain as-is.\n\n- Stephanie Todd\u2019s group memberships updated:\n  - Added to CSM Tier 1 Support.\n  - Removed from all other existing groups on record (memberships removed: member_id 298 for group_id 50 and member_id 659 for group_id 35).\n  - Result: Stephanie is now only a member of CSM Tier 1 Support.\n\nIf you want, I can move the case to in_progress next and align the applicable SLA after validating the entitlement for the Palo Alto Networks PA-3220, and initiate a knowledge search to accelerate resolution.",
+          "usage_metadata": {
+            "input_tokens": 5255,
+            "output_tokens": 1884,
+            "total_tokens": 7139,
+            "input_token_details": {
+              "audio": 0,
+              "cache_read": 4736
+            },
+            "output_token_details": {
+              "audio": 0,
+              "reasoning": 1664
+            }
+          },
+          "response_metadata": {
+            "token_usage": {
+              "completion_tokens": 1884,
+              "prompt_tokens": 5255,
+              "total_tokens": 7139,
+              "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 1664,
+                "rejected_prediction_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 4736
+              },
+              "latency_checkpoint": {
+                "engine_tbt_ms": 12,
+                "engine_ttft_ms": 382,
+                "engine_ttlt_ms": 23189,
+                "pre_inference_ms": 384,
+                "service_tbt_ms": 12,
+                "service_ttft_ms": 966,
+                "service_ttlt_ms": 23771,
+                "total_duration_ms": 23401,
+                "user_visible_ttft_ms": 581
+              }
+            },
+            "model_provider": "openai",
+            "model_name": "Azure/gpt-5-2025-08-07",
+            "system_fingerprint": null,
+            "id": "chatcmpl-DqyxovFGn878bZllGVtK39c2YBwEE",
+            "service_tier": "default",
+            "finish_reason": "stop",
+            "logprobs": null
+          },
+          "tool_calls": []
+        }
+      ],
+      "tools_used": [
+        "search_cases",
+        "find_user",
+        "find_user_group",
+        "list_group_members",
+        "add_new_group_member",
+        "remove_group_membership",
+        "update_case"
+      ],
+      "tool_results": [
+        {
+          "tool_name": "search_cases",
+          "arguments": {
+            "number": "CS-0000001"
+          },
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "[{\"case_id\": 1, \"number\": \"CS-0000001\", \"account_id\": 1, \"contact_id\": 123, \"product_id\": 128, \"installed_product_id\": 3, \"channel\": \"web\", \"priority\": \"critical\", \"state\": \"new\", \"short_description\": \"Product: Palo Alto Networks PA-3220, Issue: is not working as expected.\", \"escalation\": 1, \"escalation_reason\": \"urgency\", \"reopen_count\": 0, \"sys_created_on\": \"2025-08-27 15:34:44\", \"sys_updated_on\": \"2026-04-22 02:02:57\", \"closed_on\": null, \"assignment_group_id\": 4, \"assigned_to\": 403}]",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "tool_name": "find_user",
+          "arguments": {
+            "name": "Stephanie Todd"
+          },
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"user_id\": 6, \"first_name\": \"Stephanie\", \"last_name\": \"Todd\", \"email\": \"stephanie.todd@servicenow.com\", \"role\": \"agent\", \"location_id\": 6, \"active\": 1}",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "tool_name": "find_user_group",
+          "arguments": {
+            "name": "CSM Tier 1 Support"
+          },
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"group_id\": 1, \"name\": \"CSM Tier 1 Support\", \"type\": \"support\", \"active\": 1}",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "tool_name": "list_group_members",
+          "arguments": {
+            "user_id": 6
+          },
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "[{\"member_id\": 298, \"group_id\": 50, \"user_id\": 6, \"sys_created_on\": \"2025-08-27 15:34:33\"}, {\"member_id\": 659, \"group_id\": 35, \"user_id\": 6, \"sys_created_on\": \"2025-08-27 15:35:23\"}]",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "tool_name": "add_new_group_member",
+          "arguments": {
+            "group_id": 1,
+            "user_id": 6
+          },
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"member_id\": 960, \"group_id\": 1, \"user_id\": 6, \"sys_created_on\": \"2026-06-15 10:35:33\"}",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "tool_name": "remove_group_membership",
+          "arguments": {
+            "member_id": 298
+          },
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"deleted\": 1}",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "tool_name": "remove_group_membership",
+          "arguments": {
+            "member_id": 659
+          },
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"deleted\": 1}",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "tool_name": "update_case",
+          "arguments": {
+            "case_id": 1,
+            "priority": "critical",
+            "assignment_group_id": 1,
+            "assigned_to": 6
+          },
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"case_id\": 1, \"number\": \"CS-0000001\", \"account_id\": 1, \"contact_id\": 123, \"product_id\": 128, \"installed_product_id\": 3, \"channel\": \"web\", \"priority\": \"critical\", \"state\": \"new\", \"short_description\": \"Product: Palo Alto Networks PA-3220, Issue: is not working as expected.\", \"assignment_group_id\": 1, \"assigned_to\": 6, \"escalation\": 1, \"escalation_reason\": \"urgency\", \"reopen_count\": 0, \"sys_created_on\": \"2025-08-27 15:34:44\", \"sys_updated_on\": \"2026-06-15 10:36:12\", \"closed_on\": null}",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        }
+      ],
+      "verification_results": {
+        "Susan Garcia is now inactive": {
+          "passed": false,
+          "expected": 1,
+          "actual": 0,
+          "comparison_type": "equals",
+          "query": "SELECT COUNT(*) AS cnt\nFROM \"user\"\nWHERE email = 'susan.garcia@servicenow.com'\n  AND active = 0;",
+          "details": "Comparison equals: 0 vs 1"
+        },
+        "Case CS-0000001 now owned by Stephanie in CSM Tier 1 with Critical priority": {
+          "passed": true,
+          "expected": 1,
+          "actual": 1,
+          "comparison_type": "equals",
+          "query": "SELECT COUNT(*) AS cnt\nFROM customer_case cc\nJOIN \"user\" u ON cc.assigned_to = u.user_id\nJOIN user_group g ON cc.assignment_group_id = g.group_id\nWHERE cc.number = 'CS-0000001'\n  AND u.email = 'stephanie.todd@servicenow.com'\n  AND g.name = 'CSM Tier 1 Support'\n  AND cc.priority = 'critical';",
+          "details": "Comparison equals: 1 vs 1"
+        },
+        "Stephanie has no other group memberships": {
+          "passed": true,
+          "expected": 0,
+          "actual": 0,
+          "comparison_type": "equals",
+          "query": "SELECT COUNT(*) AS cnt\nFROM user_group_member gm\nJOIN \"user\" u ON gm.user_id = u.user_id\nJOIN user_group g ON gm.group_id = g.group_id\nWHERE u.email = 'stephanie.todd@servicenow.com'\n  AND g.name <> 'CSM Tier 1 Support';",
+          "details": "Comparison equals: 0 vs 0"
+        }
+      },
+      "verification_summary": {
+        "total": 3,
+        "passed": 2,
+        "failed": 1,
+        "pass_rate": 0.6666666666666666
+      },
+      "overall_success": false
+    }
+  ],
+  "statistics": {
+    "total_runs": 1,
+    "successful_runs": 0,
+    "overall_success_rate": 0.0,
+    "pass_at_1": 0.0,
+    "verifier_level_pass_rate": 0.6666666666666666,
+    "total_verifiers_checked": 3,
+    "total_verifiers_passed": 2,
+    "individual_verifier_stats": {
+      "Susan Garcia is now inactive": {
+        "passed": 0,
+        "total": 1,
+        "pass_rate": 0.0
+      },
+      "Case CS-0000001 now owned by Stephanie in CSM Tier 1 with Critical priority": {
+        "passed": 1,
+        "total": 1,
+        "pass_rate": 1.0
+      },
+      "Stephanie has no other group memberships": {
+        "passed": 1,
+        "total": 1,
+        "pass_rate": 1.0
+      }
+    },
+    "mean_execution_time_ms": 153698.0,
+    "tool_usage": {
+      "search_cases": 1,
+      "find_user": 1,
+      "find_user_group": 1,
+      "list_group_members": 1,
+      "add_new_group_member": 1,
+      "remove_group_membership": 1,
+      "update_case": 1
+    }
+  }
+}

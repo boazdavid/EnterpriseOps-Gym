@@ -65,6 +65,28 @@ class BenchmarkExecutor:
         if not self.gym_configs:
             self.gym_configs = self._parse_gym_configs()
 
+        # Optionally inject additional MCP server from environment variables
+        additional_mcp_name = os.environ.get("MCP_NAME_2")
+        additional_mcp_endpoint = os.environ.get("MCP_ENDPOINT_2")
+        if additional_mcp_name and additional_mcp_endpoint:
+            already_present = any(
+                g["mcp_server_name"] == additional_mcp_name for g in self.gym_configs
+            )
+            if not already_present:
+                self.gym_configs.append({
+                    "mcp_server_name": additional_mcp_name,
+                    "mcp_server_url": additional_mcp_endpoint,
+                    "seed_database_file": "",
+                    "database_id": "",
+                    "mcp_endpoint": "/mcp",
+                    "auth_config": None,
+                    "context": {},
+                })
+                logger.info(
+                    f"➕ Injected additional MCP server from env: "
+                    f"{additional_mcp_name} -> {additional_mcp_endpoint}"
+                )
+
         logger.info(f"📋 Configured {len(self.gym_configs)} gym server(s)")
         for idx, gym_config in enumerate(self.gym_configs):
             logger.info(
@@ -281,10 +303,13 @@ class BenchmarkExecutor:
             logger.info(
                 f"[TOOL_FILTER] Expected tools: {', '.join(self.config.selected_tools)}"
             )
+            # Tools from env-injected MCP servers bypass the selected_tools filter
+            injected_server_name = os.environ.get("MCP_NAME_2")
             filtered_tools = [
                 tool
                 for tool in merged_tools
                 if tool.get("name") in self.config.selected_tools
+                or tool.get("_mcp_server_name") == injected_server_name
             ]
             logger.info(
                 f"[TOOL_FILTER] ✅ Filtered from {len(merged_tools)} to {len(filtered_tools)} tools"

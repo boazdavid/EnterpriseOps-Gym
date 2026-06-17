@@ -195,6 +195,13 @@ async def execute_sample(
         return
     print(f"Running benchmark for config: {config_file}")
     config = load_config(config_file)
+
+    # Optionally append additional instructions to the system prompt
+    prompt_suffix_file = os.environ.get("SYSTEM_PROMPT_SUFFIX_FILE")
+    if prompt_suffix_file and os.path.isfile(prompt_suffix_file):
+        with open(prompt_suffix_file, "r") as f:
+            config.system_prompt = config.system_prompt + "\n\n" + f.read()
+
     llm_config = random.choice(
         load_llm_configs(llm_config)
     )  # MARKER: Load balancer picks a random LLM instance

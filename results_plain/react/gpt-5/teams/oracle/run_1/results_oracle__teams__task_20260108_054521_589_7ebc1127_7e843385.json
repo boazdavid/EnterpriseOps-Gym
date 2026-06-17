@@ -1,0 +1,1148 @@
+{
+  "benchmark_config": {
+    "model": "vllm/Azure/gpt-5-2025-08-07",
+    "number_of_runs": 1,
+    "user_prompt": "We\u2019re rolling out a new \u201cQuality First\u201d initiative across TechCorp, and I (James Wilson) need to set up the supporting workspace. Please update the team named \"TechCorp Solutions Team\" description to \u201cQuality and delivery oversight for all product releases\u201d, then create a new private channel called Quality First War Room under the same team, add me as its owner, and add Alice Johnson and Carol White as members so they can collaborate on high-priority issues. Once the channel is ready, post a message saying \u201cQuality First War Room is now live, use this space for critical release decisions and escalations.\u201d After that, create a virtual event webinar titled \u201cQuality First Launch Briefing\u201d scheduled for January 20th, 2026 starting at 15:00 UTC and ending at 17:00 UTC, with an initial description explaining the expectations and updated quality standards, then publish the webinar for organization-wide visibility. Next, start an audio call between me and Alice Johnson so we can review the webinar content.",
+    "gym_servers": [
+      {
+        "name": "gym-teams-mcp",
+        "url": "http://localhost:8002",
+        "seed_database_file": "Domain Wise DBs and Task-DB Mappings/teams/dbs/db_1763719312619_uhgzo6si4.sql",
+        "uses_cloning": true
+      }
+    ],
+    "total_gyms": 1,
+    "total_tools_available": 9
+  },
+  "runs": [
+    {
+      "run_number": 1,
+      "started_at": "2026-06-15T08:33:51.055568+00:00",
+      "execution_time_ms": 127111,
+      "model_response": "All set, James.\n\nHere\u2019s what I completed:\n\n- Team update\n  - TechCorp Solutions Team description updated to: \u201cQuality and delivery oversight for all product releases\u201d.\n\n- Private channel\n  - Created \u201cQuality First War Room\u201d (private) under TechCorp Solutions Team.\n  - Membership:\n    - Owner: James Wilson\n    - Members: Alice Johnson, Carol White\n  - Channel ID: channel_193a98d609664d38848a91ffb3ff4dbf\n  - Posted announcement: \u201cQuality First War Room is now live, use this space for critical release decisions and escalations.\u201d\n\n- Webinar\n  - Created and published \u201cQuality First Launch Briefing\u201d for organization-wide visibility.\n  - When: January 20, 2026, 15:00\u201317:00 UTC\n  - Description: Outlines expectations and updated quality standards for the Quality First initiative.\n  - Webinar ID: 3aaf7ed1-c45f-4820-be7f-294bbcb4a79b@e109d950-ab4f-4677-80c9-785c49f72a2f\n  - Status: Published\n\n- Call\n  - Started an audio call for you and Alice Johnson to review content.\n  - Call ID: 5c2fdc2f-16e4-4955-9828-f09d03d0e5f1 (current state: establishing)\n\nIf you\u2019d like, I can add co-organizers to the webinar, enable attendee email notifications, or invite a distribution list.",
+      "conversation_flow": [
+        {
+          "type": "system_message",
+          "content": "# **Teams Assistant Policy**\n\nYou are a **Microsoft Teams Management Assistant**.\n\nYour goal is to assist users in managing Teams, channels, chats, meetings, and related collaboration objects while adhering to organizational security, access, and data governance policies.\n\nYou must always act on **confirmed context** and **existing relationships**, ensuring all actions maintain system integrity and Microsoft Graph API consistency.\n\n---\n\n## **General Instructions [Must follow]**\n\n* **Never infer** user/team/channel data \u2014 act only on existing verified records.\n\n* If a request violates access control or schema constraints, **abort** with a reason.\n\n* Do not expose internal data, app configurations, or identities outside the permitted scope.\n\n* Follow **Microsoft Graph API** semantics for all CRUD and OData operations.\n\n* You do not need to ask for confirmation or permission before taking action.\n\n* When identifiers such as names or IDs are missing, perform exactly one lookup per entity type, verify that you are reusing correct values from previous responses, and proceed using the retrieved data.\n\n* Never assume or fabricate IDs, responses, or outcomes \u2014 rely solely on verified API results.\n\n* Complete each task in a single, logical, and efficient execution flow.\n\n---\n\n## **Roles & Responsibilities**\n\n### **Administrator**\n\n* Has **full access** to the organization\u2019s Teams environment.\n\n* Can:\n\n* Create, update, and delete **teams**, **channels**, **users**, **groups**, **apps**, and **tags**.\n\n* Configure global and per-team policies (e.g., **guest access**, **fun settings**, **messaging settings**).\n\n* Manage **permissions**, **roles**, **installed apps**, and **templates**.\n\n* Oversee **meetings**, **recordings**, and **compliance data**.\n\n* Responsible for lifecycle management, archival, and compliance enforcement.\n\n---\n\n### **Team Owner**\n\n* Has full access to their **own teams**.\n\n* Can:\n\n* Create and manage **channels**, **members**, **tabs**, and **apps** within owned teams.\n\n* Modify team-level settings such as visibility, messaging, and permissions.\n\n* Archive or unarchive teams, and manage **tags** and **roles**.\n\n* Cannot:\n\n* Modify organization-wide resources or teams owned by others.\n\n---\n\n### **Team Member**\n\n* Can participate in collaboration within the teams they belong to.\n\n* Can:\n\n* Send and edit messages in channels.\n\n* Add files, reactions, mentions, and app tabs (where permissions allow).\n\n* Cannot:\n\n* Create or delete teams.\n\n* Alter team-level settings or membership lists.\n\n---\n\n### **Guest User**\n\n* External user invited to collaborate within a team or channel.\n\n* Can:\n\n* View and post in shared channels.\n\n* Access shared files and participate in chats/meetings.\n\n* Cannot:\n\n* Create or delete teams or channels.\n\n* Add apps, bots, or connectors.\n\n* Access internal (private) data.\n\n---\n\n### **Meeting Organizer / Host**\n\n* Creates and manages **online meetings**, webinars, and townhalls.\n\n* Can:\n\n* Schedule, update, or cancel meetings (`create_meeting`, `update_meeting`, `delete_meeting`).\n\n* View attendance, recordings, and transcripts.\n\n* Assign presenters and co-organizers.\n\n* Must ensure meeting end times follow start times and participants are valid users.\n\n---\n\n## **Core Operations**\n\n### **1. User Management**\n\n| Function\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Tools\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Policy\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n| ------------------------------ | ------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |\n\n| Create / Update / Delete Users | `create_user`, `update_user`, `delete_user` | Only **Admins** can create or deactivate users. `userPrincipalName` must be unique and valid email format. |\n\n| Retrieve Users\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| `get_user`, `list_users`\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Accessible by admins and compliance auditors. No bulk data leaks permitted.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n| Presence & Status\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| `set_user_status_message`\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Users can set their own status. Admins can override only with explicit policy.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n---\n\n### **2. Team Lifecycle**\n\n| Function\u00a0\u00a0\u00a0| Tools\u00a0\u00a0\u00a0\u00a0\u00a0| Rules\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n| ------------ | ------------- | ------------------------------------------------------------------------------------------------------------------ |\n\n| Create Teams | `create_team` | Only **Admins** or **Owners** with proper template reference may create teams.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n| List Teams\u00a0\u00a0| `list_teams`\u00a0| Limited to user\u2019s visible teams or global admins.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n| Update Team\u00a0| `update_team` | Modifiable fields: `displayName`, `description`, `visibility`, `settings`. Cannot overwrite ownership or template. |\n\n| Delete Team\u00a0| `delete_team` | Allowed only by **Admins** or **Owners**. Must cascade cleanup of associated channels, tabs, and installed apps.\u00a0\u00a0|\n\n---\n\n### **3. Channel Management**\n\n| Function\u00a0\u00a0\u00a0\u00a0| Tools\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Rules\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n| --------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |\n\n| Create Channel\u00a0| `create_channel`\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Requires valid `teamId`. Cannot duplicate `displayName`. For private/shared channels, must specify `members`. |\n\n| Update Channel\u00a0| `update_channel`\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Only team owners or admins can change display name, description, or favorite status.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n| List Channels\u00a0\u00a0| `list_channels`, `list_all_channels`, `get_primary_channel` | Visible only to members of that team.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n| Archive Channel | `archive_channel`\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Prevents posting; content remains viewable.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n| Manage Members\u00a0| `add_channel_member`\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Allowed for private/shared/standard channels only. Validates that users exist and aren\u2019t disabled.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n---\n\n### **4. Chat & Messaging**\n\n| Function\u00a0\u00a0\u00a0\u00a0\u00a0| Tools\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Rules\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n| ---------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------- |\n\n| Create Chat\u00a0\u00a0\u00a0| `create_chat`\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Must include authenticated user in members. Only one-on-one chat per user pair.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n| Send Message\u00a0\u00a0\u00a0| `send_chat_message`, `send_channel_message`\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Requires existing chat or channel ID. No long-term logs; messages must be human-contextual. |\n\n| React to Message | `set_chat_message_reaction`, `set_channel_message_reaction` | Reaction emojis must be supported Unicode types.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n| Pin Message\u00a0\u00a0\u00a0| `pin_chat_message`\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Pins only allowed by chat owners or participants.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n| List Messages\u00a0\u00a0| `list_channel_messages`\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Members-only access; must respect channel visibility.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n---\n\n### **5. Tabs & App Integration**\n\n| Function\u00a0\u00a0| Tools\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Rules\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n| ---------- | ----------------------------------------- | -------------------------------------------------------------------------------------------------- |\n\n| Add Tab\u00a0\u00a0| `add_tab_to_chat`, `add_tabs_to_channels` | The app must already be installed. Only configurable tabs can accept `contentUrl` or `websiteUrl`. |\n\n| Update Tab | `update_channel_tab`\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Only `displayName` and `configuration` fields may be updated.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n| Delete Tab | `delete_channel_tab`\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Permanently removes tab; cannot restore.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n| List Tabs\u00a0| `list_tabs_in_channel`\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Admins and team members may view; excludes native Files tab.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n---\n\n### **6. Membership & Access Control**\n\n| Function\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Tools\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Rules\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n| ------------------- | --------------------------------------------- | ------------------------------------------------------------------------ |\n\n| Add Team Members\u00a0\u00a0| `add_team_member`, `add_team_members_in_bulk` | At least one owner required. Validate email and user existence.\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n| Update Member Roles | `update_team_member`\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Only owners/admins can modify roles.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n| Remove Members\u00a0\u00a0\u00a0| `remove_team_member`\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Removes access to team resources. Cascade revokes across chats/channels. |\n\n| List Members\u00a0\u00a0\u00a0\u00a0| `list_team_members`\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Members and owners only.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n---\n\n### **7. Meetings & Calls**\n\n| Function\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Tools\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Rules\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n| ------------------------ | ----------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |\n\n| Create Meeting / Call\u00a0\u00a0| `create_call`, `create_virtual_event_webinar`, `create_virtual_event_townhall`\u00a0\u00a0\u00a0| Requires valid participants, time zones, and no overlap of start/end.\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n| Manage Call Audio\u00a0\u00a0\u00a0\u00a0| `create_audio_routing_group`, `hold_music_operations`, `send_dtmf_tones_operations` | Restricted to service bots or admins. Must operate on active calls.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n| Recordings / Transcripts | `call_recordings`, `call_transcripts` tables\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Only organizers and admins can access or delete. Stored \u2264 30 days by default. |\n\n| Attendance Tracking\u00a0\u00a0\u00a0| `meeting_attendance_reports`, `attendance_records`\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Recorded automatically upon meeting end. Read-only for hosts.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n---\n\n### **8. File & Folder Access**\n\n* File references stored in **`drive_items`** and **`channel_files_folders`**.\n\n* Access must respect SharePoint permissions.\n\n* Retrieval through:\n\n* `get_files_folder` \u2014 for channel-level root folder.\n\n* `list_tabs_in_channel` \u2014 to discover file integrations.\n\nRules:\n\n* No file may be shared externally unless organization policy allows.\n\n* Read/write limited to team membership scope.\n\n---\n\n### **9. Tagging & Mentions**\n\n| Function\u00a0\u00a0\u00a0\u00a0| Tools\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Rules\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n| -------------- | ---------------------------- | ------------------------------------- |\n\n| Create Tag\u00a0\u00a0\u00a0| `create_teamwork_tag`\u00a0\u00a0\u00a0\u00a0| Tag names \u2264 40 chars. Max 25 members. |\n\n| Update Tag\u00a0\u00a0\u00a0| `update_teamwork_tag`\u00a0\u00a0\u00a0\u00a0| Only tag owners or admins.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n| Add Tag Member | `create_teamwork_tag_member` | Member must belong to the same team.\u00a0|\n\n| List Tags\u00a0\u00a0\u00a0| `list_teamwork_tags`\u00a0\u00a0\u00a0\u00a0\u00a0| Read-only for team members.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n---\n\n### **10. Groups & Permissions**\n\n* Groups back teams and define membership synchronization.\n\n* Managed via:\n\n* `create_group`, `update_group`, `list_groups`, `add_group_owner`.\n\n* Enforce:\n\n* `mailNickname` unique.\n\n* Security vs. mail-enabled group consistency.\n\n* Dynamic membership (`groupTypes` includes `DynamicMembership`) rules must be syntactically valid.\n\n---\n\n### **11. Virtual Events**\n\n#### Webinars\n\n* Tools: `create_virtual_event_webinar`, `get_virtual_event_webinar`, `publish_virtual_event_webinar`, `cancel_virtual_event_webinar`\n\n* Constraints:\n\n* Only **Organizers** may publish or cancel.\n\n* Status transitions:\n\n* `draft \u2192 published \u2192 canceled`\n\n* `canceled` webinars cannot be republished.\n\n* Validations: `endDateTime > startDateTime`.\n\n#### Townhalls\n\n* Tools: `create_virtual_event_townhall`, `list_virtual_event_townhalls`, `cancel_virtual_event_townhall`\n\n* Rules:\n\n* `isInviteOnly` only allowed if `audience='organization'`.\n\n* Co-organizers must exist in `teams_users`.\n\n* Organizer-only cancellation rights.\n\n---\n\n## **Security & Integrity**\n\n* All actions validated against `teams_user_roles`, `resource_access`, and `teams_orgs`.\n\n* `soft_delete` flags are respected across all entities \u2014 no physical deletion unless explicitly stated.\n\n* Channel, chat, and file visibility determined by membership and ACLs.\n\n* Private data (emails, messages) cannot be exposed via list APIs without filters.\n\n---\n\n## **Free-Form Text & Naming Conventions**\n\n| Field\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Limit\u00a0\u00a0\u00a0\u00a0| Format / Example\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n| -------------------------- | ----------- | ------------------------------------------------------- |\n\n| `displayName`\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| 1\u2013256 chars | \"Project Phoenix \u2013 Engineering\"\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n| `description`\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| \u22641024 chars | \"Internal collaboration space for release coordination\" |\n\n| `chatMessage.body.content` | \u22645000 chars | Rich text (HTML or plain)\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n| `tag.displayName`\u00a0\u00a0\u00a0\u00a0\u00a0| \u226440 chars\u00a0\u00a0| Must be unique per team\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n| `team.displayName`\u00a0\u00a0\u00a0\u00a0\u00a0| \u2264255 chars\u00a0| No reserved keywords (e.g., \"General\", \"Admin\")\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n---\n\n## **Enumerations (Strict Values)**\n\n### Teams & Channels\n\n* `team.visibility`: `private`, `public`\n\n* `channel.membershipType`: `standard`, `private`, `shared`\n\n* `channelMessage.importance`: `normal`, `high`, `urgent`\n\n### Chats\n\n* `chat.chatType`: `oneOnOne`, `group`\n\n* `chatMessage.messageType`: `message`, `chatEvent`, `systemEventMessage`\n\n### Meetings\n\n* `meeting.allowMeetingChat`: `enabled`, `disabled`\n\n* `meeting.allowedPresenters`: `everyone`, `organizer`, `none`\n\n### Virtual Events\n\n* `audience`: `everyone`, `organization`, `unknownFutureValue`\n\n* `status`: `draft`, `published`, `canceled`\n\n### Presence\n\n* `availability`: `Available`, `Busy`, `DoNotDisturb`, `Away`, `Offline`\n\n* `activity`: `InMeeting`, `Available`, `Presenting`, `Away`, `BeRightBack`\n\n---\n\n## **Audit & Logging Requirements**\n\nEvery operation must record:\n\n* `org_id`, `user_id`, and timestamp.\n\n* `resource_id` and `operation_type`.\n\n* System must update `updated_at` fields on every modification.\n\n* Retain audit logs for \u2265 30 days for compliance.\n\n---\n\n## **Service-Level Policies**\n\n* API rate limits per Microsoft Graph standards (429 handling).\n\n* Call records, transcripts, and meeting data retained max **30 days**.\n\n* Archived channels and teams are read-only.\n\n* Bots may only perform operations within granted permissions (`Chat.ReadWrite`, `Team.ReadBasic.All`, etc.).\n\n---\n\n## **Violation Handling**\n\nIf an operation:\n\n* Modifies unrelated entities,\n\n* References non-existent IDs,\n\n* Violates permission hierarchy,\n\n* Or attempts disallowed state transitions,\n\nthe agent must **abort immediately** and return a policy violation notice.\n\n---"
+        },
+        {
+          "type": "user_message",
+          "content": "We\u2019re rolling out a new \u201cQuality First\u201d initiative across TechCorp, and I (James Wilson) need to set up the supporting workspace. Please update the team named \"TechCorp Solutions Team\" description to \u201cQuality and delivery oversight for all product releases\u201d, then create a new private channel called Quality First War Room under the same team, add me as its owner, and add Alice Johnson and Carol White as members so they can collaborate on high-priority issues. Once the channel is ready, post a message saying \u201cQuality First War Room is now live, use this space for critical release decisions and escalations.\u201d After that, create a virtual event webinar titled \u201cQuality First Launch Briefing\u201d scheduled for January 20th, 2026 starting at 15:00 UTC and ending at 17:00 UTC, with an initial description explaining the expectations and updated quality standards, then publish the webinar for organization-wide visibility. Next, start an audio call between me and Alice Johnson so we can review the webinar content."
+        },
+        {
+          "type": "ai_message",
+          "content": "",
+          "usage_metadata": {
+            "input_tokens": 7902,
+            "output_tokens": 2683,
+            "total_tokens": 10585,
+            "input_token_details": {
+              "audio": 0,
+              "cache_read": 3840
+            },
+            "output_token_details": {
+              "audio": 0,
+              "reasoning": 2560
+            }
+          },
+          "response_metadata": {
+            "token_usage": {
+              "completion_tokens": 2683,
+              "prompt_tokens": 7902,
+              "total_tokens": 10585,
+              "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 2560,
+                "rejected_prediction_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 3840
+              },
+              "latency_checkpoint": {
+                "engine_tbt_ms": 12,
+                "engine_ttft_ms": 415,
+                "engine_ttlt_ms": 32930,
+                "pre_inference_ms": 461,
+                "service_tbt_ms": 12,
+                "service_ttft_ms": 1455,
+                "service_ttlt_ms": 33894,
+                "total_duration_ms": 33447,
+                "user_visible_ttft_ms": 995
+              }
+            },
+            "model_provider": "openai",
+            "model_name": "Azure/gpt-5-2025-08-07",
+            "system_fingerprint": null,
+            "id": "chatcmpl-Dqx3U0OCtAkkWg17YIIxlNCzyCJnd",
+            "service_tier": "default",
+            "finish_reason": "tool_calls",
+            "logprobs": null
+          },
+          "tool_calls": [
+            {
+              "name": "list_teams",
+              "args": {
+                "_filter": "displayName eq 'TechCorp Solutions Team'",
+                "_top": 50,
+                "_count": true
+              }
+            },
+            {
+              "name": "list_users",
+              "args": {
+                "_filter": "displayName eq 'James Wilson' or displayName eq 'Alice Johnson' or displayName eq 'Carol White'",
+                "_select": "id,displayName,mail,userPrincipalName,accountEnabled",
+                "_top": 50,
+                "_count": true
+              }
+            }
+          ]
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "list_teams",
+          "result": {
+            "success": true,
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\n  \"@odata.context\": \"https://graph.microsoft.com/v1.0/$metadata#teams\",\n  \"@odata.count\": 1,\n  \"value\": [\n    {\n      \"id\": \"team_techcorp_001\",\n      \"displayName\": \"TechCorp Solutions Team\",\n      \"description\": \"Main collaboration team for TechCorp Solutions organization\",\n      \"visibility\": \"private\",\n      \"specialization\": \"none\",\n      \"isArchived\": false,\n      \"webUrl\": \"https://teams.microsoft.com/l/team/team_techcorp_001\",\n      \"createdDateTime\": \"2026-06-15T08:33:52\",\n      \"internalId\": \"team_techcorp_001\",\n      \"classification\": \"High Business Impact\",\n      \"tenantId\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n      \"memberSettings\": {\n        \"allowCreateUpdateChannels\": true,\n        \"allowCreatePrivateChannels\": true,\n        \"allowDeleteChannels\": true,\n        \"allowAddRemoveApps\": true,\n        \"allowCreateUpdateRemoveTabs\": true,\n        \"allowCreateUpdateRemoveConnectors\": true\n      },\n      \"guestSettings\": {\n        \"allowCreateUpdateChannels\": false,\n        \"allowDeleteChannels\": false\n      },\n      \"messagingSettings\": {\n        \"allowUserEditMessages\": true,\n        \"allowUserDeleteMessages\": true,\n        \"allowOwnerDeleteMessages\": true,\n        \"allowTeamMentions\": true,\n        \"allowChannelMentions\": true\n      },\n      \"funSettings\": {\n        \"allowGiphy\": true,\n        \"giphyContentRating\": \"moderate\",\n        \"allowStickersAndMemes\": true,\n        \"allowCustomMemes\": true\n      },\n      \"discoverySettings\": {\n        \"showInTeamsSearchAndSuggestions\": false\n      },\n      \"incomingChannels\": [\n        {\n          \"id\": \"e4f8a2b6c7d9e3f5a8b2c6d1e5f9a3b7\",\n          \"displayName\": \"Tech Innovation\",\n          \"description\": \"Shared channel for technology innovation collaboration\",\n          \"membershipType\": \"shared\",\n          \"tenantId\": \"f9e8d7c6-b5a4-3210-9876-543210fedcba\"\n        }\n      ]\n    }\n  ]\n}"
+                }
+              ],
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "gym-teams-mcp"
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "list_users",
+          "result": {
+            "success": true,
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\n  \"@odata.context\": \"https://graph.microsoft.com/v1.0/$metadata#users\",\n  \"value\": [\n    {\n      \"@odata.context\": \"https://graph.microsoft.com/v1.0/$metadata#users/$entity\",\n      \"id\": \"alice.johnson\",\n      \"displayName\": \"Alice Johnson\",\n      \"mail\": \"alice.manager@techcorp.com\",\n      \"userPrincipalName\": \"alice.manager@techcorp.com\",\n      \"accountEnabled\": true\n    },\n    {\n      \"@odata.context\": \"https://graph.microsoft.com/v1.0/$metadata#users/$entity\",\n      \"id\": \"carol.white\",\n      \"displayName\": \"Carol White\",\n      \"mail\": \"carol.white@techcorp.com\",\n      \"userPrincipalName\": \"carol.white@techcorp.com\",\n      \"accountEnabled\": true\n    },\n    {\n      \"@odata.context\": \"https://graph.microsoft.com/v1.0/$metadata#users/$entity\",\n      \"id\": \"james.wilson\",\n      \"displayName\": \"James Wilson\",\n      \"mail\": \"james.wilson@techcorp.com\",\n      \"userPrincipalName\": \"james.wilson@techcorp.com\",\n      \"accountEnabled\": true\n    }\n  ],\n  \"@odata.count\": 3\n}"
+                }
+              ],
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "gym-teams-mcp"
+        },
+        {
+          "type": "ai_message",
+          "content": "",
+          "usage_metadata": {
+            "input_tokens": 8960,
+            "output_tokens": 2729,
+            "total_tokens": 11689,
+            "input_token_details": {
+              "audio": 0,
+              "cache_read": 3840
+            },
+            "output_token_details": {
+              "audio": 0,
+              "reasoning": 2688
+            }
+          },
+          "response_metadata": {
+            "token_usage": {
+              "completion_tokens": 2729,
+              "prompt_tokens": 8960,
+              "total_tokens": 11689,
+              "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 2688,
+                "rejected_prediction_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 3840
+              },
+              "latency_checkpoint": {
+                "engine_tbt_ms": 9,
+                "engine_ttft_ms": 473,
+                "engine_ttlt_ms": 25577,
+                "pre_inference_ms": 395,
+                "service_tbt_ms": 9,
+                "service_ttft_ms": 1357,
+                "service_ttlt_ms": 26472,
+                "total_duration_ms": 26083,
+                "user_visible_ttft_ms": 962
+              }
+            },
+            "model_provider": "openai",
+            "model_name": "Azure/gpt-5-2025-08-07",
+            "system_fingerprint": null,
+            "id": "chatcmpl-Dqx43EtoqcPhWArGhbG4vGDMgFVQl",
+            "service_tier": "default",
+            "finish_reason": "tool_calls",
+            "logprobs": null
+          },
+          "tool_calls": [
+            {
+              "name": "update_team",
+              "args": {
+                "teamId": "team_techcorp_001",
+                "description": "Quality and delivery oversight for all product releases"
+              }
+            }
+          ]
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "update_team",
+          "result": {
+            "success": true,
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\n  \"id\": \"team_techcorp_001\",\n  \"internalId\": \"team_techcorp_001\",\n  \"tenantId\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n  \"displayName\": \"TechCorp Solutions Team\",\n  \"description\": \"Quality and delivery oversight for all product releases\",\n  \"visibility\": \"private\",\n  \"specialization\": \"none\",\n  \"classification\": \"High Business Impact\",\n  \"memberSettings\": {\n    \"allowCreateUpdateChannels\": true,\n    \"allowCreatePrivateChannels\": true,\n    \"allowDeleteChannels\": true,\n    \"allowAddRemoveApps\": true,\n    \"allowCreateUpdateRemoveTabs\": true,\n    \"allowCreateUpdateRemoveConnectors\": true\n  },\n  \"guestSettings\": {\n    \"allowCreateUpdateChannels\": false,\n    \"allowDeleteChannels\": false\n  },\n  \"messagingSettings\": {\n    \"allowUserEditMessages\": true,\n    \"allowUserDeleteMessages\": true,\n    \"allowOwnerDeleteMessages\": true,\n    \"allowTeamMentions\": true,\n    \"allowChannelMentions\": true\n  },\n  \"funSettings\": {\n    \"allowGiphy\": true,\n    \"giphyContentRating\": \"moderate\",\n    \"allowStickersAndMemes\": true,\n    \"allowCustomMemes\": true\n  },\n  \"classSettings\": null,\n  \"isArchived\": false,\n  \"createdDateTime\": \"2026-06-15T08:33:52\",\n  \"summary\": null,\n  \"webUrl\": \"https://teams.microsoft.com/l/team/team_techcorp_001\",\n  \"members\": null,\n  \"channels\": null,\n  \"installedApps\": null,\n  \"incomingChannels\": null\n}"
+                }
+              ],
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "gym-teams-mcp"
+        },
+        {
+          "type": "ai_message",
+          "content": "",
+          "usage_metadata": {
+            "input_tokens": 9450,
+            "output_tokens": 2769,
+            "total_tokens": 12219,
+            "input_token_details": {
+              "audio": 0,
+              "cache_read": 8832
+            },
+            "output_token_details": {
+              "audio": 0,
+              "reasoning": 2560
+            }
+          },
+          "response_metadata": {
+            "token_usage": {
+              "completion_tokens": 2769,
+              "prompt_tokens": 9450,
+              "total_tokens": 12219,
+              "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 2560,
+                "rejected_prediction_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 8832
+              },
+              "latency_checkpoint": {
+                "engine_tbt_ms": 9,
+                "engine_ttft_ms": 270,
+                "engine_ttlt_ms": 26028,
+                "pre_inference_ms": 239,
+                "service_tbt_ms": 9,
+                "service_ttft_ms": 989,
+                "service_ttlt_ms": 26744,
+                "total_duration_ms": 26514,
+                "user_visible_ttft_ms": 750
+              }
+            },
+            "model_provider": "openai",
+            "model_name": "Azure/gpt-5-2025-08-07",
+            "system_fingerprint": null,
+            "id": "chatcmpl-Dqx4VdOlpz6GUMQTYVxIu8KqXX3ra",
+            "service_tier": "default",
+            "finish_reason": "tool_calls",
+            "logprobs": null
+          },
+          "tool_calls": [
+            {
+              "name": "create_channel",
+              "args": {
+                "teamId": "team_techcorp_001",
+                "displayName": "Quality First War Room",
+                "description": "Private space for rapid triage and decisions during Quality First initiative.",
+                "membershipType": "private",
+                "members": [
+                  {
+                    "user_odata_bind": "https://graph.microsoft.com/v1.0/users('james.wilson@techcorp.com')",
+                    "roles": [
+                      "owner"
+                    ],
+                    "displayName": "James Wilson",
+                    "email": "james.wilson@techcorp.com"
+                  },
+                  {
+                    "user_odata_bind": "https://graph.microsoft.com/v1.0/users('alice.manager@techcorp.com')",
+                    "roles": [
+                      "member"
+                    ],
+                    "displayName": "Alice Johnson",
+                    "email": "alice.manager@techcorp.com"
+                  },
+                  {
+                    "user_odata_bind": "https://graph.microsoft.com/v1.0/users('carol.white@techcorp.com')",
+                    "roles": [
+                      "member"
+                    ],
+                    "displayName": "Carol White",
+                    "email": "carol.white@techcorp.com"
+                  }
+                ],
+                "isFavoriteByDefault": true
+              }
+            }
+          ]
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "create_channel",
+          "result": {
+            "success": true,
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\n  \"@odata.context\": \"https://graph.microsoft.com/v1.0/$metadata#teams('team_techcorp_001')/channels/$entity\",\n  \"@odata.type\": \"#microsoft.graph.channel\",\n  \"id\": \"channel_193a98d609664d38848a91ffb3ff4dbf\",\n  \"displayName\": \"Quality First War Room\",\n  \"description\": \"Private space for rapid triage and decisions during Quality First initiative.\",\n  \"membershipType\": \"private\",\n  \"isFavoriteByDefault\": true,\n  \"tenantId\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n  \"teamId\": \"team_techcorp_001\",\n  \"isArchived\": false,\n  \"createdDateTime\": \"2026-06-15T08:35:26.759345Z\"\n}"
+                }
+              ],
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "gym-teams-mcp"
+        },
+        {
+          "type": "ai_message",
+          "content": "",
+          "usage_metadata": {
+            "input_tokens": 9892,
+            "output_tokens": 82,
+            "total_tokens": 9974,
+            "input_token_details": {
+              "audio": 0,
+              "cache_read": 7808
+            },
+            "output_token_details": {
+              "audio": 0,
+              "reasoning": 0
+            }
+          },
+          "response_metadata": {
+            "token_usage": {
+              "completion_tokens": 82,
+              "prompt_tokens": 9892,
+              "total_tokens": 9974,
+              "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 0,
+                "rejected_prediction_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 7808
+              },
+              "latency_checkpoint": {
+                "engine_tbt_ms": 5,
+                "engine_ttft_ms": 332,
+                "engine_ttlt_ms": 710,
+                "pre_inference_ms": 431,
+                "service_tbt_ms": 5,
+                "service_ttft_ms": 1234,
+                "service_ttlt_ms": 1611,
+                "total_duration_ms": 1187,
+                "user_visible_ttft_ms": 803
+              }
+            },
+            "model_provider": "openai",
+            "model_name": "Azure/gpt-5-2025-08-07",
+            "system_fingerprint": null,
+            "id": "chatcmpl-Dqx4x4INj0PGvhNrXG23VlJJ32GfC",
+            "service_tier": "default",
+            "finish_reason": "tool_calls",
+            "logprobs": null
+          },
+          "tool_calls": [
+            {
+              "name": "send_channel_message",
+              "args": {
+                "teamId": "team_techcorp_001",
+                "channelId": "channel_193a98d609664d38848a91ffb3ff4dbf",
+                "body": {
+                  "contentType": "text",
+                  "content": "Quality First War Room is now live, use this space for critical release decisions and escalations."
+                },
+                "importance": "high"
+              }
+            }
+          ]
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "send_channel_message",
+          "result": {
+            "success": true,
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\n  \"@odata.context\": \"https://graph.microsoft.com/v1.0/$metadata#teams('team_techcorp_001')/channels('channel_193a98d609664d38848a91ffb3ff4dbf')/messages/$entity\",\n  \"id\": \"msg_aa46e783a1a04268bce9269fd5f3e206\",\n  \"replyToId\": null,\n  \"etag\": \"etag_msg_aa46e783a1a04268bce9269fd5f3e206\",\n  \"messageType\": \"message\",\n  \"createdDateTime\": \"2026-06-15T08:35:29.291156Z\",\n  \"lastModifiedDateTime\": \"2026-06-15T08:35:29.291156Z\",\n  \"lastEditedDateTime\": null,\n  \"deletedDateTime\": null,\n  \"subject\": null,\n  \"summary\": null,\n  \"chatId\": null,\n  \"importance\": \"high\",\n  \"locale\": \"en-us\",\n  \"webUrl\": \"https://teams.microsoft.com/l/message/channel_193a98d609664d38848a91ffb3ff4dbf/msg_aa46e783a1a04268bce9269fd5f3e206\",\n  \"policyViolation\": null,\n  \"eventDetail\": null,\n  \"from\": {\n    \"application\": null,\n    \"device\": null,\n    \"user\": {\n      \"id\": \"james.wilson\",\n      \"displayName\": \"Current User\",\n      \"userIdentityType\": \"aadUser\"\n    }\n  },\n  \"body\": {\n    \"contentType\": \"text\",\n    \"content\": \"Quality First War Room is now live, use this space for critical release decisions and escalations.\"\n  },\n  \"channelIdentity\": {\n    \"teamId\": \"team_techcorp_001\",\n    \"channelId\": \"channel_193a98d609664d38848a91ffb3ff4dbf\"\n  },\n  \"attachments\": [],\n  \"mentions\": [],\n  \"reactions\": [],\n  \"messageHistory\": []\n}"
+                }
+              ],
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "gym-teams-mcp"
+        },
+        {
+          "type": "ai_message",
+          "content": "",
+          "usage_metadata": {
+            "input_tokens": 10517,
+            "output_tokens": 118,
+            "total_tokens": 10635,
+            "input_token_details": {
+              "audio": 0,
+              "cache_read": 3584
+            },
+            "output_token_details": {
+              "audio": 0,
+              "reasoning": 0
+            }
+          },
+          "response_metadata": {
+            "token_usage": {
+              "completion_tokens": 118,
+              "prompt_tokens": 10517,
+              "total_tokens": 10635,
+              "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 0,
+                "rejected_prediction_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 3584
+              },
+              "latency_checkpoint": {
+                "engine_tbt_ms": 6,
+                "engine_ttft_ms": 376,
+                "engine_ttlt_ms": 1061,
+                "pre_inference_ms": 299,
+                "service_tbt_ms": 6,
+                "service_ttft_ms": 779,
+                "service_ttlt_ms": 1461,
+                "total_duration_ms": 1170,
+                "user_visible_ttft_ms": 480
+              }
+            },
+            "model_provider": "openai",
+            "model_name": "Azure/gpt-5-2025-08-07",
+            "system_fingerprint": null,
+            "id": "chatcmpl-Dqx4zJ64TvFvm5BIn4nhnPoZtp6BV",
+            "service_tier": "default",
+            "finish_reason": "tool_calls",
+            "logprobs": null
+          },
+          "tool_calls": [
+            {
+              "name": "create_virtual_event_webinar",
+              "args": {
+                "displayName": "Quality First Launch Briefing",
+                "description": {
+                  "contentType": "text",
+                  "content": "This briefing will outline expectations and updated quality standards under the Quality First initiative, including release gating, escalation protocols, and ownership."
+                },
+                "startDateTime": {
+                  "dateTime": "2026-01-20T15:00:00",
+                  "timeZone": "UTC"
+                },
+                "endDateTime": {
+                  "dateTime": "2026-01-20T17:00:00",
+                  "timeZone": "UTC"
+                },
+                "audience": "organization"
+              }
+            }
+          ]
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "create_virtual_event_webinar",
+          "result": {
+            "success": true,
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\n  \"@odata.type\": \"#microsoft.graph.virtualEventWebinar\",\n  \"id\": \"3aaf7ed1-c45f-4820-be7f-294bbcb4a79b@e109d950-ab4f-4677-80c9-785c49f72a2f\",\n  \"status\": \"draft\",\n  \"displayName\": \"Quality First Launch Briefing\",\n  \"description\": {\n    \"contentType\": \"text\",\n    \"content\": \"This briefing will outline expectations and updated quality standards under the Quality First initiative, including release gating, escalation protocols, and ownership.\"\n  },\n  \"startDateTime\": {\n    \"dateTime\": \"2026-01-20T15:00:00\",\n    \"timeZone\": \"UTC\"\n  },\n  \"endDateTime\": {\n    \"dateTime\": \"2026-01-20T17:00:00\",\n    \"timeZone\": \"UTC\"\n  },\n  \"audience\": \"organization\",\n  \"createdBy\": {\n    \"application\": null,\n    \"device\": null,\n    \"user\": {\n      \"@odata.type\": \"#microsoft.graph.communicationsUserIdentity\",\n      \"id\": \"james.wilson\",\n      \"displayName\": \"James Wilson\",\n      \"tenantId\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\"\n    }\n  },\n  \"coOrganizers\": [],\n  \"settings\": {\n    \"isAttendeeEmailNotificationEnabled\": false\n  },\n  \"externalEventInformation\": []\n}"
+                }
+              ],
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "gym-teams-mcp"
+        },
+        {
+          "type": "ai_message",
+          "content": "",
+          "usage_metadata": {
+            "input_tokens": 11049,
+            "output_tokens": 69,
+            "total_tokens": 11118,
+            "input_token_details": {
+              "audio": 0,
+              "cache_read": 10624
+            },
+            "output_token_details": {
+              "audio": 0,
+              "reasoning": 0
+            }
+          },
+          "response_metadata": {
+            "token_usage": {
+              "completion_tokens": 69,
+              "prompt_tokens": 11049,
+              "total_tokens": 11118,
+              "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 0,
+                "rejected_prediction_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 10624
+              },
+              "latency_checkpoint": {
+                "engine_tbt_ms": 4,
+                "engine_ttft_ms": 88,
+                "engine_ttlt_ms": 335,
+                "pre_inference_ms": 421,
+                "service_tbt_ms": 4,
+                "service_ttft_ms": 648,
+                "service_ttlt_ms": 887,
+                "total_duration_ms": 480,
+                "user_visible_ttft_ms": 227
+              }
+            },
+            "model_provider": "openai",
+            "model_name": "Azure/gpt-5-2025-08-07",
+            "system_fingerprint": null,
+            "id": "chatcmpl-Dqx51uo1GcV94jixWsFelVj5yL2bI",
+            "service_tier": "default",
+            "finish_reason": "tool_calls",
+            "logprobs": null
+          },
+          "tool_calls": [
+            {
+              "name": "publish_virtual_event_webinar",
+              "args": {
+                "webinar_id": "3aaf7ed1-c45f-4820-be7f-294bbcb4a79b@e109d950-ab4f-4677-80c9-785c49f72a2f"
+              }
+            }
+          ]
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "publish_virtual_event_webinar",
+          "result": {
+            "success": true,
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Operation completed successfully"
+                }
+              ],
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "gym-teams-mcp"
+        },
+        {
+          "type": "ai_message",
+          "content": "",
+          "usage_metadata": {
+            "input_tokens": 11155,
+            "output_tokens": 122,
+            "total_tokens": 11277,
+            "input_token_details": {
+              "audio": 0,
+              "cache_read": 0
+            },
+            "output_token_details": {
+              "audio": 0,
+              "reasoning": 0
+            }
+          },
+          "response_metadata": {
+            "token_usage": {
+              "completion_tokens": 122,
+              "prompt_tokens": 11155,
+              "total_tokens": 11277,
+              "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 0,
+                "rejected_prediction_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 0
+              },
+              "latency_checkpoint": {
+                "engine_tbt_ms": 8,
+                "engine_ttft_ms": 710,
+                "engine_ttlt_ms": 1625,
+                "pre_inference_ms": 285,
+                "service_tbt_ms": 8,
+                "service_ttft_ms": 1186,
+                "service_ttlt_ms": 2094,
+                "total_duration_ms": 1817,
+                "user_visible_ttft_ms": 901
+              }
+            },
+            "model_provider": "openai",
+            "model_name": "Azure/gpt-5-2025-08-07",
+            "system_fingerprint": null,
+            "id": "chatcmpl-Dqx53sRv5hKmnpTkAuLeBtD8AMf8v",
+            "service_tier": "default",
+            "finish_reason": "tool_calls",
+            "logprobs": null
+          },
+          "tool_calls": [
+            {
+              "name": "create_call",
+              "args": {
+                "callbackUri": "https://bot.techcorp.com/graph/call-events",
+                "targets": [
+                  {
+                    "identity": {
+                      "user": {
+                        "id": "james.wilson",
+                        "displayName": "James Wilson"
+                      }
+                    }
+                  },
+                  {
+                    "identity": {
+                      "user": {
+                        "id": "alice.johnson",
+                        "displayName": "Alice Johnson"
+                      }
+                    }
+                  }
+                ],
+                "requestedModalities": [
+                  "audio"
+                ],
+                "mediaConfig": {
+                  "_odata_type": "#microsoft.graph.serviceHostedMediaConfig",
+                  "preFetchMedia": [
+                    {
+                      "uri": "https://bot.techcorp.com/media/hold-music.wav",
+                      "resourceId": "hold-music"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "create_call",
+          "result": {
+            "success": true,
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\n  \"id\": \"5c2fdc2f-16e4-4955-9828-f09d03d0e5f1\",\n  \"state\": \"establishing\",\n  \"direction\": \"outgoing\",\n  \"callbackUri\": \"https://bot.techcorp.com/graph/call-events\",\n  \"callChainId\": \"c3b6e6cf-61e1-4590-9827-d6029d8f6e9a\",\n  \"source\": null,\n  \"targets\": [\n    {\n      \"@odata.type\": \"#microsoft.graph.invitationParticipantInfo\",\n      \"identity\": {\n        \"@odata.type\": \"#microsoft.graph.identitySet\",\n        \"user\": {\n          \"@odata.type\": \"#microsoft.graph.identity\",\n          \"id\": \"james.wilson\",\n          \"displayName\": \"James Wilson\",\n          \"identityProvider\": null,\n          \"tenantId\": null\n        },\n        \"phone\": null,\n        \"application\": null\n      },\n      \"replacesCallId\": null,\n      \"participantId\": null,\n      \"hidden\": null,\n      \"removeFromDefaultAudioRoutingGroup\": null\n    },\n    {\n      \"@odata.type\": \"#microsoft.graph.invitationParticipantInfo\",\n      \"identity\": {\n        \"@odata.type\": \"#microsoft.graph.identitySet\",\n        \"user\": {\n          \"@odata.type\": \"#microsoft.graph.identity\",\n          \"id\": \"alice.johnson\",\n          \"displayName\": \"Alice Johnson\",\n          \"identityProvider\": null,\n          \"tenantId\": null\n        },\n        \"phone\": null,\n        \"application\": null\n      },\n      \"replacesCallId\": null,\n      \"participantId\": null,\n      \"hidden\": null,\n      \"removeFromDefaultAudioRoutingGroup\": null\n    }\n  ],\n  \"requestedModalities\": [\n    \"audio\"\n  ],\n  \"activeModalities\": [],\n  \"mediaConfig\": {\n    \"_odata_type\": \"#microsoft.graph.serviceHostedMediaConfig\",\n    \"preFetchMedia\": [\n      {\n        \"uri\": \"https://bot.techcorp.com/media/hold-music.wav\",\n        \"resourceId\": \"hold-music\"\n      }\n    ],\n    \"@odata.type\": \"#microsoft.graph.serviceHostedMediaConfig\"\n  },\n  \"chatInfo\": null,\n  \"meetingInfo\": null,\n  \"myParticipantId\": \"96f1c18c-363e-4e72-9588-bbae80bc1d9c\",\n  \"subject\": null,\n  \"callOptions\": null,\n  \"callRoutes\": [],\n  \"resultInfo\": null,\n  \"mediaState\": null,\n  \"toneInfo\": null,\n  \"transcription\": null,\n  \"answeredBy\": null,\n  \"ringingTimeoutInSeconds\": null,\n  \"tenantId\": null,\n  \"terminationReason\": null,\n  \"meetingCapability\": null,\n  \"routingPolicies\": []\n}"
+                }
+              ],
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "gym-teams-mcp"
+        },
+        {
+          "type": "ai_message",
+          "content": "All set, James.\n\nHere\u2019s what I completed:\n\n- Team update\n  - TechCorp Solutions Team description updated to: \u201cQuality and delivery oversight for all product releases\u201d.\n\n- Private channel\n  - Created \u201cQuality First War Room\u201d (private) under TechCorp Solutions Team.\n  - Membership:\n    - Owner: James Wilson\n    - Members: Alice Johnson, Carol White\n  - Channel ID: channel_193a98d609664d38848a91ffb3ff4dbf\n  - Posted announcement: \u201cQuality First War Room is now live, use this space for critical release decisions and escalations.\u201d\n\n- Webinar\n  - Created and published \u201cQuality First Launch Briefing\u201d for organization-wide visibility.\n  - When: January 20, 2026, 15:00\u201317:00 UTC\n  - Description: Outlines expectations and updated quality standards for the Quality First initiative.\n  - Webinar ID: 3aaf7ed1-c45f-4820-be7f-294bbcb4a79b@e109d950-ab4f-4677-80c9-785c49f72a2f\n  - Status: Published\n\n- Call\n  - Started an audio call for you and Alice Johnson to review content.\n  - Call ID: 5c2fdc2f-16e4-4955-9828-f09d03d0e5f1 (current state: establishing)\n\nIf you\u2019d like, I can add co-organizers to the webinar, enable attendee email notifications, or invite a distribution list.",
+          "usage_metadata": {
+            "input_tokens": 12029,
+            "output_tokens": 2005,
+            "total_tokens": 14034,
+            "input_token_details": {
+              "audio": 0,
+              "cache_read": 11264
+            },
+            "output_token_details": {
+              "audio": 0,
+              "reasoning": 1664
+            }
+          },
+          "response_metadata": {
+            "token_usage": {
+              "completion_tokens": 2005,
+              "prompt_tokens": 12029,
+              "total_tokens": 14034,
+              "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 1664,
+                "rejected_prediction_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 11264
+              },
+              "latency_checkpoint": {
+                "engine_tbt_ms": 10,
+                "engine_ttft_ms": 91,
+                "engine_ttlt_ms": 20609,
+                "pre_inference_ms": 754,
+                "service_tbt_ms": 10,
+                "service_ttft_ms": 1009,
+                "service_ttlt_ms": 21548,
+                "total_duration_ms": 20800,
+                "user_visible_ttft_ms": 255
+              }
+            },
+            "model_provider": "openai",
+            "model_name": "Azure/gpt-5-2025-08-07",
+            "system_fingerprint": null,
+            "id": "chatcmpl-Dqx56nu5VhAYvRcwijG3ko4U4MRvy",
+            "service_tier": "default",
+            "finish_reason": "stop",
+            "logprobs": null
+          },
+          "tool_calls": []
+        }
+      ],
+      "tools_used": [
+        "list_teams",
+        "list_users",
+        "update_team",
+        "create_channel",
+        "send_channel_message",
+        "create_virtual_event_webinar",
+        "publish_virtual_event_webinar",
+        "create_call"
+      ],
+      "tool_results": [
+        {
+          "tool_name": "list_teams",
+          "arguments": {
+            "_filter": "displayName eq 'TechCorp Solutions Team'",
+            "_top": 50,
+            "_count": true
+          },
+          "result": {
+            "success": true,
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\n  \"@odata.context\": \"https://graph.microsoft.com/v1.0/$metadata#teams\",\n  \"@odata.count\": 1,\n  \"value\": [\n    {\n      \"id\": \"team_techcorp_001\",\n      \"displayName\": \"TechCorp Solutions Team\",\n      \"description\": \"Main collaboration team for TechCorp Solutions organization\",\n      \"visibility\": \"private\",\n      \"specialization\": \"none\",\n      \"isArchived\": false,\n      \"webUrl\": \"https://teams.microsoft.com/l/team/team_techcorp_001\",\n      \"createdDateTime\": \"2026-06-15T08:33:52\",\n      \"internalId\": \"team_techcorp_001\",\n      \"classification\": \"High Business Impact\",\n      \"tenantId\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n      \"memberSettings\": {\n        \"allowCreateUpdateChannels\": true,\n        \"allowCreatePrivateChannels\": true,\n        \"allowDeleteChannels\": true,\n        \"allowAddRemoveApps\": true,\n        \"allowCreateUpdateRemoveTabs\": true,\n        \"allowCreateUpdateRemoveConnectors\": true\n      },\n      \"guestSettings\": {\n        \"allowCreateUpdateChannels\": false,\n        \"allowDeleteChannels\": false\n      },\n      \"messagingSettings\": {\n        \"allowUserEditMessages\": true,\n        \"allowUserDeleteMessages\": true,\n        \"allowOwnerDeleteMessages\": true,\n        \"allowTeamMentions\": true,\n        \"allowChannelMentions\": true\n      },\n      \"funSettings\": {\n        \"allowGiphy\": true,\n        \"giphyContentRating\": \"moderate\",\n        \"allowStickersAndMemes\": true,\n        \"allowCustomMemes\": true\n      },\n      \"discoverySettings\": {\n        \"showInTeamsSearchAndSuggestions\": false\n      },\n      \"incomingChannels\": [\n        {\n          \"id\": \"e4f8a2b6c7d9e3f5a8b2c6d1e5f9a3b7\",\n          \"displayName\": \"Tech Innovation\",\n          \"description\": \"Shared channel for technology innovation collaboration\",\n          \"membershipType\": \"shared\",\n          \"tenantId\": \"f9e8d7c6-b5a4-3210-9876-543210fedcba\"\n        }\n      ]\n    }\n  ]\n}"
+                }
+              ],
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "gym-teams-mcp"
+        },
+        {
+          "tool_name": "list_users",
+          "arguments": {
+            "_filter": "displayName eq 'James Wilson' or displayName eq 'Alice Johnson' or displayName eq 'Carol White'",
+            "_select": "id,displayName,mail,userPrincipalName,accountEnabled",
+            "_top": 50,
+            "_count": true
+          },
+          "result": {
+            "success": true,
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\n  \"@odata.context\": \"https://graph.microsoft.com/v1.0/$metadata#users\",\n  \"value\": [\n    {\n      \"@odata.context\": \"https://graph.microsoft.com/v1.0/$metadata#users/$entity\",\n      \"id\": \"alice.johnson\",\n      \"displayName\": \"Alice Johnson\",\n      \"mail\": \"alice.manager@techcorp.com\",\n      \"userPrincipalName\": \"alice.manager@techcorp.com\",\n      \"accountEnabled\": true\n    },\n    {\n      \"@odata.context\": \"https://graph.microsoft.com/v1.0/$metadata#users/$entity\",\n      \"id\": \"carol.white\",\n      \"displayName\": \"Carol White\",\n      \"mail\": \"carol.white@techcorp.com\",\n      \"userPrincipalName\": \"carol.white@techcorp.com\",\n      \"accountEnabled\": true\n    },\n    {\n      \"@odata.context\": \"https://graph.microsoft.com/v1.0/$metadata#users/$entity\",\n      \"id\": \"james.wilson\",\n      \"displayName\": \"James Wilson\",\n      \"mail\": \"james.wilson@techcorp.com\",\n      \"userPrincipalName\": \"james.wilson@techcorp.com\",\n      \"accountEnabled\": true\n    }\n  ],\n  \"@odata.count\": 3\n}"
+                }
+              ],
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "gym-teams-mcp"
+        },
+        {
+          "tool_name": "update_team",
+          "arguments": {
+            "teamId": "team_techcorp_001",
+            "description": "Quality and delivery oversight for all product releases"
+          },
+          "result": {
+            "success": true,
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\n  \"id\": \"team_techcorp_001\",\n  \"internalId\": \"team_techcorp_001\",\n  \"tenantId\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n  \"displayName\": \"TechCorp Solutions Team\",\n  \"description\": \"Quality and delivery oversight for all product releases\",\n  \"visibility\": \"private\",\n  \"specialization\": \"none\",\n  \"classification\": \"High Business Impact\",\n  \"memberSettings\": {\n    \"allowCreateUpdateChannels\": true,\n    \"allowCreatePrivateChannels\": true,\n    \"allowDeleteChannels\": true,\n    \"allowAddRemoveApps\": true,\n    \"allowCreateUpdateRemoveTabs\": true,\n    \"allowCreateUpdateRemoveConnectors\": true\n  },\n  \"guestSettings\": {\n    \"allowCreateUpdateChannels\": false,\n    \"allowDeleteChannels\": false\n  },\n  \"messagingSettings\": {\n    \"allowUserEditMessages\": true,\n    \"allowUserDeleteMessages\": true,\n    \"allowOwnerDeleteMessages\": true,\n    \"allowTeamMentions\": true,\n    \"allowChannelMentions\": true\n  },\n  \"funSettings\": {\n    \"allowGiphy\": true,\n    \"giphyContentRating\": \"moderate\",\n    \"allowStickersAndMemes\": true,\n    \"allowCustomMemes\": true\n  },\n  \"classSettings\": null,\n  \"isArchived\": false,\n  \"createdDateTime\": \"2026-06-15T08:33:52\",\n  \"summary\": null,\n  \"webUrl\": \"https://teams.microsoft.com/l/team/team_techcorp_001\",\n  \"members\": null,\n  \"channels\": null,\n  \"installedApps\": null,\n  \"incomingChannels\": null\n}"
+                }
+              ],
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "gym-teams-mcp"
+        },
+        {
+          "tool_name": "create_channel",
+          "arguments": {
+            "teamId": "team_techcorp_001",
+            "displayName": "Quality First War Room",
+            "description": "Private space for rapid triage and decisions during Quality First initiative.",
+            "membershipType": "private",
+            "members": [
+              {
+                "user_odata_bind": "https://graph.microsoft.com/v1.0/users('james.wilson@techcorp.com')",
+                "roles": [
+                  "owner"
+                ],
+                "displayName": "James Wilson",
+                "email": "james.wilson@techcorp.com"
+              },
+              {
+                "user_odata_bind": "https://graph.microsoft.com/v1.0/users('alice.manager@techcorp.com')",
+                "roles": [
+                  "member"
+                ],
+                "displayName": "Alice Johnson",
+                "email": "alice.manager@techcorp.com"
+              },
+              {
+                "user_odata_bind": "https://graph.microsoft.com/v1.0/users('carol.white@techcorp.com')",
+                "roles": [
+                  "member"
+                ],
+                "displayName": "Carol White",
+                "email": "carol.white@techcorp.com"
+              }
+            ],
+            "isFavoriteByDefault": true
+          },
+          "result": {
+            "success": true,
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\n  \"@odata.context\": \"https://graph.microsoft.com/v1.0/$metadata#teams('team_techcorp_001')/channels/$entity\",\n  \"@odata.type\": \"#microsoft.graph.channel\",\n  \"id\": \"channel_193a98d609664d38848a91ffb3ff4dbf\",\n  \"displayName\": \"Quality First War Room\",\n  \"description\": \"Private space for rapid triage and decisions during Quality First initiative.\",\n  \"membershipType\": \"private\",\n  \"isFavoriteByDefault\": true,\n  \"tenantId\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n  \"teamId\": \"team_techcorp_001\",\n  \"isArchived\": false,\n  \"createdDateTime\": \"2026-06-15T08:35:26.759345Z\"\n}"
+                }
+              ],
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "gym-teams-mcp"
+        },
+        {
+          "tool_name": "send_channel_message",
+          "arguments": {
+            "teamId": "team_techcorp_001",
+            "channelId": "channel_193a98d609664d38848a91ffb3ff4dbf",
+            "body": {
+              "contentType": "text",
+              "content": "Quality First War Room is now live, use this space for critical release decisions and escalations."
+            },
+            "importance": "high"
+          },
+          "result": {
+            "success": true,
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\n  \"@odata.context\": \"https://graph.microsoft.com/v1.0/$metadata#teams('team_techcorp_001')/channels('channel_193a98d609664d38848a91ffb3ff4dbf')/messages/$entity\",\n  \"id\": \"msg_aa46e783a1a04268bce9269fd5f3e206\",\n  \"replyToId\": null,\n  \"etag\": \"etag_msg_aa46e783a1a04268bce9269fd5f3e206\",\n  \"messageType\": \"message\",\n  \"createdDateTime\": \"2026-06-15T08:35:29.291156Z\",\n  \"lastModifiedDateTime\": \"2026-06-15T08:35:29.291156Z\",\n  \"lastEditedDateTime\": null,\n  \"deletedDateTime\": null,\n  \"subject\": null,\n  \"summary\": null,\n  \"chatId\": null,\n  \"importance\": \"high\",\n  \"locale\": \"en-us\",\n  \"webUrl\": \"https://teams.microsoft.com/l/message/channel_193a98d609664d38848a91ffb3ff4dbf/msg_aa46e783a1a04268bce9269fd5f3e206\",\n  \"policyViolation\": null,\n  \"eventDetail\": null,\n  \"from\": {\n    \"application\": null,\n    \"device\": null,\n    \"user\": {\n      \"id\": \"james.wilson\",\n      \"displayName\": \"Current User\",\n      \"userIdentityType\": \"aadUser\"\n    }\n  },\n  \"body\": {\n    \"contentType\": \"text\",\n    \"content\": \"Quality First War Room is now live, use this space for critical release decisions and escalations.\"\n  },\n  \"channelIdentity\": {\n    \"teamId\": \"team_techcorp_001\",\n    \"channelId\": \"channel_193a98d609664d38848a91ffb3ff4dbf\"\n  },\n  \"attachments\": [],\n  \"mentions\": [],\n  \"reactions\": [],\n  \"messageHistory\": []\n}"
+                }
+              ],
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "gym-teams-mcp"
+        },
+        {
+          "tool_name": "create_virtual_event_webinar",
+          "arguments": {
+            "displayName": "Quality First Launch Briefing",
+            "description": {
+              "contentType": "text",
+              "content": "This briefing will outline expectations and updated quality standards under the Quality First initiative, including release gating, escalation protocols, and ownership."
+            },
+            "startDateTime": {
+              "dateTime": "2026-01-20T15:00:00",
+              "timeZone": "UTC"
+            },
+            "endDateTime": {
+              "dateTime": "2026-01-20T17:00:00",
+              "timeZone": "UTC"
+            },
+            "audience": "organization"
+          },
+          "result": {
+            "success": true,
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\n  \"@odata.type\": \"#microsoft.graph.virtualEventWebinar\",\n  \"id\": \"3aaf7ed1-c45f-4820-be7f-294bbcb4a79b@e109d950-ab4f-4677-80c9-785c49f72a2f\",\n  \"status\": \"draft\",\n  \"displayName\": \"Quality First Launch Briefing\",\n  \"description\": {\n    \"contentType\": \"text\",\n    \"content\": \"This briefing will outline expectations and updated quality standards under the Quality First initiative, including release gating, escalation protocols, and ownership.\"\n  },\n  \"startDateTime\": {\n    \"dateTime\": \"2026-01-20T15:00:00\",\n    \"timeZone\": \"UTC\"\n  },\n  \"endDateTime\": {\n    \"dateTime\": \"2026-01-20T17:00:00\",\n    \"timeZone\": \"UTC\"\n  },\n  \"audience\": \"organization\",\n  \"createdBy\": {\n    \"application\": null,\n    \"device\": null,\n    \"user\": {\n      \"@odata.type\": \"#microsoft.graph.communicationsUserIdentity\",\n      \"id\": \"james.wilson\",\n      \"displayName\": \"James Wilson\",\n      \"tenantId\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\"\n    }\n  },\n  \"coOrganizers\": [],\n  \"settings\": {\n    \"isAttendeeEmailNotificationEnabled\": false\n  },\n  \"externalEventInformation\": []\n}"
+                }
+              ],
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "gym-teams-mcp"
+        },
+        {
+          "tool_name": "publish_virtual_event_webinar",
+          "arguments": {
+            "webinar_id": "3aaf7ed1-c45f-4820-be7f-294bbcb4a79b@e109d950-ab4f-4677-80c9-785c49f72a2f"
+          },
+          "result": {
+            "success": true,
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Operation completed successfully"
+                }
+              ],
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "gym-teams-mcp"
+        },
+        {
+          "tool_name": "create_call",
+          "arguments": {
+            "callbackUri": "https://bot.techcorp.com/graph/call-events",
+            "targets": [
+              {
+                "identity": {
+                  "user": {
+                    "id": "james.wilson",
+                    "displayName": "James Wilson"
+                  }
+                }
+              },
+              {
+                "identity": {
+                  "user": {
+                    "id": "alice.johnson",
+                    "displayName": "Alice Johnson"
+                  }
+                }
+              }
+            ],
+            "requestedModalities": [
+              "audio"
+            ],
+            "mediaConfig": {
+              "_odata_type": "#microsoft.graph.serviceHostedMediaConfig",
+              "preFetchMedia": [
+                {
+                  "uri": "https://bot.techcorp.com/media/hold-music.wav",
+                  "resourceId": "hold-music"
+                }
+              ]
+            }
+          },
+          "result": {
+            "success": true,
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\n  \"id\": \"5c2fdc2f-16e4-4955-9828-f09d03d0e5f1\",\n  \"state\": \"establishing\",\n  \"direction\": \"outgoing\",\n  \"callbackUri\": \"https://bot.techcorp.com/graph/call-events\",\n  \"callChainId\": \"c3b6e6cf-61e1-4590-9827-d6029d8f6e9a\",\n  \"source\": null,\n  \"targets\": [\n    {\n      \"@odata.type\": \"#microsoft.graph.invitationParticipantInfo\",\n      \"identity\": {\n        \"@odata.type\": \"#microsoft.graph.identitySet\",\n        \"user\": {\n          \"@odata.type\": \"#microsoft.graph.identity\",\n          \"id\": \"james.wilson\",\n          \"displayName\": \"James Wilson\",\n          \"identityProvider\": null,\n          \"tenantId\": null\n        },\n        \"phone\": null,\n        \"application\": null\n      },\n      \"replacesCallId\": null,\n      \"participantId\": null,\n      \"hidden\": null,\n      \"removeFromDefaultAudioRoutingGroup\": null\n    },\n    {\n      \"@odata.type\": \"#microsoft.graph.invitationParticipantInfo\",\n      \"identity\": {\n        \"@odata.type\": \"#microsoft.graph.identitySet\",\n        \"user\": {\n          \"@odata.type\": \"#microsoft.graph.identity\",\n          \"id\": \"alice.johnson\",\n          \"displayName\": \"Alice Johnson\",\n          \"identityProvider\": null,\n          \"tenantId\": null\n        },\n        \"phone\": null,\n        \"application\": null\n      },\n      \"replacesCallId\": null,\n      \"participantId\": null,\n      \"hidden\": null,\n      \"removeFromDefaultAudioRoutingGroup\": null\n    }\n  ],\n  \"requestedModalities\": [\n    \"audio\"\n  ],\n  \"activeModalities\": [],\n  \"mediaConfig\": {\n    \"_odata_type\": \"#microsoft.graph.serviceHostedMediaConfig\",\n    \"preFetchMedia\": [\n      {\n        \"uri\": \"https://bot.techcorp.com/media/hold-music.wav\",\n        \"resourceId\": \"hold-music\"\n      }\n    ],\n    \"@odata.type\": \"#microsoft.graph.serviceHostedMediaConfig\"\n  },\n  \"chatInfo\": null,\n  \"meetingInfo\": null,\n  \"myParticipantId\": \"96f1c18c-363e-4e72-9588-bbae80bc1d9c\",\n  \"subject\": null,\n  \"callOptions\": null,\n  \"callRoutes\": [],\n  \"resultInfo\": null,\n  \"mediaState\": null,\n  \"toneInfo\": null,\n  \"transcription\": null,\n  \"answeredBy\": null,\n  \"ringingTimeoutInSeconds\": null,\n  \"tenantId\": null,\n  \"terminationReason\": null,\n  \"meetingCapability\": null,\n  \"routingPolicies\": []\n}"
+                }
+              ],
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "gym-teams-mcp"
+        }
+      ],
+      "verification_results": {
+        "TechCorp Solutions Team Description Updated": {
+          "passed": true,
+          "expected": 1,
+          "actual": 1,
+          "comparison_type": "equals",
+          "query": "SELECT COUNT(*) AS count FROM teams WHERE team_id = 'team_techcorp_001' AND LOWER(description) LIKE '%quality and delivery oversight for all product releases%';",
+          "details": "Comparison equals: 1 vs 1"
+        },
+        "Quality First War Room Channel Created": {
+          "passed": true,
+          "expected": 1,
+          "actual": 1,
+          "comparison_type": "equals",
+          "query": "SELECT COUNT(*) AS count FROM channels WHERE display_name = 'Quality First War Room' AND team_id = 'team_techcorp_001' AND soft_delete = 0 AND is_archived = 0 AND membership_type = 'private';",
+          "details": "Comparison equals: 1 vs 1"
+        },
+        "Alice Added To Quality First War Room": {
+          "passed": true,
+          "expected": 1,
+          "actual": 1,
+          "comparison_type": "equals",
+          "query": "SELECT COUNT(*) AS count FROM channel_members cm JOIN channels c ON cm.channel_id = c.channel_id WHERE c.display_name = 'Quality First War Room' AND c.team_id = 'team_techcorp_001' AND (cm.user_id = 'alice.johnson' OR cm.email = 'alice.manager@techcorp.com');",
+          "details": "Comparison equals: 1 vs 1"
+        },
+        "Carol Added To Quality First War Room": {
+          "passed": true,
+          "expected": 1,
+          "actual": 1,
+          "comparison_type": "equals",
+          "query": "SELECT COUNT(*) AS count FROM channel_members cm JOIN channels c ON cm.channel_id = c.channel_id WHERE c.display_name = 'Quality First War Room' AND c.team_id = 'team_techcorp_001' AND (cm.user_id = 'carol.white' OR cm.email = 'carol.white@techcorp.com');",
+          "details": "Comparison equals: 1 vs 1"
+        },
+        "James Added To Quality First War Room": {
+          "passed": true,
+          "expected": 1,
+          "actual": 1,
+          "comparison_type": "equals",
+          "query": "SELECT COUNT(*) AS count FROM channel_members cm JOIN channels c ON cm.channel_id = c.channel_id WHERE c.display_name = 'Quality First War Room' AND c.team_id = 'team_techcorp_001' AND (cm.user_id = 'james.wilson' OR cm.email = 'james.wilson@techcorp.com');",
+          "details": "Comparison equals: 1 vs 1"
+        },
+        "Quality First War Room Intro Message Posted": {
+          "passed": true,
+          "expected": 1,
+          "actual": 1,
+          "comparison_type": "equals",
+          "query": "SELECT COUNT(*) AS count FROM channel_messages WHERE channel_id IN (SELECT channel_id FROM channels WHERE display_name = 'Quality First War Room' AND team_id = 'team_techcorp_001') AND body_json LIKE '%Quality First War Room is now live, use this space for critical release decisions and escalations.%';",
+          "details": "Comparison equals: 1 vs 1"
+        },
+        "Quality First Launch Briefing Webinar Created With Schedule": {
+          "passed": true,
+          "expected": 1,
+          "actual": 1,
+          "comparison_type": "equals",
+          "query": "SELECT COUNT(*) AS count FROM virtual_event_webinars w WHERE w.created_by_user_id = 'james.wilson' AND w.display_name = 'Quality First Launch Briefing' AND w.audience = 'organization' AND w.start_date_time LIKE '%2026-01-20%' AND w.start_date_time LIKE '%15:00%' AND w.start_time_zone = 'UTC' AND w.end_date_time LIKE '%2026-01-20%' AND w.end_date_time LIKE '%17:00%' AND w.end_time_zone = 'UTC';",
+          "details": "Comparison equals: 1 vs 1"
+        },
+        "Quality First Launch Briefing Webinar Published": {
+          "passed": true,
+          "expected": 1,
+          "actual": 1,
+          "comparison_type": "equals",
+          "query": "SELECT COUNT(*) AS count FROM virtual_event_webinars w WHERE w.display_name = 'Quality First Launch Briefing' AND LOWER(w.audience) = 'organization' AND LOWER(w.status) = 'published';",
+          "details": "Comparison equals: 1 vs 1"
+        },
+        "Audio Call Created Between James And Alice": {
+          "passed": false,
+          "expected": 1,
+          "actual": 0,
+          "comparison_type": "equals",
+          "query": "SELECT COUNT(*) FROM calls c WHERE json_extract(c.source, '$.identity.user.id') = 'james.wilson' AND json_extract(c.targets, '$[0].identity.user.id') = 'alice.johnson' AND JSON_EXTRACT(c.requested_modalities, '$') LIKE '%audio%';",
+          "details": "Comparison equals: 0 vs 1"
+        }
+      },
+      "verification_summary": {
+        "total": 9,
+        "passed": 8,
+        "failed": 1,
+        "pass_rate": 0.8888888888888888
+      },
+      "overall_success": false
+    }
+  ],
+  "statistics": {
+    "total_runs": 1,
+    "successful_runs": 0,
+    "overall_success_rate": 0.0,
+    "pass_at_1": 0.0,
+    "verifier_level_pass_rate": 0.8888888888888888,
+    "total_verifiers_checked": 9,
+    "total_verifiers_passed": 8,
+    "individual_verifier_stats": {
+      "TechCorp Solutions Team Description Updated": {
+        "passed": 1,
+        "total": 1,
+        "pass_rate": 1.0
+      },
+      "Quality First War Room Channel Created": {
+        "passed": 1,
+        "total": 1,
+        "pass_rate": 1.0
+      },
+      "Alice Added To Quality First War Room": {
+        "passed": 1,
+        "total": 1,
+        "pass_rate": 1.0
+      },
+      "Carol Added To Quality First War Room": {
+        "passed": 1,
+        "total": 1,
+        "pass_rate": 1.0
+      },
+      "James Added To Quality First War Room": {
+        "passed": 1,
+        "total": 1,
+        "pass_rate": 1.0
+      },
+      "Quality First War Room Intro Message Posted": {
+        "passed": 1,
+        "total": 1,
+        "pass_rate": 1.0
+      },
+      "Quality First Launch Briefing Webinar Created With Schedule": {
+        "passed": 1,
+        "total": 1,
+        "pass_rate": 1.0
+      },
+      "Quality First Launch Briefing Webinar Published": {
+        "passed": 1,
+        "total": 1,
+        "pass_rate": 1.0
+      },
+      "Audio Call Created Between James And Alice": {
+        "passed": 0,
+        "total": 1,
+        "pass_rate": 0.0
+      }
+    },
+    "mean_execution_time_ms": 127111.0,
+    "tool_usage": {
+      "list_teams": 1,
+      "list_users": 1,
+      "update_team": 1,
+      "create_channel": 1,
+      "send_channel_message": 1,
+      "create_virtual_event_webinar": 1,
+      "publish_virtual_event_webinar": 1,
+      "create_call": 1
+    }
+  }
+}

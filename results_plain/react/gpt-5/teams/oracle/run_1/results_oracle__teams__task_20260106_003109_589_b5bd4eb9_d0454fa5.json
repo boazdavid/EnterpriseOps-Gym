@@ -1,0 +1,297 @@
+{
+  "benchmark_config": {
+    "model": "vllm/Azure/gpt-5-2025-08-07",
+    "number_of_runs": 1,
+    "user_prompt": "Create a dedicated engineering space within the TechCorp Solutions team by adding a new private channel called \u201cTechnical discussions.\u201d The channel shouldn\u2019t simply mirror whatever membership the team already has. Instead, it should settle on the small group of people who actually need to work there, which in this case means only Alice Johnson, Bob Smith, Nathan Richards, and Sophia Bennett. Within that group, make sure the leadership role is assigned correctly. Bob Smith should be the only person among the four of them who ends up with ownership privileges. The workspace should also include a OneNote tab named \u201cEngineering Notebook.\u201d If the channel already contains another notebook tab or something similar, adjust things so that the Engineering Notebook becomes the one that represents the engineering workspace going forward. Because people may need to send updates from outside Teams, make sure the channel has an active email address. This is especially important if the channel never had one or if it is still linked to an old identity. When everything has been shaped into its final form and the channel reflects what the engineering team needs, post a high-priority message using this exact sentence: \u201cThe engineering workspace is now updated with four members of the engineering team, the Engineering Notebook tab, and an active shared email address for direct updates\"",
+    "gym_servers": [
+      {
+        "name": "gym-teams-mcp",
+        "url": "http://localhost:8002",
+        "seed_database_file": "Domain Wise DBs and Task-DB Mappings/teams/dbs/db_1764274139477_ve41d08gm.sql",
+        "uses_cloning": true
+      }
+    ],
+    "total_gyms": 1,
+    "total_tools_available": 8
+  },
+  "runs": [
+    {
+      "run_number": 1,
+      "started_at": "2026-06-15T08:40:43.223088+00:00",
+      "execution_time_ms": 71595,
+      "model_response": "I can\u2019t proceed because I couldn\u2019t find any team named \u201cTechCorp Solutions\u201d in your tenant. I need a valid target team before I can create the private channel.\n\nWhat I need from you to complete this in one pass:\n- Team: Provide the teamId for the TechCorp Solutions team (preferred), or confirm the exact display name if it\u2019s different. If the team doesn\u2019t exist and you want me to create it, confirm you have admin/owner rights and share the desired displayName/description/visibility.\n- OneNote: Provide the URL of the OneNote notebook to pin as the \u201cEngineering Notebook\u201d tab. If you prefer a brand-new notebook, please share a link to an existing notebook to use or confirm where it should live; I can pin a notebook once I have its URL.\n- Users (optional if you know UPNs): I will add exactly these four people to the channel, with Bob Smith as the only owner: Alice Johnson, Bob Smith, Nathan Richards, and Sophia Bennett. If there are users with duplicate names, please provide their UPNs/emails to avoid ambiguity.\n\nOnce I have the teamId and the notebook URL, I will:\n- Create the private channel \u201cTechnical discussions\u201d with members Alice Johnson, Nathan Richards, and Sophia Bennett as members, and Bob Smith as the sole owner.\n- Pin a OneNote tab named \u201cEngineering Notebook\u201d pointing to the provided notebook. Note: I can add the tab; if you also want me to remove or reorder any existing notebook tabs, I\u2019ll do so if those controls are available in this environment.\n- Provision or refresh the channel email address so it\u2019s active for outside updates.\n- Post a high-priority message with the exact sentence you provided.",
+      "conversation_flow": [
+        {
+          "type": "system_message",
+          "content": "# **Teams Assistant Policy**\n\nYou are a **Microsoft Teams Management Assistant**.\n\nYour goal is to assist users in managing Teams, channels, chats, meetings, and related collaboration objects while adhering to organizational security, access, and data governance policies.\n\nYou must always act on **confirmed context** and **existing relationships**, ensuring all actions maintain system integrity and Microsoft Graph API consistency.\n\n---\n\n## **General Instructions [Must follow]**\n\n* **Never infer** user/team/channel data \u2014 act only on existing verified records.\n\n* If a request violates access control or schema constraints, **abort** with a reason.\n\n* Do not expose internal data, app configurations, or identities outside the permitted scope.\n\n* Follow **Microsoft Graph API** semantics for all CRUD and OData operations.\n\n* You do not need to ask for confirmation or permission before taking action.\n\n* When identifiers such as names or IDs are missing, perform exactly one lookup per entity type, verify that you are reusing correct values from previous responses, and proceed using the retrieved data.\n\n* Never assume or fabricate IDs, responses, or outcomes \u2014 rely solely on verified API results.\n\n* Complete each task in a single, logical, and efficient execution flow.\n\n---\n\n## **Roles & Responsibilities**\n\n### **Administrator**\n\n* Has **full access** to the organization\u2019s Teams environment.\n\n* Can:\n\n* Create, update, and delete **teams**, **channels**, **users**, **groups**, **apps**, and **tags**.\n\n* Configure global and per-team policies (e.g., **guest access**, **fun settings**, **messaging settings**).\n\n* Manage **permissions**, **roles**, **installed apps**, and **templates**.\n\n* Oversee **meetings**, **recordings**, and **compliance data**.\n\n* Responsible for lifecycle management, archival, and compliance enforcement.\n\n---\n\n### **Team Owner**\n\n* Has full access to their **own teams**.\n\n* Can:\n\n* Create and manage **channels**, **members**, **tabs**, and **apps** within owned teams.\n\n* Modify team-level settings such as visibility, messaging, and permissions.\n\n* Archive or unarchive teams, and manage **tags** and **roles**.\n\n* Cannot:\n\n* Modify organization-wide resources or teams owned by others.\n\n---\n\n### **Team Member**\n\n* Can participate in collaboration within the teams they belong to.\n\n* Can:\n\n* Send and edit messages in channels.\n\n* Add files, reactions, mentions, and app tabs (where permissions allow).\n\n* Cannot:\n\n* Create or delete teams.\n\n* Alter team-level settings or membership lists.\n\n---\n\n### **Guest User**\n\n* External user invited to collaborate within a team or channel.\n\n* Can:\n\n* View and post in shared channels.\n\n* Access shared files and participate in chats/meetings.\n\n* Cannot:\n\n* Create or delete teams or channels.\n\n* Add apps, bots, or connectors.\n\n* Access internal (private) data.\n\n---\n\n### **Meeting Organizer / Host**\n\n* Creates and manages **online meetings**, webinars, and townhalls.\n\n* Can:\n\n* Schedule, update, or cancel meetings (`create_meeting`, `update_meeting`, `delete_meeting`).\n\n* View attendance, recordings, and transcripts.\n\n* Assign presenters and co-organizers.\n\n* Must ensure meeting end times follow start times and participants are valid users.\n\n---\n\n## **Core Operations**\n\n### **1. User Management**\n\n| Function\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Tools\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Policy\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n| ------------------------------ | ------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |\n\n| Create / Update / Delete Users | `create_user`, `update_user`, `delete_user` | Only **Admins** can create or deactivate users. `userPrincipalName` must be unique and valid email format. |\n\n| Retrieve Users\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| `get_user`, `list_users`\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Accessible by admins and compliance auditors. No bulk data leaks permitted.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n| Presence & Status\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| `set_user_status_message`\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Users can set their own status. Admins can override only with explicit policy.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n---\n\n### **2. Team Lifecycle**\n\n| Function\u00a0\u00a0\u00a0| Tools\u00a0\u00a0\u00a0\u00a0\u00a0| Rules\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n| ------------ | ------------- | ------------------------------------------------------------------------------------------------------------------ |\n\n| Create Teams | `create_team` | Only **Admins** or **Owners** with proper template reference may create teams.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n| List Teams\u00a0\u00a0| `list_teams`\u00a0| Limited to user\u2019s visible teams or global admins.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n| Update Team\u00a0| `update_team` | Modifiable fields: `displayName`, `description`, `visibility`, `settings`. Cannot overwrite ownership or template. |\n\n| Delete Team\u00a0| `delete_team` | Allowed only by **Admins** or **Owners**. Must cascade cleanup of associated channels, tabs, and installed apps.\u00a0\u00a0|\n\n---\n\n### **3. Channel Management**\n\n| Function\u00a0\u00a0\u00a0\u00a0| Tools\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Rules\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n| --------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |\n\n| Create Channel\u00a0| `create_channel`\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Requires valid `teamId`. Cannot duplicate `displayName`. For private/shared channels, must specify `members`. |\n\n| Update Channel\u00a0| `update_channel`\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Only team owners or admins can change display name, description, or favorite status.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n| List Channels\u00a0\u00a0| `list_channels`, `list_all_channels`, `get_primary_channel` | Visible only to members of that team.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n| Archive Channel | `archive_channel`\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Prevents posting; content remains viewable.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n| Manage Members\u00a0| `add_channel_member`\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Allowed for private/shared/standard channels only. Validates that users exist and aren\u2019t disabled.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n---\n\n### **4. Chat & Messaging**\n\n| Function\u00a0\u00a0\u00a0\u00a0\u00a0| Tools\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Rules\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n| ---------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------- |\n\n| Create Chat\u00a0\u00a0\u00a0| `create_chat`\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Must include authenticated user in members. Only one-on-one chat per user pair.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n| Send Message\u00a0\u00a0\u00a0| `send_chat_message`, `send_channel_message`\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Requires existing chat or channel ID. No long-term logs; messages must be human-contextual. |\n\n| React to Message | `set_chat_message_reaction`, `set_channel_message_reaction` | Reaction emojis must be supported Unicode types.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n| Pin Message\u00a0\u00a0\u00a0| `pin_chat_message`\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Pins only allowed by chat owners or participants.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n| List Messages\u00a0\u00a0| `list_channel_messages`\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Members-only access; must respect channel visibility.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n---\n\n### **5. Tabs & App Integration**\n\n| Function\u00a0\u00a0| Tools\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Rules\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n| ---------- | ----------------------------------------- | -------------------------------------------------------------------------------------------------- |\n\n| Add Tab\u00a0\u00a0| `add_tab_to_chat`, `add_tabs_to_channels` | The app must already be installed. Only configurable tabs can accept `contentUrl` or `websiteUrl`. |\n\n| Update Tab | `update_channel_tab`\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Only `displayName` and `configuration` fields may be updated.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n| Delete Tab | `delete_channel_tab`\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Permanently removes tab; cannot restore.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n| List Tabs\u00a0| `list_tabs_in_channel`\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Admins and team members may view; excludes native Files tab.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n---\n\n### **6. Membership & Access Control**\n\n| Function\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Tools\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Rules\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n| ------------------- | --------------------------------------------- | ------------------------------------------------------------------------ |\n\n| Add Team Members\u00a0\u00a0| `add_team_member`, `add_team_members_in_bulk` | At least one owner required. Validate email and user existence.\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n| Update Member Roles | `update_team_member`\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Only owners/admins can modify roles.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n| Remove Members\u00a0\u00a0\u00a0| `remove_team_member`\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Removes access to team resources. Cascade revokes across chats/channels. |\n\n| List Members\u00a0\u00a0\u00a0\u00a0| `list_team_members`\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Members and owners only.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n---\n\n### **7. Meetings & Calls**\n\n| Function\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Tools\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Rules\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n| ------------------------ | ----------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |\n\n| Create Meeting / Call\u00a0\u00a0| `create_call`, `create_virtual_event_webinar`, `create_virtual_event_townhall`\u00a0\u00a0\u00a0| Requires valid participants, time zones, and no overlap of start/end.\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n| Manage Call Audio\u00a0\u00a0\u00a0\u00a0| `create_audio_routing_group`, `hold_music_operations`, `send_dtmf_tones_operations` | Restricted to service bots or admins. Must operate on active calls.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n| Recordings / Transcripts | `call_recordings`, `call_transcripts` tables\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Only organizers and admins can access or delete. Stored \u2264 30 days by default. |\n\n| Attendance Tracking\u00a0\u00a0\u00a0| `meeting_attendance_reports`, `attendance_records`\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Recorded automatically upon meeting end. Read-only for hosts.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n---\n\n### **8. File & Folder Access**\n\n* File references stored in **`drive_items`** and **`channel_files_folders`**.\n\n* Access must respect SharePoint permissions.\n\n* Retrieval through:\n\n* `get_files_folder` \u2014 for channel-level root folder.\n\n* `list_tabs_in_channel` \u2014 to discover file integrations.\n\nRules:\n\n* No file may be shared externally unless organization policy allows.\n\n* Read/write limited to team membership scope.\n\n---\n\n### **9. Tagging & Mentions**\n\n| Function\u00a0\u00a0\u00a0\u00a0| Tools\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Rules\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n| -------------- | ---------------------------- | ------------------------------------- |\n\n| Create Tag\u00a0\u00a0\u00a0| `create_teamwork_tag`\u00a0\u00a0\u00a0\u00a0| Tag names \u2264 40 chars. Max 25 members. |\n\n| Update Tag\u00a0\u00a0\u00a0| `update_teamwork_tag`\u00a0\u00a0\u00a0\u00a0| Only tag owners or admins.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n| Add Tag Member | `create_teamwork_tag_member` | Member must belong to the same team.\u00a0|\n\n| List Tags\u00a0\u00a0\u00a0| `list_teamwork_tags`\u00a0\u00a0\u00a0\u00a0\u00a0| Read-only for team members.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n---\n\n### **10. Groups & Permissions**\n\n* Groups back teams and define membership synchronization.\n\n* Managed via:\n\n* `create_group`, `update_group`, `list_groups`, `add_group_owner`.\n\n* Enforce:\n\n* `mailNickname` unique.\n\n* Security vs. mail-enabled group consistency.\n\n* Dynamic membership (`groupTypes` includes `DynamicMembership`) rules must be syntactically valid.\n\n---\n\n### **11. Virtual Events**\n\n#### Webinars\n\n* Tools: `create_virtual_event_webinar`, `get_virtual_event_webinar`, `publish_virtual_event_webinar`, `cancel_virtual_event_webinar`\n\n* Constraints:\n\n* Only **Organizers** may publish or cancel.\n\n* Status transitions:\n\n* `draft \u2192 published \u2192 canceled`\n\n* `canceled` webinars cannot be republished.\n\n* Validations: `endDateTime > startDateTime`.\n\n#### Townhalls\n\n* Tools: `create_virtual_event_townhall`, `list_virtual_event_townhalls`, `cancel_virtual_event_townhall`\n\n* Rules:\n\n* `isInviteOnly` only allowed if `audience='organization'`.\n\n* Co-organizers must exist in `teams_users`.\n\n* Organizer-only cancellation rights.\n\n---\n\n## **Security & Integrity**\n\n* All actions validated against `teams_user_roles`, `resource_access`, and `teams_orgs`.\n\n* `soft_delete` flags are respected across all entities \u2014 no physical deletion unless explicitly stated.\n\n* Channel, chat, and file visibility determined by membership and ACLs.\n\n* Private data (emails, messages) cannot be exposed via list APIs without filters.\n\n---\n\n## **Free-Form Text & Naming Conventions**\n\n| Field\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Limit\u00a0\u00a0\u00a0\u00a0| Format / Example\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n| -------------------------- | ----------- | ------------------------------------------------------- |\n\n| `displayName`\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| 1\u2013256 chars | \"Project Phoenix \u2013 Engineering\"\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n| `description`\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| \u22641024 chars | \"Internal collaboration space for release coordination\" |\n\n| `chatMessage.body.content` | \u22645000 chars | Rich text (HTML or plain)\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n| `tag.displayName`\u00a0\u00a0\u00a0\u00a0\u00a0| \u226440 chars\u00a0\u00a0| Must be unique per team\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n| `team.displayName`\u00a0\u00a0\u00a0\u00a0\u00a0| \u2264255 chars\u00a0| No reserved keywords (e.g., \"General\", \"Admin\")\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n---\n\n## **Enumerations (Strict Values)**\n\n### Teams & Channels\n\n* `team.visibility`: `private`, `public`\n\n* `channel.membershipType`: `standard`, `private`, `shared`\n\n* `channelMessage.importance`: `normal`, `high`, `urgent`\n\n### Chats\n\n* `chat.chatType`: `oneOnOne`, `group`\n\n* `chatMessage.messageType`: `message`, `chatEvent`, `systemEventMessage`\n\n### Meetings\n\n* `meeting.allowMeetingChat`: `enabled`, `disabled`\n\n* `meeting.allowedPresenters`: `everyone`, `organizer`, `none`\n\n### Virtual Events\n\n* `audience`: `everyone`, `organization`, `unknownFutureValue`\n\n* `status`: `draft`, `published`, `canceled`\n\n### Presence\n\n* `availability`: `Available`, `Busy`, `DoNotDisturb`, `Away`, `Offline`\n\n* `activity`: `InMeeting`, `Available`, `Presenting`, `Away`, `BeRightBack`\n\n---\n\n## **Audit & Logging Requirements**\n\nEvery operation must record:\n\n* `org_id`, `user_id`, and timestamp.\n\n* `resource_id` and `operation_type`.\n\n* System must update `updated_at` fields on every modification.\n\n* Retain audit logs for \u2265 30 days for compliance.\n\n---\n\n## **Service-Level Policies**\n\n* API rate limits per Microsoft Graph standards (429 handling).\n\n* Call records, transcripts, and meeting data retained max **30 days**.\n\n* Archived channels and teams are read-only.\n\n* Bots may only perform operations within granted permissions (`Chat.ReadWrite`, `Team.ReadBasic.All`, etc.).\n\n---\n\n## **Violation Handling**\n\nIf an operation:\n\n* Modifies unrelated entities,\n\n* References non-existent IDs,\n\n* Violates permission hierarchy,\n\n* Or attempts disallowed state transitions,\n\nthe agent must **abort immediately** and return a policy violation notice.\n\n---"
+        },
+        {
+          "type": "user_message",
+          "content": "Create a dedicated engineering space within the TechCorp Solutions team by adding a new private channel called \u201cTechnical discussions.\u201d The channel shouldn\u2019t simply mirror whatever membership the team already has. Instead, it should settle on the small group of people who actually need to work there, which in this case means only Alice Johnson, Bob Smith, Nathan Richards, and Sophia Bennett. Within that group, make sure the leadership role is assigned correctly. Bob Smith should be the only person among the four of them who ends up with ownership privileges. The workspace should also include a OneNote tab named \u201cEngineering Notebook.\u201d If the channel already contains another notebook tab or something similar, adjust things so that the Engineering Notebook becomes the one that represents the engineering workspace going forward. Because people may need to send updates from outside Teams, make sure the channel has an active email address. This is especially important if the channel never had one or if it is still linked to an old identity. When everything has been shaped into its final form and the channel reflects what the engineering team needs, post a high-priority message using this exact sentence: \u201cThe engineering workspace is now updated with four members of the engineering team, the Engineering Notebook tab, and an active shared email address for direct updates\""
+        },
+        {
+          "type": "ai_message",
+          "content": "",
+          "usage_metadata": {
+            "input_tokens": 7114,
+            "output_tokens": 2354,
+            "total_tokens": 9468,
+            "input_token_details": {
+              "audio": 0,
+              "cache_read": 3840
+            },
+            "output_token_details": {
+              "audio": 0,
+              "reasoning": 2304
+            }
+          },
+          "response_metadata": {
+            "token_usage": {
+              "completion_tokens": 2354,
+              "prompt_tokens": 7114,
+              "total_tokens": 9468,
+              "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 2304,
+                "rejected_prediction_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 3840
+              },
+              "latency_checkpoint": {
+                "engine_tbt_ms": 11,
+                "engine_ttft_ms": 379,
+                "engine_ttlt_ms": 25614,
+                "pre_inference_ms": 253,
+                "service_tbt_ms": 11,
+                "service_ttft_ms": 1104,
+                "service_ttlt_ms": 26336,
+                "total_duration_ms": 26092,
+                "user_visible_ttft_ms": 851
+              }
+            },
+            "model_provider": "openai",
+            "model_name": "Azure/gpt-5-2025-08-07",
+            "system_fingerprint": null,
+            "id": "chatcmpl-DqxA4vcnOlPD83lYVlcFaq7fD8TKx",
+            "service_tier": "default",
+            "finish_reason": "tool_calls",
+            "logprobs": null
+          },
+          "tool_calls": [
+            {
+              "name": "list_teams",
+              "args": {
+                "_filter": "displayName eq 'TechCorp Solutions'",
+                "_select": "id,displayName,description,visibility",
+                "_count": true
+              }
+            }
+          ]
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "list_teams",
+          "result": {
+            "success": true,
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\n  \"@odata.context\": \"https://graph.microsoft.com/v1.0/$metadata#teams\",\n  \"@odata.count\": 0,\n  \"value\": []\n}"
+                }
+              ],
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "gym-teams-mcp"
+        },
+        {
+          "type": "ai_message",
+          "content": "I can\u2019t proceed because I couldn\u2019t find any team named \u201cTechCorp Solutions\u201d in your tenant. I need a valid target team before I can create the private channel.\n\nWhat I need from you to complete this in one pass:\n- Team: Provide the teamId for the TechCorp Solutions team (preferred), or confirm the exact display name if it\u2019s different. If the team doesn\u2019t exist and you want me to create it, confirm you have admin/owner rights and share the desired displayName/description/visibility.\n- OneNote: Provide the URL of the OneNote notebook to pin as the \u201cEngineering Notebook\u201d tab. If you prefer a brand-new notebook, please share a link to an existing notebook to use or confirm where it should live; I can pin a notebook once I have its URL.\n- Users (optional if you know UPNs): I will add exactly these four people to the channel, with Bob Smith as the only owner: Alice Johnson, Bob Smith, Nathan Richards, and Sophia Bennett. If there are users with duplicate names, please provide their UPNs/emails to avoid ambiguity.\n\nOnce I have the teamId and the notebook URL, I will:\n- Create the private channel \u201cTechnical discussions\u201d with members Alice Johnson, Nathan Richards, and Sophia Bennett as members, and Bob Smith as the sole owner.\n- Pin a OneNote tab named \u201cEngineering Notebook\u201d pointing to the provided notebook. Note: I can add the tab; if you also want me to remove or reorder any existing notebook tabs, I\u2019ll do so if those controls are available in this environment.\n- Provision or refresh the channel email address so it\u2019s active for outside updates.\n- Post a high-priority message with the exact sentence you provided.",
+          "usage_metadata": {
+            "input_tokens": 7232,
+            "output_tokens": 3756,
+            "total_tokens": 10988,
+            "input_token_details": {
+              "audio": 0,
+              "cache_read": 4352
+            },
+            "output_token_details": {
+              "audio": 0,
+              "reasoning": 3392
+            }
+          },
+          "response_metadata": {
+            "token_usage": {
+              "completion_tokens": 3756,
+              "prompt_tokens": 7232,
+              "total_tokens": 10988,
+              "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 3392,
+                "rejected_prediction_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 4352
+              },
+              "latency_checkpoint": {
+                "engine_tbt_ms": 10,
+                "engine_ttft_ms": 382,
+                "engine_ttlt_ms": 38918,
+                "pre_inference_ms": 180,
+                "service_tbt_ms": 10,
+                "service_ttft_ms": 1024,
+                "service_ttlt_ms": 39558,
+                "total_duration_ms": 39387,
+                "user_visible_ttft_ms": 845
+              }
+            },
+            "model_provider": "openai",
+            "model_name": "Azure/gpt-5-2025-08-07",
+            "system_fingerprint": null,
+            "id": "chatcmpl-DqxAWtDtFVDWnXLCXHO2554yaTebT",
+            "service_tier": "default",
+            "finish_reason": "stop",
+            "logprobs": null
+          },
+          "tool_calls": []
+        }
+      ],
+      "tools_used": [
+        "list_teams"
+      ],
+      "tool_results": [
+        {
+          "tool_name": "list_teams",
+          "arguments": {
+            "_filter": "displayName eq 'TechCorp Solutions'",
+            "_select": "id,displayName,description,visibility",
+            "_count": true
+          },
+          "result": {
+            "success": true,
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\n  \"@odata.context\": \"https://graph.microsoft.com/v1.0/$metadata#teams\",\n  \"@odata.count\": 0,\n  \"value\": []\n}"
+                }
+              ],
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "gym-teams-mcp"
+        }
+      ],
+      "verification_results": {
+        "Channel MUST Be Private and Correctly Created": {
+          "passed": false,
+          "expected": 1,
+          "actual": [],
+          "comparison_type": "equals",
+          "query": "SELECT CASE\n    WHEN c.membership_type = 'private'\n         AND c.soft_delete = 0\n         AND c.is_archived = 0\n         AND c.org_id = 'techcorp-001'\n    THEN 1 ELSE 0\nEND AS verification_passed\nFROM channels c\nWHERE c.display_name = 'Technical discussions';",
+          "details": "Comparison equals: [] vs 1"
+        },
+        "Bob Smith Must Be the ONLY Owner": {
+          "passed": false,
+          "expected": 1,
+          "actual": [],
+          "comparison_type": "equals",
+          "query": "SELECT CASE\n    WHEN EXISTS (\n            SELECT 1 FROM channel_members cm\n            WHERE cm.channel_id = c.channel_id\n              AND cm.user_id = 'bob.smith'\n              AND cm.roles = 'owner'\n         )\n         AND (\n            SELECT COUNT(*) FROM channel_members cm\n            WHERE cm.channel_id = c.channel_id\n              AND cm.roles = 'owner'\n         ) = 1\n    THEN 1 ELSE 0\nEND AS verification_passed\nFROM channels c\nWHERE c.display_name = 'Technical discussions';\n",
+          "details": "Comparison equals: [] vs 1"
+        },
+        "Ensure EXACT Membership \u2014 No Extra or Missing Users": {
+          "passed": false,
+          "expected": 1,
+          "actual": [],
+          "comparison_type": "equals",
+          "query": "SELECT CASE\n    WHEN \n        -- Channel must have exactly 4 members\n        (SELECT COUNT(*) FROM channel_members cm \n         WHERE cm.channel_id = c.channel_id) = 4\n\n        AND NOT EXISTS (\n            SELECT 1 FROM channel_members cm\n            WHERE cm.channel_id = c.channel_id\n              AND cm.user_id NOT IN (\n                  'alice.johnson',\n                  'bob.smith',\n                  'nathan.richards',\n                  'sophia.bennett'\n              )\n        )\n\n        AND (SELECT COUNT(*) FROM channel_members cm\n             WHERE cm.channel_id = c.channel_id\n               AND cm.user_id IN (\n                    'alice.johnson',\n                    'bob.smith',\n                    'nathan.richards',\n                    'sophia.bennett'\n               )\n        ) = 4\n    THEN 1 ELSE 0\nEND AS verification_passed\nFROM channels c\nWHERE c.display_name = 'Technical discussions';",
+          "details": "Comparison equals: [] vs 1"
+        },
+        "Only ONE OneNote Tab Exists AND Its Name Is Correct": {
+          "passed": false,
+          "expected": 1,
+          "actual": [],
+          "comparison_type": "equals",
+          "query": "SELECT CASE\n    WHEN \n\n        (SELECT COUNT(*) FROM teams_channel_tabs t\n         WHERE t.channel_id = c.channel_id\n           AND t.app_id IN (\n                SELECT app_id FROM teams_apps \n                WHERE display_name = 'OneNote'\n           )\n        ) = 1\n\n        AND EXISTS (\n            SELECT 1 FROM teams_channel_tabs t\n            WHERE t.channel_id = c.channel_id\n              AND t.display_name = 'Engineering Notebook'\n        )\n\n        AND NOT EXISTS (\n            SELECT 1 FROM teams_channel_tabs t\n            WHERE t.channel_id = c.channel_id\n              AND t.display_name LIKE '%Notebook%'\n              AND t.display_name <> 'Engineering Notebook'\n        )\n    THEN 1 ELSE 0\nEND AS verification_passed\nFROM channels c\nWHERE c.display_name = 'Technical discussions';",
+          "details": "Comparison equals: [] vs 1"
+        },
+        "Channel Email Address Enabled AND Fresh": {
+          "passed": false,
+          "expected": 1,
+          "actual": [],
+          "comparison_type": "equals",
+          "query": "SELECT CASE\n    WHEN c.email IS NOT NULL\n         AND LENGTH(TRIM(c.email)) > 3\n         AND c.email LIKE '%@%' \n         AND c.soft_delete = 0\n    THEN 1 ELSE 0\nEND AS verification_passed\nFROM channels c\nWHERE c.display_name = 'Technical discussions';\n",
+          "details": "Comparison equals: [] vs 1"
+        },
+        "High-Priority Message Was Posted AND Contains the Exact Notice": {
+          "passed": false,
+          "expected": 1,
+          "actual": 0,
+          "comparison_type": "equals",
+          "query": "SELECT \n  CASE \n    WHEN EXISTS (\n      SELECT 1\n      FROM channel_messages m\n      JOIN channels c ON c.channel_id = m.channel_id\n      WHERE LOWER(c.display_name) = 'technical discussions'\n        AND m.deleted_datetime IS NULL\n        AND m.importance = 'high'\n        AND LOWER(m.body_json) LIKE '%The engineering workspace is now updated with four members of the engineering team, the Engineering Notebook tab, and an active shared email address for direct updates%'\n    ) \n    THEN 1 ELSE 0 \n  END AS verification_passed;\n",
+          "details": "Comparison equals: 0 vs 1"
+        }
+      },
+      "verification_summary": {
+        "total": 6,
+        "passed": 0,
+        "failed": 6,
+        "pass_rate": 0.0
+      },
+      "overall_success": false
+    }
+  ],
+  "statistics": {
+    "total_runs": 1,
+    "successful_runs": 0,
+    "overall_success_rate": 0.0,
+    "pass_at_1": 0.0,
+    "verifier_level_pass_rate": 0.0,
+    "total_verifiers_checked": 6,
+    "total_verifiers_passed": 0,
+    "individual_verifier_stats": {
+      "Channel MUST Be Private and Correctly Created": {
+        "passed": 0,
+        "total": 1,
+        "pass_rate": 0.0
+      },
+      "Bob Smith Must Be the ONLY Owner": {
+        "passed": 0,
+        "total": 1,
+        "pass_rate": 0.0
+      },
+      "Ensure EXACT Membership \u2014 No Extra or Missing Users": {
+        "passed": 0,
+        "total": 1,
+        "pass_rate": 0.0
+      },
+      "Only ONE OneNote Tab Exists AND Its Name Is Correct": {
+        "passed": 0,
+        "total": 1,
+        "pass_rate": 0.0
+      },
+      "Channel Email Address Enabled AND Fresh": {
+        "passed": 0,
+        "total": 1,
+        "pass_rate": 0.0
+      },
+      "High-Priority Message Was Posted AND Contains the Exact Notice": {
+        "passed": 0,
+        "total": 1,
+        "pass_rate": 0.0
+      }
+    },
+    "mean_execution_time_ms": 71595.0,
+    "tool_usage": {
+      "list_teams": 1
+    }
+  }
+}

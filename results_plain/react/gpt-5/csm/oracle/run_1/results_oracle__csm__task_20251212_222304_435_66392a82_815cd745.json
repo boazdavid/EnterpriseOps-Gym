@@ -1,0 +1,1812 @@
+{
+  "benchmark_config": {
+    "model": "vllm/Azure/gpt-5-2025-08-07",
+    "number_of_runs": 1,
+    "user_prompt": "We've been asked to offboard Tabitha Bullock from our frontline case queue because she'll no longer be working on customer incidents. Please identify all her active cases, assign them to Lisa Smith, and make sure those cases are now owned by the Case Assignment_3 support group going forward. After the reassignment is complete, offboard Tabitha's profile. Finally, for the customer whose active case Tabitha was handling, send a report notification to their contact confirming that a new case owner has been assigned and that the case is now managed by the Case Assignment_3 group.",
+    "gym_servers": [
+      {
+        "name": "sn-csm-server",
+        "url": "http://localhost:8001",
+        "seed_database_file": "Domain Wise DBs and Task-DB Mappings/csm/dbs/db_1762254390925_u5icw4thh.sql",
+        "uses_cloning": true
+      }
+    ],
+    "total_gyms": 1,
+    "total_tools_available": 10
+  },
+  "runs": [
+    {
+      "run_number": 1,
+      "started_at": "2026-06-15T11:10:34.620314+00:00",
+      "execution_time_ms": 189602,
+      "model_response": "Here\u2019s what I\u2019ve done:\n\n1) Identified users and group\n- Tabitha Bullock (user_id: 3) \u2013 active agent prior to changes\n- Lisa Smith (user_id: 496) \u2013 active agent\n- Case Assignment_3 support group (group_id: 44) \u2013 active\n- Ensured Lisa is a member of Case Assignment_3 for valid assignment (added membership)\n\n2) Located Tabitha\u2019s cases assigned to her (assigned_to = 3)\n- CS-0000251 (case_id: 251) \u2013 state: new \u2013 active\n- CS-0001088 (case_id: 1088) \u2013 state: canceled \u2013 not active\n- CS-0001142 (case_id: 1142) \u2013 state: in_progress \u2013 active\n\n3) Reassigned all active cases to Lisa Smith and Case Assignment_3\n- CS-0000251: assignment_group_id \u2192 44 (Case Assignment_3), assigned_to \u2192 496 (Lisa Smith)\n- CS-0001142: assignment_group_id \u2192 44 (Case Assignment_3), assigned_to \u2192 496 (Lisa Smith)\n- CS-0001088 is canceled and was left unchanged, as it\u2019s not active\n\n4) Offboarded Tabitha\u2019s profile\n- Deactivated user_id 3 (active \u2192 false)\n\n5) Sent report notifications to affected customers\u2019 contacts confirming the new owner and group\n- CS-0000251: Sent report to Brandon Davis (brandon.davis@vehementcap.com)\n- CS-0001142: Sent report to David Trujillo (david.trujillo@hernandezbarnettandstewart.com)\n\nSummary of results\n- Active cases reassigned: CS-0000251 and CS-0001142 \u2192 Lisa Smith in Case Assignment_3\n- Non-active (canceled) case left as-is: CS-0001088\n- Tabitha Bullock has been deactivated\n- Customer contacts for the active cases have been notified that a new case owner (Lisa Smith) has been assigned and that Case Assignment_3 now manages the cases\n\nIf you want me to remove any residual group memberships for Tabitha or perform any additional offboarding steps, I can proceed with that as well.",
+      "conversation_flow": [
+        {
+          "type": "system_message",
+          "content": "CSM Agent Policy\n\nYou are a Customer Service Management assistant. Your goal is to assist users in the Customer Service Management lifecycle by helping them register cases, validate entitlements, manage customer assets, raise escalations, attach relevant knowledge, close cases, and in other related processes effectively.\n\nYou should always act based on confirmed user context, ing record relationships, and database integrity best practices. Avoid actions that assume data, do not provide enough context, or seem to be in violation of this policy.\n\nGeneral Instructions\n\nBy default, you should assume the roles and responsibilities of an admin to complete a particular request. If a user request violates policy, do not act on it. Perform one operation at a time. Do not provide knowledge or procedures not in the system. Do not ask for any information or confirmation from the user, if you cannot proceed ahead provide the reason for that before pausing.\n\nRoles & Responsibilities\n\nAdministrator\n\nHas full access across all tables. Can create, update, and deactivate: Users, user groups, and group memberships. Accounts, contacts, locations, and entitlements. Products, installed products, SLAs, contracts, and knowledge. Manages assignment rules, workflows, and escalations.\n\nAgent\n\nFrontline support representative handling customer cases. Read-only access to all records (accounts, contacts, products, contracts, entitlements). Can: Create and update customer cases, interactions, and case work notes. Associate knowledge articles with cases. View entitlements and SLAs linked to accounts and cases. Update case assignment, state, and resolution. Cannot modify user, group, or membership data.\n\nManager\n\nSupervises agents and case queues. Has agent privileges plus: Can reassign cases across groups and users. Can escalate cases and override case prioritization. Monitors SLA compliance, case trends, and escalations. Can approve exceptions (e.g., entitlement overrides or escalations). May contribute to knowledge management as reviewers.\n\nCustomer (Portal User)\n\nEnd user accessing the customer portal. Can: View and update their own profile. Create new cases and track the status of their submitted cases. Search and view knowledge articles (based on visibility: internal/external). Participate in community forums (if enabled). Initiate interactions (chat, email, web, etc.). Limited to their own account\u2019s data (cannot see other accounts/customers). Cannot access internal system data (users, groups, SLAs, contracts of other customers).\n\nCore Operations\n\nRegistering a Customer Case\n\nBegin by identifying the reporting contact and verifying association with an account. Collect necessary inputs: Issue description (short_description) Product or installed product involved Contact channel (channel) Priority (if not provided \u2192 default = moderate) Default state = new. Verify the product or installed product belongs to the customer\u2019s account.\n\nAssigning a Case\n\nA case may be assigned to: An assignment group (assignment_group_id), or A user (assigned_to) within that group. Agents must: Be active, and Be members of the assigned group. Assignment constraints: assigned_to must reference a user with role agent or manager and (if used) member of assignment_group_id.\n\nWorking on a Case\n\nAgents may: Update cause, resolution notes, or other internal fields. Change state (new \u2192 in_progress, in_progress \u2192 pending/resolved). Attach a missing product or installed product. Link relevant knowledge articles. Important: Cases cannot be closed directly. They must first be moved to resolved, then to closed. If a case is invalid, it may be canceled.\n\nCase Lifecycle Management\n\nValid state transitions: new \u2192 in_progress / pending / resolved in_progress \u2192 pending / resolved pending \u2192 in_progress / resolved resolved \u2192 closed / new canceled At each step: Validate acting user\u2019s relationship to the case. Capture timestamps (sys_updated_on, closed_on where applicable). Prevent premature closure without resolution.\n\nEntitlement Validation\n\nBefore applying entitlement: Check it is active and within contract validity. Product-specific entitlements must match the case product (unless entitlement is account-wide). max_cases_per_month = 0 means unlimited; otherwise enforce limits. If entitlement is invalid \u2192 inform the user.\n\nInstalled Product Management\n\nInstalled products must: Be active / in_use. Belong to the reporting account. Do not attach items in retired / repair status to new cases. Ensure installed product\u2019s product matches the case product.\n\nLinking Knowledge Articles\n\nWhen linking knowledge: Articles must be in state = published. Visibility rules apply: internal = agents only external = customers can view Link articles to cases via case_knowledge (usage = suggested, applied, resolution). Ownership is tracked via owner_id.\n\nEscalations\n\nEscalations may be raised when: SLA breach risk exists, or Customer explicitly requests escalation, or High business risk/impact. Steps: Record escalation = true on case. Capture escalation_reason. Ensure justification is logged in case notes. There is no separate escalation record. Escalation is tracked within the case.\n\nProduct Handling\n\nProducts must be: Present in product table, In lifecycle_state = active. Installed products must match the product and account context.\n\nSecurity\n\nUsers may only view or update cases they own, are assigned to, or are in the assigned group. Do not disclose personal data or case details outside these permissions.\n\nValidation, Error Handling & Logging\n\nAlways validate existence and integrity of: Users, accounts, contacts, products, entitlements, and cases. State transitions follow lifecycle rules. All actions must: Update sys_updated_on. Capture timestamps (e.g., closed_on for case closure).\n\nService Levels & Timelines\n\nCase handling Response and resolution timelines are determined by the entitlements (entitlement table) linked to the customer account and product. Applicable SLAs (sla_definition and case_sla tables) set the exact targets for response or resolution, and may vary by case priority, support level, and coverage hours. SLA pause behavior: Obey sla_definition.pause_on_pending; when case state is pending, pause applicable SLAs. If no entitlement or SLA is associated with the account/product, no service level commitments are in scope. Installed product repair / replacement Commitments depend on warranty contracts or support agreements (contract table). The applicable SLA target will be enforced only if defined under the customer\u2019s entitlement. In absence of a valid contract or entitlement, no guaranteed turnaround applies. Knowledge article publication / retirement Service levels for publishing or retiring knowledge are governed by internal operational policies and are not bound by customer-facing SLAs. Unless explicitly defined in entitlements or SLAs, no service level commitments are in scope. User & group management (administrative actions) Internal administrative tasks (user/group creation, role updates, membership changes) are not subject to customer-facing SLAs. Unless an internal SLA is defined, no service level commitments are in scope.\n\nPredefined Lists (Enumerations)\n\nOnly the following values are allowed for these fields:\n\nUsers & Groups user.role: admin, agent, manager, customer user_group.type: support, backoffice, field, vendor\n\nGeography location.city: new_york, london, mumbai, tokyo, sydney location.country: usa, uk, india, japan, australia\n\nAccounts & Contacts account.account_type: customer, partner, internal\n\nProducts & Installed Base product.category: software, hardware, service product.lifecycle_state: active, retired installed_product.status: in_use, in_stock, repair, retired\n\nContracts, Entitlements, SLAs contract.contract_type: support, warranty, subscription contract.status: active, suspended, expired entitlement.support_level: standard, premium, enterprise entitlement.coverage_hours: h8x5, h12x6, h24x7 sla_definition.metric: response, resolution sla_definition.applies_to_priority: critical, high, moderate, low\n\nCase Management customer_case.channel: web, email, phone, chat, social, alert, community customer_case.priority: critical, high, moderate, low customer_case.state: new, in_progress, pending, resolved, closed, canceled customer_case.escalation_reason: urgency, vip, impact, breach_risk, customer_request\n\nInteractions & Knowledge interaction.channel: web, email, phone, chat, social, alert, community knowledge.state: draft, published, retired knowledge.visibility: internal, external case_knowledge.used_as: suggested, applied, resolution Enforcement: reject any value outside the list with INVALID_ENUM_VALUE.\n\nKnowledge Related Policies: When a new case is created and is asked to be investigated, then a knowledge base search should be performed. For all cases the entitlement for the product should be verified and should be actively running. If no relevant knowledge is found and case is being closed, a new knowledge article should be created to capture the findings and resolution steps. If a knowledge article is created, it should be linked to the case for future reference. When new case moves to work in progress appropriate SLA should be aligned to it. Used as for knowledge base to case: When the knowledge is found through automated search it should be linked as suggested. If the knowledge is found to be useful to resolve the case or is being created after case resolution it should have used as type to resolution in linking. In other cases if knowledge is linked it should as applied. If knowledge article is found then it should be used to assist in the next set of actions. For example, it might details regarding product configuration, troubleshooting steps, or best practices or team that should work on it.\n\nFree form text policies: (For texts like short description of cases, title of knowledge, escalation reason and content/body of knowledge) Character limits: 30\u2013120 chars Case Short Description: It can be something like: \"Product: \" + Product name + \", Issue: is not working as expected.\" KB title: Issue Resolution related to , step-by-step guide KB content/body: This kind of issues are tackled by Assignment Group: , Assigned to: . Steps to resolve the issue: , Suggested Priority: . Escalation reason: The case could not be completed on time/exceeds the time limit or has priority beyond the defined list of priorities."
+        },
+        {
+          "type": "user_message",
+          "content": "We've been asked to offboard Tabitha Bullock from our frontline case queue because she'll no longer be working on customer incidents. Please identify all her active cases, assign them to Lisa Smith, and make sure those cases are now owned by the Case Assignment_3 support group going forward. After the reassignment is complete, offboard Tabitha's profile. Finally, for the customer whose active case Tabitha was handling, send a report notification to their contact confirming that a new case owner has been assigned and that the case is now managed by the Case Assignment_3 group."
+        },
+        {
+          "type": "ai_message",
+          "content": "",
+          "usage_metadata": {
+            "input_tokens": 3509,
+            "output_tokens": 2011,
+            "total_tokens": 5520,
+            "input_token_details": {
+              "audio": 0,
+              "cache_read": 1792
+            },
+            "output_token_details": {
+              "audio": 0,
+              "reasoning": 1984
+            }
+          },
+          "response_metadata": {
+            "token_usage": {
+              "completion_tokens": 2011,
+              "prompt_tokens": 3509,
+              "total_tokens": 5520,
+              "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 1984,
+                "rejected_prediction_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 1792
+              },
+              "latency_checkpoint": {
+                "engine_tbt_ms": 12,
+                "engine_ttft_ms": 355,
+                "engine_ttlt_ms": 24227,
+                "pre_inference_ms": 315,
+                "service_tbt_ms": 12,
+                "service_ttft_ms": 846,
+                "service_ttlt_ms": 24712,
+                "total_duration_ms": 24408,
+                "user_visible_ttft_ms": 531
+              }
+            },
+            "model_provider": "openai",
+            "model_name": "Azure/gpt-5-2025-08-07",
+            "system_fingerprint": null,
+            "id": "chatcmpl-DqzV6Qzy9MTOz2rtlqFpp1C7rX4Dk",
+            "service_tier": "default",
+            "finish_reason": "tool_calls",
+            "logprobs": null
+          },
+          "tool_calls": [
+            {
+              "name": "find_user",
+              "args": {
+                "name": "Tabitha Bullock"
+              }
+            }
+          ]
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "find_user",
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"user_id\": 3, \"first_name\": \"Tabitha\", \"last_name\": \"Bullock\", \"email\": \"tabitha.bullock@servicenow.com\", \"role\": \"agent\", \"location_id\": 3, \"active\": 1}",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "type": "ai_message",
+          "content": "",
+          "usage_metadata": {
+            "input_tokens": 3636,
+            "output_tokens": 19,
+            "total_tokens": 3655,
+            "input_token_details": {
+              "audio": 0,
+              "cache_read": 3328
+            },
+            "output_token_details": {
+              "audio": 0,
+              "reasoning": 0
+            }
+          },
+          "response_metadata": {
+            "token_usage": {
+              "completion_tokens": 19,
+              "prompt_tokens": 3636,
+              "total_tokens": 3655,
+              "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 0,
+                "rejected_prediction_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 3328
+              },
+              "latency_checkpoint": {
+                "engine_tbt_ms": 0,
+                "engine_ttft_ms": 343,
+                "engine_ttlt_ms": 346,
+                "pre_inference_ms": 188,
+                "service_tbt_ms": 3,
+                "service_ttft_ms": 667,
+                "service_ttlt_ms": 720,
+                "total_duration_ms": 535,
+                "user_visible_ttft_ms": 478
+              }
+            },
+            "model_provider": "openai",
+            "model_name": "Azure/gpt-5-2025-08-07",
+            "system_fingerprint": null,
+            "id": "chatcmpl-DqzVXljOWkZSLdKaPatxXbF35f5Oq",
+            "service_tier": "default",
+            "finish_reason": "tool_calls",
+            "logprobs": null
+          },
+          "tool_calls": [
+            {
+              "name": "find_user",
+              "args": {
+                "name": "Lisa Smith"
+              }
+            }
+          ]
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "find_user",
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"user_id\": 496, \"first_name\": \"Lisa\", \"last_name\": \"Smith\", \"email\": \"lisa.smith82@servicenow.com\", \"role\": \"agent\", \"location_id\": 496, \"active\": 1}",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "type": "ai_message",
+          "content": "",
+          "usage_metadata": {
+            "input_tokens": 3759,
+            "output_tokens": 22,
+            "total_tokens": 3781,
+            "input_token_details": {
+              "audio": 0,
+              "cache_read": 3456
+            },
+            "output_token_details": {
+              "audio": 0,
+              "reasoning": 0
+            }
+          },
+          "response_metadata": {
+            "token_usage": {
+              "completion_tokens": 22,
+              "prompt_tokens": 3759,
+              "total_tokens": 3781,
+              "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 0,
+                "rejected_prediction_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 3456
+              },
+              "latency_checkpoint": {
+                "engine_tbt_ms": 0,
+                "engine_ttft_ms": 355,
+                "engine_ttlt_ms": 357,
+                "pre_inference_ms": 234,
+                "service_tbt_ms": 2,
+                "service_ttft_ms": 717,
+                "service_ttlt_ms": 766,
+                "total_duration_ms": 535,
+                "user_visible_ttft_ms": 484
+              }
+            },
+            "model_provider": "openai",
+            "model_name": "Azure/gpt-5-2025-08-07",
+            "system_fingerprint": null,
+            "id": "chatcmpl-DqzVY6h7LT4un5z3QyURGN40MaDQJ",
+            "service_tier": "default",
+            "finish_reason": "tool_calls",
+            "logprobs": null
+          },
+          "tool_calls": [
+            {
+              "name": "find_user_group",
+              "args": {
+                "name": "Case Assignment_3"
+              }
+            }
+          ]
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "find_user_group",
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"group_id\": 44, \"name\": \"Case Assignment_3\", \"type\": \"support\", \"active\": 1}",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "type": "ai_message",
+          "content": "",
+          "usage_metadata": {
+            "input_tokens": 3859,
+            "output_tokens": 992,
+            "total_tokens": 4851,
+            "input_token_details": {
+              "audio": 0,
+              "cache_read": 3584
+            },
+            "output_token_details": {
+              "audio": 0,
+              "reasoning": 960
+            }
+          },
+          "response_metadata": {
+            "token_usage": {
+              "completion_tokens": 992,
+              "prompt_tokens": 3859,
+              "total_tokens": 4851,
+              "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 960,
+                "rejected_prediction_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 3584
+              },
+              "latency_checkpoint": {
+                "engine_tbt_ms": 12,
+                "engine_ttft_ms": 346,
+                "engine_ttlt_ms": 12533,
+                "pre_inference_ms": 288,
+                "service_tbt_ms": 12,
+                "service_ttft_ms": 785,
+                "service_ttlt_ms": 12970,
+                "total_duration_ms": 12690,
+                "user_visible_ttft_ms": 497
+              }
+            },
+            "model_provider": "openai",
+            "model_name": "Azure/gpt-5-2025-08-07",
+            "system_fingerprint": null,
+            "id": "chatcmpl-DqzVawNBPNivvleJ2oxvW0r8QFlni",
+            "service_tier": "default",
+            "finish_reason": "tool_calls",
+            "logprobs": null
+          },
+          "tool_calls": [
+            {
+              "name": "check_user_membership",
+              "args": {
+                "user_id": 496,
+                "group_id": 44
+              }
+            }
+          ]
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "check_user_membership",
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"exists\": false, \"member_id\": null}",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "type": "ai_message",
+          "content": "",
+          "usage_metadata": {
+            "input_tokens": 3947,
+            "output_tokens": 1376,
+            "total_tokens": 5323,
+            "input_token_details": {
+              "audio": 0,
+              "cache_read": 3712
+            },
+            "output_token_details": {
+              "audio": 0,
+              "reasoning": 1344
+            }
+          },
+          "response_metadata": {
+            "token_usage": {
+              "completion_tokens": 1376,
+              "prompt_tokens": 3947,
+              "total_tokens": 5323,
+              "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 1344,
+                "rejected_prediction_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 3712
+              },
+              "latency_checkpoint": {
+                "engine_tbt_ms": 12,
+                "engine_ttft_ms": 360,
+                "engine_ttlt_ms": 16557,
+                "pre_inference_ms": 380,
+                "service_tbt_ms": 12,
+                "service_ttft_ms": 894,
+                "service_ttlt_ms": 17089,
+                "total_duration_ms": 16719,
+                "user_visible_ttft_ms": 514
+              }
+            },
+            "model_provider": "openai",
+            "model_name": "Azure/gpt-5-2025-08-07",
+            "system_fingerprint": null,
+            "id": "chatcmpl-DqzVoSU5fgE04DrHUIXar2XDI3gQS",
+            "service_tier": "default",
+            "finish_reason": "tool_calls",
+            "logprobs": null
+          },
+          "tool_calls": [
+            {
+              "name": "add_new_group_member",
+              "args": {
+                "group_id": 44,
+                "user_id": 496
+              }
+            }
+          ]
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "add_new_group_member",
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"member_id\": 960, \"group_id\": 44, \"user_id\": 496, \"sys_created_on\": \"2026-06-15 11:11:37\"}",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "type": "ai_message",
+          "content": "",
+          "usage_metadata": {
+            "input_tokens": 4065,
+            "output_tokens": 22,
+            "total_tokens": 4087,
+            "input_token_details": {
+              "audio": 0,
+              "cache_read": 3840
+            },
+            "output_token_details": {
+              "audio": 0,
+              "reasoning": 0
+            }
+          },
+          "response_metadata": {
+            "token_usage": {
+              "completion_tokens": 22,
+              "prompt_tokens": 4065,
+              "total_tokens": 4087,
+              "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 0,
+                "rejected_prediction_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 3840
+              },
+              "latency_checkpoint": {
+                "engine_tbt_ms": 0,
+                "engine_ttft_ms": 354,
+                "engine_ttlt_ms": 356,
+                "pre_inference_ms": 262,
+                "service_tbt_ms": 3,
+                "service_ttft_ms": 748,
+                "service_ttlt_ms": 805,
+                "total_duration_ms": 547,
+                "user_visible_ttft_ms": 486
+              }
+            },
+            "model_provider": "openai",
+            "model_name": "Azure/gpt-5-2025-08-07",
+            "system_fingerprint": null,
+            "id": "chatcmpl-DqzW5qSzAHRgrt63v91F3emwxNGqj",
+            "service_tier": "default",
+            "finish_reason": "tool_calls",
+            "logprobs": null
+          },
+          "tool_calls": [
+            {
+              "name": "get_cases_assigned_to",
+              "args": {
+                "assigned_to": 3
+              }
+            }
+          ]
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "get_cases_assigned_to",
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "[{\"case_id\": 251, \"number\": \"CS-0000251\", \"account_id\": 11, \"contact_id\": 15, \"product_id\": 40, \"installed_product_id\": null, \"channel\": \"phone\", \"priority\": \"high\", \"state\": \"new\", \"short_description\": \"Product: Microsoft System Center Variant 20, Issue: is not working as expected.\", \"assignment_group_id\": 67, \"assigned_to\": 3, \"sys_created_on\": \"2025-08-27 15:47:58\"}, {\"case_id\": 1088, \"number\": \"CS-0001088\", \"account_id\": 47, \"contact_id\": 109, \"product_id\": 134, \"installed_product_id\": null, \"channel\": \"chat\", \"priority\": \"critical\", \"state\": \"canceled\", \"short_description\": \"Product: Dell PowerEdge R750 (Config 2), Issue: is not working as expected.\", \"assignment_group_id\": 67, \"assigned_to\": 3, \"sys_created_on\": \"2025-08-27 15:35:04\"}, {\"case_id\": 1142, \"number\": \"CS-0001142\", \"account_id\": 49, \"contact_id\": 112, \"product_id\": 80, \"installed_product_id\": 272, \"channel\": \"phone\", \"priority\": \"low\", \"state\": \"in_progress\", \"short_description\": \"Product: Microsoft System Center Variant 60, Issue: is not working as expected.\", \"assignment_group_id\": 67, \"assigned_to\": 3, \"sys_created_on\": \"2025-08-27 15:33:10\"}]",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "type": "ai_message",
+          "content": "",
+          "usage_metadata": {
+            "input_tokens": 4514,
+            "output_tokens": 1316,
+            "total_tokens": 5830,
+            "input_token_details": {
+              "audio": 0,
+              "cache_read": 3968
+            },
+            "output_token_details": {
+              "audio": 0,
+              "reasoning": 1280
+            }
+          },
+          "response_metadata": {
+            "token_usage": {
+              "completion_tokens": 1316,
+              "prompt_tokens": 4514,
+              "total_tokens": 5830,
+              "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 1280,
+                "rejected_prediction_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 3968
+              },
+              "latency_checkpoint": {
+                "engine_tbt_ms": 12,
+                "engine_ttft_ms": 363,
+                "engine_ttlt_ms": 16300,
+                "pre_inference_ms": 255,
+                "service_tbt_ms": 12,
+                "service_ttft_ms": 750,
+                "service_ttlt_ms": 16685,
+                "total_duration_ms": 16445,
+                "user_visible_ttft_ms": 495
+              }
+            },
+            "model_provider": "openai",
+            "model_name": "Azure/gpt-5-2025-08-07",
+            "system_fingerprint": null,
+            "id": "chatcmpl-DqzW7NzQSnhM6wEsueppGpaysYSta",
+            "service_tier": "default",
+            "finish_reason": "tool_calls",
+            "logprobs": null
+          },
+          "tool_calls": [
+            {
+              "name": "update_case",
+              "args": {
+                "case_id": 251,
+                "assignment_group_id": 44,
+                "assigned_to": 496
+              }
+            }
+          ]
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "update_case",
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"case_id\": 251, \"number\": \"CS-0000251\", \"account_id\": 11, \"contact_id\": 15, \"product_id\": 40, \"installed_product_id\": null, \"channel\": \"phone\", \"priority\": \"high\", \"state\": \"new\", \"short_description\": \"Product: Microsoft System Center Variant 20, Issue: is not working as expected.\", \"assignment_group_id\": 44, \"assigned_to\": 496, \"escalation\": 0, \"escalation_reason\": null, \"reopen_count\": 0, \"sys_created_on\": \"2025-08-27 15:47:58\", \"sys_updated_on\": \"2026-06-15 11:11:56\", \"closed_on\": null}",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "type": "ai_message",
+          "content": "",
+          "usage_metadata": {
+            "input_tokens": 4762,
+            "output_tokens": 31,
+            "total_tokens": 4793,
+            "input_token_details": {
+              "audio": 0,
+              "cache_read": 4352
+            },
+            "output_token_details": {
+              "audio": 0,
+              "reasoning": 0
+            }
+          },
+          "response_metadata": {
+            "token_usage": {
+              "completion_tokens": 31,
+              "prompt_tokens": 4762,
+              "total_tokens": 4793,
+              "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 0,
+                "rejected_prediction_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 4352
+              },
+              "latency_checkpoint": {
+                "engine_tbt_ms": 3,
+                "engine_ttft_ms": 367,
+                "engine_ttlt_ms": 465,
+                "pre_inference_ms": 182,
+                "service_tbt_ms": 3,
+                "service_ttft_ms": 680,
+                "service_ttlt_ms": 771,
+                "total_duration_ms": 600,
+                "user_visible_ttft_ms": 498
+              }
+            },
+            "model_provider": "openai",
+            "model_name": "Azure/gpt-5-2025-08-07",
+            "system_fingerprint": null,
+            "id": "chatcmpl-DqzWOlrQydAzV55WILym2cKnoeSpR",
+            "service_tier": "default",
+            "finish_reason": "tool_calls",
+            "logprobs": null
+          },
+          "tool_calls": [
+            {
+              "name": "update_case",
+              "args": {
+                "case_id": 1142,
+                "assignment_group_id": 44,
+                "assigned_to": 496
+              }
+            }
+          ]
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "update_case",
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"case_id\": 1142, \"number\": \"CS-0001142\", \"account_id\": 49, \"contact_id\": 112, \"product_id\": 80, \"installed_product_id\": 272, \"channel\": \"phone\", \"priority\": \"low\", \"state\": \"in_progress\", \"short_description\": \"Product: Microsoft System Center Variant 60, Issue: is not working as expected.\", \"assignment_group_id\": 44, \"assigned_to\": 496, \"escalation\": 0, \"escalation_reason\": null, \"reopen_count\": 0, \"sys_created_on\": \"2025-08-27 15:33:10\", \"sys_updated_on\": \"2026-06-15 11:12:00\", \"closed_on\": null}",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "type": "ai_message",
+          "content": "",
+          "usage_metadata": {
+            "input_tokens": 5014,
+            "output_tokens": 1502,
+            "total_tokens": 6516,
+            "input_token_details": {
+              "audio": 0,
+              "cache_read": 4608
+            },
+            "output_token_details": {
+              "audio": 0,
+              "reasoning": 1472
+            }
+          },
+          "response_metadata": {
+            "token_usage": {
+              "completion_tokens": 1502,
+              "prompt_tokens": 5014,
+              "total_tokens": 6516,
+              "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 1472,
+                "rejected_prediction_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 4608
+              },
+              "latency_checkpoint": {
+                "engine_tbt_ms": 13,
+                "engine_ttft_ms": 345,
+                "engine_ttlt_ms": 20492,
+                "pre_inference_ms": 198,
+                "service_tbt_ms": 13,
+                "service_ttft_ms": 676,
+                "service_ttlt_ms": 20822,
+                "total_duration_ms": 20635,
+                "user_visible_ttft_ms": 477
+              }
+            },
+            "model_provider": "openai",
+            "model_name": "Azure/gpt-5-2025-08-07",
+            "system_fingerprint": null,
+            "id": "chatcmpl-DqzWVQjm8va6PiolKLsQCmJpQx51h",
+            "service_tier": "default",
+            "finish_reason": "tool_calls",
+            "logprobs": null
+          },
+          "tool_calls": [
+            {
+              "name": "update_user_details",
+              "args": {
+                "user_id": 3,
+                "active": false
+              }
+            }
+          ]
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "update_user_details",
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"user_id\": 3, \"first_name\": \"Tabitha\", \"last_name\": \"Bullock\", \"email\": \"tabitha.bullock@servicenow.com\", \"phone\": \"+917949689758\", \"role\": \"agent\", \"location_id\": 3, \"active\": 0, \"sys_created_on\": \"2025-08-27 15:34:50\", \"sys_updated_on\": \"2026-06-15 11:12:24\"}",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "type": "ai_message",
+          "content": "",
+          "usage_metadata": {
+            "input_tokens": 5194,
+            "output_tokens": 857,
+            "total_tokens": 6051,
+            "input_token_details": {
+              "audio": 0,
+              "cache_read": 4864
+            },
+            "output_token_details": {
+              "audio": 0,
+              "reasoning": 832
+            }
+          },
+          "response_metadata": {
+            "token_usage": {
+              "completion_tokens": 857,
+              "prompt_tokens": 5194,
+              "total_tokens": 6051,
+              "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 832,
+                "rejected_prediction_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 4864
+              },
+              "latency_checkpoint": {
+                "engine_tbt_ms": 13,
+                "engine_ttft_ms": 354,
+                "engine_ttlt_ms": 12535,
+                "pre_inference_ms": 213,
+                "service_tbt_ms": 13,
+                "service_ttft_ms": 701,
+                "service_ttlt_ms": 12882,
+                "total_duration_ms": 12679,
+                "user_visible_ttft_ms": 489
+              }
+            },
+            "model_provider": "openai",
+            "model_name": "Azure/gpt-5-2025-08-07",
+            "system_fingerprint": null,
+            "id": "chatcmpl-DqzWqOkPfykDjnA9wXO2ZBLo3Gt49",
+            "service_tier": "default",
+            "finish_reason": "tool_calls",
+            "logprobs": null
+          },
+          "tool_calls": [
+            {
+              "name": "find_contacts",
+              "args": {
+                "contact_id": 15
+              }
+            }
+          ]
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "find_contacts",
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "[{\"contact_id\": 15, \"account_id\": 11, \"portal_user_id\": 10, \"active\": 1, \"is_primary\": 1, \"sys_created_on\": \"2025-08-27 15:43:34\"}]",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "type": "ai_message",
+          "content": "",
+          "usage_metadata": {
+            "input_tokens": 5319,
+            "output_tokens": 19,
+            "total_tokens": 5338,
+            "input_token_details": {
+              "audio": 0,
+              "cache_read": 5120
+            },
+            "output_token_details": {
+              "audio": 0,
+              "reasoning": 0
+            }
+          },
+          "response_metadata": {
+            "token_usage": {
+              "completion_tokens": 19,
+              "prompt_tokens": 5319,
+              "total_tokens": 5338,
+              "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 0,
+                "rejected_prediction_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 5120
+              },
+              "latency_checkpoint": {
+                "engine_tbt_ms": 0,
+                "engine_ttft_ms": 356,
+                "engine_ttlt_ms": 358,
+                "pre_inference_ms": 269,
+                "service_tbt_ms": 1,
+                "service_ttft_ms": 763,
+                "service_ttlt_ms": 781,
+                "total_duration_ms": 515,
+                "user_visible_ttft_ms": 494
+              }
+            },
+            "model_provider": "openai",
+            "model_name": "Azure/gpt-5-2025-08-07",
+            "system_fingerprint": null,
+            "id": "chatcmpl-DqzX4zaigJ6m9BI0aDzGOA39E7yHr",
+            "service_tier": "default",
+            "finish_reason": "tool_calls",
+            "logprobs": null
+          },
+          "tool_calls": [
+            {
+              "name": "list_users",
+              "args": {
+                "user_id": 10
+              }
+            }
+          ]
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "list_users",
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "[{\"user_id\": 10, \"first_name\": \"Brandon\", \"last_name\": \"Davis\", \"email\": \"brandon.davis@vehementcap.com\", \"phone\": \"+12028044331\", \"role\": \"customer\", \"location_id\": 10, \"active\": 1, \"sys_created_on\": \"2025-08-27 15:39:21\"}]",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "type": "ai_message",
+          "content": "",
+          "usage_metadata": {
+            "input_tokens": 5476,
+            "output_tokens": 36,
+            "total_tokens": 5512,
+            "input_token_details": {
+              "audio": 0,
+              "cache_read": 5248
+            },
+            "output_token_details": {
+              "audio": 0,
+              "reasoning": 0
+            }
+          },
+          "response_metadata": {
+            "token_usage": {
+              "completion_tokens": 36,
+              "prompt_tokens": 5476,
+              "total_tokens": 5512,
+              "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 0,
+                "rejected_prediction_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 5248
+              },
+              "latency_checkpoint": {
+                "engine_tbt_ms": 6,
+                "engine_ttft_ms": 345,
+                "engine_ttlt_ms": 560,
+                "pre_inference_ms": 175,
+                "service_tbt_ms": 6,
+                "service_ttft_ms": 668,
+                "service_ttlt_ms": 879,
+                "total_duration_ms": 716,
+                "user_visible_ttft_ms": 493
+              }
+            },
+            "model_provider": "openai",
+            "model_name": "Azure/gpt-5-2025-08-07",
+            "system_fingerprint": null,
+            "id": "chatcmpl-DqzX5CIoYNincMKNdEA78DA6y4mGe",
+            "service_tier": "default",
+            "finish_reason": "tool_calls",
+            "logprobs": null
+          },
+          "tool_calls": [
+            {
+              "name": "send_notification",
+              "args": {
+                "case_id": 251,
+                "email": "brandon.davis@vehementcap.com",
+                "type": "report"
+              }
+            }
+          ]
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "send_notification",
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"notification_id\": 734, \"case_id\": 251, \"knowledge_id\": null, \"email\": \"brandon.davis@vehementcap.com\", \"type\": \"report\", \"status\": \"success\", \"sys_created_on\": \"2026-06-15 11:12:41\"}",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "type": "ai_message",
+          "content": "",
+          "usage_metadata": {
+            "input_tokens": 5628,
+            "output_tokens": 1113,
+            "total_tokens": 6741,
+            "input_token_details": {
+              "audio": 0,
+              "cache_read": 5376
+            },
+            "output_token_details": {
+              "audio": 0,
+              "reasoning": 1088
+            }
+          },
+          "response_metadata": {
+            "token_usage": {
+              "completion_tokens": 1113,
+              "prompt_tokens": 5628,
+              "total_tokens": 6741,
+              "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 1088,
+                "rejected_prediction_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 5376
+              },
+              "latency_checkpoint": {
+                "engine_tbt_ms": 12,
+                "engine_ttft_ms": 358,
+                "engine_ttlt_ms": 14145,
+                "pre_inference_ms": 507,
+                "service_tbt_ms": 12,
+                "service_ttft_ms": 1009,
+                "service_ttlt_ms": 14796,
+                "total_duration_ms": 14297,
+                "user_visible_ttft_ms": 501
+              }
+            },
+            "model_provider": "openai",
+            "model_name": "Azure/gpt-5-2025-08-07",
+            "system_fingerprint": null,
+            "id": "chatcmpl-DqzX842RtW6Wqd1oCUeuhfffweEIr",
+            "service_tier": "default",
+            "finish_reason": "tool_calls",
+            "logprobs": null
+          },
+          "tool_calls": [
+            {
+              "name": "find_contacts",
+              "args": {
+                "contact_id": 112
+              }
+            }
+          ]
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "find_contacts",
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "[{\"contact_id\": 112, \"account_id\": 49, \"portal_user_id\": 340, \"active\": 1, \"is_primary\": 0, \"sys_created_on\": \"2025-08-27 15:34:12\"}]",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "type": "ai_message",
+          "content": "",
+          "usage_metadata": {
+            "input_tokens": 5753,
+            "output_tokens": 19,
+            "total_tokens": 5772,
+            "input_token_details": {
+              "audio": 0,
+              "cache_read": 5504
+            },
+            "output_token_details": {
+              "audio": 0,
+              "reasoning": 0
+            }
+          },
+          "response_metadata": {
+            "token_usage": {
+              "completion_tokens": 19,
+              "prompt_tokens": 5753,
+              "total_tokens": 5772,
+              "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 0,
+                "rejected_prediction_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 5504
+              },
+              "latency_checkpoint": {
+                "engine_tbt_ms": 0,
+                "engine_ttft_ms": 352,
+                "engine_ttlt_ms": 353,
+                "pre_inference_ms": 414,
+                "service_tbt_ms": 3,
+                "service_ttft_ms": 911,
+                "service_ttlt_ms": 962,
+                "total_duration_ms": 550,
+                "user_visible_ttft_ms": 497
+              }
+            },
+            "model_provider": "openai",
+            "model_name": "Azure/gpt-5-2025-08-07",
+            "system_fingerprint": null,
+            "id": "chatcmpl-DqzXS0pnTeqgqt5n7JvCa35m4zQM1",
+            "service_tier": "default",
+            "finish_reason": "tool_calls",
+            "logprobs": null
+          },
+          "tool_calls": [
+            {
+              "name": "list_users",
+              "args": {
+                "user_id": 340
+              }
+            }
+          ]
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "list_users",
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "[{\"user_id\": 340, \"first_name\": \"David\", \"last_name\": \"Trujillo\", \"email\": \"david.trujillo@hernandezbarnettandstewart.com\", \"phone\": \"+916513290110\", \"role\": \"customer\", \"location_id\": 340, \"active\": 1, \"sys_created_on\": \"2025-08-27 15:44:01\"}]",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "type": "ai_message",
+          "content": "",
+          "usage_metadata": {
+            "input_tokens": 5916,
+            "output_tokens": 43,
+            "total_tokens": 5959,
+            "input_token_details": {
+              "audio": 0,
+              "cache_read": 5632
+            },
+            "output_token_details": {
+              "audio": 0,
+              "reasoning": 0
+            }
+          },
+          "response_metadata": {
+            "token_usage": {
+              "completion_tokens": 43,
+              "prompt_tokens": 5916,
+              "total_tokens": 5959,
+              "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 0,
+                "rejected_prediction_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 5632
+              },
+              "latency_checkpoint": {
+                "engine_tbt_ms": 6,
+                "engine_ttft_ms": 353,
+                "engine_ttlt_ms": 610,
+                "pre_inference_ms": 355,
+                "service_tbt_ms": 6,
+                "service_ttft_ms": 888,
+                "service_ttlt_ms": 1144,
+                "total_duration_ms": 808,
+                "user_visible_ttft_ms": 533
+              }
+            },
+            "model_provider": "openai",
+            "model_name": "Azure/gpt-5-2025-08-07",
+            "system_fingerprint": null,
+            "id": "chatcmpl-DqzXUPJA7HEAcjRmFxTDPVKu2mzLK",
+            "service_tier": "default",
+            "finish_reason": "tool_calls",
+            "logprobs": null
+          },
+          "tool_calls": [
+            {
+              "name": "send_notification",
+              "args": {
+                "case_id": 1142,
+                "email": "david.trujillo@hernandezbarnettandstewart.com",
+                "type": "report"
+              }
+            }
+          ]
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "send_notification",
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"notification_id\": 735, \"case_id\": 1142, \"knowledge_id\": null, \"email\": \"david.trujillo@hernandezbarnettandstewart.com\", \"type\": \"report\", \"status\": \"success\", \"sys_created_on\": \"2026-06-15 11:13:05\"}",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "type": "ai_message",
+          "content": "Here\u2019s what I\u2019ve done:\n\n1) Identified users and group\n- Tabitha Bullock (user_id: 3) \u2013 active agent prior to changes\n- Lisa Smith (user_id: 496) \u2013 active agent\n- Case Assignment_3 support group (group_id: 44) \u2013 active\n- Ensured Lisa is a member of Case Assignment_3 for valid assignment (added membership)\n\n2) Located Tabitha\u2019s cases assigned to her (assigned_to = 3)\n- CS-0000251 (case_id: 251) \u2013 state: new \u2013 active\n- CS-0001088 (case_id: 1088) \u2013 state: canceled \u2013 not active\n- CS-0001142 (case_id: 1142) \u2013 state: in_progress \u2013 active\n\n3) Reassigned all active cases to Lisa Smith and Case Assignment_3\n- CS-0000251: assignment_group_id \u2192 44 (Case Assignment_3), assigned_to \u2192 496 (Lisa Smith)\n- CS-0001142: assignment_group_id \u2192 44 (Case Assignment_3), assigned_to \u2192 496 (Lisa Smith)\n- CS-0001088 is canceled and was left unchanged, as it\u2019s not active\n\n4) Offboarded Tabitha\u2019s profile\n- Deactivated user_id 3 (active \u2192 false)\n\n5) Sent report notifications to affected customers\u2019 contacts confirming the new owner and group\n- CS-0000251: Sent report to Brandon Davis (brandon.davis@vehementcap.com)\n- CS-0001142: Sent report to David Trujillo (david.trujillo@hernandezbarnettandstewart.com)\n\nSummary of results\n- Active cases reassigned: CS-0000251 and CS-0001142 \u2192 Lisa Smith in Case Assignment_3\n- Non-active (canceled) case left as-is: CS-0001088\n- Tabitha Bullock has been deactivated\n- Customer contacts for the active cases have been notified that a new case owner (Lisa Smith) has been assigned and that Case Assignment_3 now manages the cases\n\nIf you want me to remove any residual group memberships for Tabitha or perform any additional offboarding steps, I can proceed with that as well.",
+          "usage_metadata": {
+            "input_tokens": 6082,
+            "output_tokens": 2337,
+            "total_tokens": 8419,
+            "input_token_details": {
+              "audio": 0,
+              "cache_read": 5760
+            },
+            "output_token_details": {
+              "audio": 0,
+              "reasoning": 1856
+            }
+          },
+          "response_metadata": {
+            "token_usage": {
+              "completion_tokens": 2337,
+              "prompt_tokens": 6082,
+              "total_tokens": 8419,
+              "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 1856,
+                "rejected_prediction_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 5760
+              },
+              "latency_checkpoint": {
+                "engine_tbt_ms": 15,
+                "engine_ttft_ms": 354,
+                "engine_ttlt_ms": 35671,
+                "pre_inference_ms": 1160,
+                "service_tbt_ms": 15,
+                "service_ttft_ms": 1833,
+                "service_ttlt_ms": 37132,
+                "total_duration_ms": 35986,
+                "user_visible_ttft_ms": 673
+              }
+            },
+            "model_provider": "openai",
+            "model_name": "Azure/gpt-5-2025-08-07",
+            "system_fingerprint": null,
+            "id": "chatcmpl-DqzXXWDSoSTVXxYe1lJYGxZRx1nNx",
+            "service_tier": "default",
+            "finish_reason": "stop",
+            "logprobs": null
+          },
+          "tool_calls": []
+        }
+      ],
+      "tools_used": [
+        "find_user",
+        "find_user_group",
+        "check_user_membership",
+        "add_new_group_member",
+        "get_cases_assigned_to",
+        "update_case",
+        "update_user_details",
+        "find_contacts",
+        "list_users",
+        "send_notification"
+      ],
+      "tool_results": [
+        {
+          "tool_name": "find_user",
+          "arguments": {
+            "name": "Tabitha Bullock"
+          },
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"user_id\": 3, \"first_name\": \"Tabitha\", \"last_name\": \"Bullock\", \"email\": \"tabitha.bullock@servicenow.com\", \"role\": \"agent\", \"location_id\": 3, \"active\": 1}",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "tool_name": "find_user",
+          "arguments": {
+            "name": "Lisa Smith"
+          },
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"user_id\": 496, \"first_name\": \"Lisa\", \"last_name\": \"Smith\", \"email\": \"lisa.smith82@servicenow.com\", \"role\": \"agent\", \"location_id\": 496, \"active\": 1}",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "tool_name": "find_user_group",
+          "arguments": {
+            "name": "Case Assignment_3"
+          },
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"group_id\": 44, \"name\": \"Case Assignment_3\", \"type\": \"support\", \"active\": 1}",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "tool_name": "check_user_membership",
+          "arguments": {
+            "user_id": 496,
+            "group_id": 44
+          },
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"exists\": false, \"member_id\": null}",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "tool_name": "add_new_group_member",
+          "arguments": {
+            "group_id": 44,
+            "user_id": 496
+          },
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"member_id\": 960, \"group_id\": 44, \"user_id\": 496, \"sys_created_on\": \"2026-06-15 11:11:37\"}",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "tool_name": "get_cases_assigned_to",
+          "arguments": {
+            "assigned_to": 3
+          },
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "[{\"case_id\": 251, \"number\": \"CS-0000251\", \"account_id\": 11, \"contact_id\": 15, \"product_id\": 40, \"installed_product_id\": null, \"channel\": \"phone\", \"priority\": \"high\", \"state\": \"new\", \"short_description\": \"Product: Microsoft System Center Variant 20, Issue: is not working as expected.\", \"assignment_group_id\": 67, \"assigned_to\": 3, \"sys_created_on\": \"2025-08-27 15:47:58\"}, {\"case_id\": 1088, \"number\": \"CS-0001088\", \"account_id\": 47, \"contact_id\": 109, \"product_id\": 134, \"installed_product_id\": null, \"channel\": \"chat\", \"priority\": \"critical\", \"state\": \"canceled\", \"short_description\": \"Product: Dell PowerEdge R750 (Config 2), Issue: is not working as expected.\", \"assignment_group_id\": 67, \"assigned_to\": 3, \"sys_created_on\": \"2025-08-27 15:35:04\"}, {\"case_id\": 1142, \"number\": \"CS-0001142\", \"account_id\": 49, \"contact_id\": 112, \"product_id\": 80, \"installed_product_id\": 272, \"channel\": \"phone\", \"priority\": \"low\", \"state\": \"in_progress\", \"short_description\": \"Product: Microsoft System Center Variant 60, Issue: is not working as expected.\", \"assignment_group_id\": 67, \"assigned_to\": 3, \"sys_created_on\": \"2025-08-27 15:33:10\"}]",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "tool_name": "update_case",
+          "arguments": {
+            "case_id": 251,
+            "assignment_group_id": 44,
+            "assigned_to": 496
+          },
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"case_id\": 251, \"number\": \"CS-0000251\", \"account_id\": 11, \"contact_id\": 15, \"product_id\": 40, \"installed_product_id\": null, \"channel\": \"phone\", \"priority\": \"high\", \"state\": \"new\", \"short_description\": \"Product: Microsoft System Center Variant 20, Issue: is not working as expected.\", \"assignment_group_id\": 44, \"assigned_to\": 496, \"escalation\": 0, \"escalation_reason\": null, \"reopen_count\": 0, \"sys_created_on\": \"2025-08-27 15:47:58\", \"sys_updated_on\": \"2026-06-15 11:11:56\", \"closed_on\": null}",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "tool_name": "update_case",
+          "arguments": {
+            "case_id": 1142,
+            "assignment_group_id": 44,
+            "assigned_to": 496
+          },
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"case_id\": 1142, \"number\": \"CS-0001142\", \"account_id\": 49, \"contact_id\": 112, \"product_id\": 80, \"installed_product_id\": 272, \"channel\": \"phone\", \"priority\": \"low\", \"state\": \"in_progress\", \"short_description\": \"Product: Microsoft System Center Variant 60, Issue: is not working as expected.\", \"assignment_group_id\": 44, \"assigned_to\": 496, \"escalation\": 0, \"escalation_reason\": null, \"reopen_count\": 0, \"sys_created_on\": \"2025-08-27 15:33:10\", \"sys_updated_on\": \"2026-06-15 11:12:00\", \"closed_on\": null}",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "tool_name": "update_user_details",
+          "arguments": {
+            "user_id": 3,
+            "active": false
+          },
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"user_id\": 3, \"first_name\": \"Tabitha\", \"last_name\": \"Bullock\", \"email\": \"tabitha.bullock@servicenow.com\", \"phone\": \"+917949689758\", \"role\": \"agent\", \"location_id\": 3, \"active\": 0, \"sys_created_on\": \"2025-08-27 15:34:50\", \"sys_updated_on\": \"2026-06-15 11:12:24\"}",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "tool_name": "find_contacts",
+          "arguments": {
+            "contact_id": 15
+          },
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "[{\"contact_id\": 15, \"account_id\": 11, \"portal_user_id\": 10, \"active\": 1, \"is_primary\": 1, \"sys_created_on\": \"2025-08-27 15:43:34\"}]",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "tool_name": "list_users",
+          "arguments": {
+            "user_id": 10
+          },
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "[{\"user_id\": 10, \"first_name\": \"Brandon\", \"last_name\": \"Davis\", \"email\": \"brandon.davis@vehementcap.com\", \"phone\": \"+12028044331\", \"role\": \"customer\", \"location_id\": 10, \"active\": 1, \"sys_created_on\": \"2025-08-27 15:39:21\"}]",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "tool_name": "send_notification",
+          "arguments": {
+            "case_id": 251,
+            "email": "brandon.davis@vehementcap.com",
+            "type": "report"
+          },
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"notification_id\": 734, \"case_id\": 251, \"knowledge_id\": null, \"email\": \"brandon.davis@vehementcap.com\", \"type\": \"report\", \"status\": \"success\", \"sys_created_on\": \"2026-06-15 11:12:41\"}",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "tool_name": "find_contacts",
+          "arguments": {
+            "contact_id": 112
+          },
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "[{\"contact_id\": 112, \"account_id\": 49, \"portal_user_id\": 340, \"active\": 1, \"is_primary\": 0, \"sys_created_on\": \"2025-08-27 15:34:12\"}]",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "tool_name": "list_users",
+          "arguments": {
+            "user_id": 340
+          },
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "[{\"user_id\": 340, \"first_name\": \"David\", \"last_name\": \"Trujillo\", \"email\": \"david.trujillo@hernandezbarnettandstewart.com\", \"phone\": \"+916513290110\", \"role\": \"customer\", \"location_id\": 340, \"active\": 1, \"sys_created_on\": \"2025-08-27 15:44:01\"}]",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "tool_name": "send_notification",
+          "arguments": {
+            "case_id": 1142,
+            "email": "david.trujillo@hernandezbarnettandstewart.com",
+            "type": "report"
+          },
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"notification_id\": 735, \"case_id\": 1142, \"knowledge_id\": null, \"email\": \"david.trujillo@hernandezbarnettandstewart.com\", \"type\": \"report\", \"status\": \"success\", \"sys_created_on\": \"2026-06-15 11:13:05\"}",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        }
+      ],
+      "verification_results": {
+        "Tabitha Bullock Deactivated": {
+          "passed": true,
+          "expected": 1,
+          "actual": 1,
+          "comparison_type": "equals",
+          "query": "SELECT COUNT(*) AS cnt FROM user WHERE user_id = 3 AND first_name = 'Tabitha' AND last_name = 'Bullock' AND active = 0;",
+          "details": "Comparison equals: 1 vs 1"
+        },
+        "All Active Tabitha Cases Reassigned To Lisa": {
+          "passed": true,
+          "expected": 2,
+          "actual": 2,
+          "comparison_type": "equals",
+          "query": "SELECT COUNT(*) AS cnt FROM customer_case WHERE case_id IN (251, 1142) AND assigned_to = 496 AND assignment_group_id = 44;",
+          "details": "Comparison equals: 2 vs 2"
+        },
+        "Lisa Is Member Of Case Assignment_3": {
+          "passed": true,
+          "expected": 1,
+          "actual": 1,
+          "comparison_type": "equals",
+          "query": "SELECT COUNT(*) AS cnt FROM user_group_member WHERE group_id = 44 AND user_id = 496;",
+          "details": "Comparison equals: 1 vs 1"
+        },
+        "Notification Sent To Brandon": {
+          "passed": true,
+          "expected": 1,
+          "actual": 1,
+          "comparison_type": "equals",
+          "query": "SELECT COUNT(*) AS cnt FROM notification n JOIN customer_case c ON n.case_id = c.case_id JOIN contact ct ON c.contact_id = ct.contact_id JOIN user u ON ct.portal_user_id = u.user_id WHERE c.case_id = 251 AND u.email = 'brandon.davis@vehementcap.com' AND n.type = 'report' AND n.status = 'success';",
+          "details": "Comparison equals: 1 vs 1"
+        },
+        "Notification Sent To David": {
+          "passed": true,
+          "expected": 1,
+          "actual": 1,
+          "comparison_type": "equals",
+          "query": "SELECT COUNT(*) AS cnt FROM notification n JOIN customer_case c ON n.case_id = c.case_id JOIN contact ct ON c.contact_id = ct.contact_id JOIN user u ON ct.portal_user_id = u.user_id WHERE c.case_id = 1142 AND u.email = 'david.trujillo@hernandezbarnettandstewart.com' AND n.type = 'report' AND n.status = 'success';",
+          "details": "Comparison equals: 1 vs 1"
+        }
+      },
+      "verification_summary": {
+        "total": 5,
+        "passed": 5,
+        "failed": 0,
+        "pass_rate": 1.0
+      },
+      "overall_success": true
+    }
+  ],
+  "statistics": {
+    "total_runs": 1,
+    "successful_runs": 1,
+    "overall_success_rate": 1.0,
+    "pass_at_1": 1.0,
+    "verifier_level_pass_rate": 1.0,
+    "total_verifiers_checked": 5,
+    "total_verifiers_passed": 5,
+    "individual_verifier_stats": {
+      "Tabitha Bullock Deactivated": {
+        "passed": 1,
+        "total": 1,
+        "pass_rate": 1.0
+      },
+      "All Active Tabitha Cases Reassigned To Lisa": {
+        "passed": 1,
+        "total": 1,
+        "pass_rate": 1.0
+      },
+      "Lisa Is Member Of Case Assignment_3": {
+        "passed": 1,
+        "total": 1,
+        "pass_rate": 1.0
+      },
+      "Notification Sent To Brandon": {
+        "passed": 1,
+        "total": 1,
+        "pass_rate": 1.0
+      },
+      "Notification Sent To David": {
+        "passed": 1,
+        "total": 1,
+        "pass_rate": 1.0
+      }
+    },
+    "mean_execution_time_ms": 189602.0,
+    "tool_usage": {
+      "find_user": 1,
+      "find_user_group": 1,
+      "check_user_membership": 1,
+      "add_new_group_member": 1,
+      "get_cases_assigned_to": 1,
+      "update_case": 1,
+      "update_user_details": 1,
+      "find_contacts": 1,
+      "list_users": 1,
+      "send_notification": 1
+    }
+  }
+}

@@ -1,0 +1,321 @@
+{
+  "benchmark_config": {
+    "model": "vllm/Azure/gpt-5-2025-08-07",
+    "number_of_runs": 1,
+    "user_prompt": "Please create a group named Deliverables Coordination, including Bob, me (James), and Dave as members. This group is mainly a conceptual record for this coordination set and will be used to keep track of us for sprint planning and related email, but it does not need to be turned into a team or linked to any existing team. It should have email enabled for internal communication, use our standard security capabilities across the organization, and use deliverables-coordination as its email alias. Make me the owner of the group. Once the group is ready, separately in the existing team named TechCorp Solutions Team, create a new private channel called Deliverables Coordination Channel. When creating this channel, set me as the owner and include Bob and Dave as members. Give the channel a short description explaining that it will serve as the primary communication space for the Deliverables Coordination conceptual group. After the channel is created, post a message that addresses everyone (except me) by their full names, explains that this channel will function as the communication hub for the Deliverables Coordination conceptual group, and asks all members to review the updated sprint plan and confirm their deliverables before tomorrow\u2019s stand-up.",
+    "gym_servers": [
+      {
+        "name": "gym-teams-mcp",
+        "url": "http://localhost:8002",
+        "seed_database_file": "Domain Wise DBs and Task-DB Mappings/teams/dbs/db_1763719312619_uhgzo6si4.sql",
+        "uses_cloning": true
+      }
+    ],
+    "total_gyms": 1,
+    "total_tools_available": 5
+  },
+  "runs": [
+    {
+      "run_number": 1,
+      "started_at": "2026-06-15T08:43:33.302903+00:00",
+      "execution_time_ms": 56253,
+      "model_response": "I can\u2019t proceed yet because I couldn\u2019t find the users you referenced. Directory lookup returned no matches for \u201cBob\u201d, \u201cDave\u201d, or \u201cJames,\u201d and I can\u2019t create the group or private channel without valid user identities.\n\nWhat I need from you:\n- The email addresses or userPrincipalNames for:\n  - You (James)\n  - Bob\n  - Dave\n- Optional but recommended: confirm the preferred group visibility (Private or Public). Given your \u201cinternal communication\u201d note, Private is usually chosen, but I won\u2019t assume.\n\nOnce you provide the user identifiers, I will:\n1) Create a Microsoft 365 group (no Team provisioned) with:\n   - displayName: Deliverables Coordination\n   - mailEnabled: true\n   - securityEnabled: true\n   - groupTypes: [\"Unified\"]\n   - mailNickname: deliverables-coordination\n   - visibility: Private (if you confirm this)\n   - owner: you (James)\n   - members: Bob, you (James), Dave\n\n2) In the existing team \u201cTechCorp Solutions Team\u201d (found), create a private channel:\n   - Name: Deliverables Coordination Channel\n   - Description: Primary communication space for the Deliverables Coordination conceptual group\n   - Owner: you (James)\n   - Members: Bob and Dave\n\n3) Post a message in that channel addressing Bob and Dave by their full names, explaining the channel\u2019s purpose as the group\u2019s communication hub, and asking them to review the updated sprint plan and confirm their deliverables before tomorrow\u2019s stand-up.\n\nPlease share the three email addresses (or UPNs) and your visibility preference, and I\u2019ll complete this in one pass.",
+      "conversation_flow": [
+        {
+          "type": "system_message",
+          "content": "# **Teams Assistant Policy**\n\nYou are a **Microsoft Teams Management Assistant**.\nYour goal is to assist users in managing Teams, channels, chats, meetings, and related collaboration objects while adhering to organizational security, access, and data governance policies.\nYou must always act on **confirmed context** and **existing relationships**, ensuring all actions maintain system integrity and Microsoft Graph API consistency.\n\n---\n\n## **General Instructions [Must follow]**\n\n* **Never infer** user/team/channel data \u2014 act only on existing verified records.\n* If a request violates access control or schema constraints, **abort** with a reason.\n* Do not expose internal data, app configurations, or identities outside the permitted scope.\n* Follow **Microsoft Graph API** semantics for all CRUD and OData operations.\n* You do not need to ask for confirmation or permission before taking action.\n* When identifiers such as names or IDs are missing, perform exactly one lookup per entity type, verify that you are reusing correct values from previous responses, and proceed using the retrieved data.\n* Never assume or fabricate IDs, responses, or outcomes \u2014 rely solely on verified API results.\n* Complete each task in a single, logical, and efficient execution flow.\n\n---\n\n## **Roles & Responsibilities**\n\n### **Administrator**\n\n* Has **full access** to the organization\u2019s Teams environment.\n* Can:\n\n* Create, update, and delete **teams**, **channels**, **users**, **groups**, **apps**, and **tags**.\n* Configure global and per-team policies (e.g., **guest access**, **fun settings**, **messaging settings**).\n* Manage **permissions**, **roles**, **installed apps**, and **templates**.\n* Oversee **meetings**, **recordings**, and **compliance data**.\n* Responsible for lifecycle management, archival, and compliance enforcement.\n\n---\n\n### **Team Owner**\n\n* Has full access to their **own teams**.\n* Can:\n\n* Create and manage **channels**, **members**, **tabs**, and **apps** within owned teams.\n* Modify team-level settings such as visibility, messaging, and permissions.\n* Archive or unarchive teams, and manage **tags** and **roles**.\n* Cannot:\n\n* Modify organization-wide resources or teams owned by others.\n\n---\n\n### **Team Member**\n\n* Can participate in collaboration within the teams they belong to.\n* Can:\n\n* Send and edit messages in channels.\n* Add files, reactions, mentions, and app tabs (where permissions allow).\n* Cannot:\n\n* Create or delete teams.\n* Alter team-level settings or membership lists.\n\n---\n\n### **Guest User**\n\n* External user invited to collaborate within a team or channel.\n* Can:\n\n* View and post in shared channels.\n* Access shared files and participate in chats/meetings.\n* Cannot:\n\n* Create or delete teams or channels.\n* Add apps, bots, or connectors.\n* Access internal (private) data.\n\n---\n\n### **Meeting Organizer / Host**\n\n* Creates and manages **online meetings**, webinars, and townhalls.\n* Can:\n\n* Schedule, update, or cancel meetings (`create_meeting`, `update_meeting`, `delete_meeting`).\n* View attendance, recordings, and transcripts.\n* Assign presenters and co-organizers.\n* Must ensure meeting end times follow start times and participants are valid users.\n\n---\n\n## **Core Operations**\n\n### **1. User Management**\n\n| Function | Tools | Policy |\n| ------------------------------ | ------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |\n| Create / Update / Delete Users | `create_user`, `update_user`, `delete_user` | Only **Admins** can create or deactivate users. `userPrincipalName` must be unique and valid email format. |\n| Retrieve Users | `get_user`, `list_users` | Accessible by admins and compliance auditors. No bulk data leaks permitted. |\n| Presence & Status | `set_user_status_message` | Users can set their own status. Admins can override only with explicit policy. |\n\n---\n\n### **2. Team Lifecycle**\n\n| Function | Tools | Rules |\n| ------------ | ------------- | ------------------------------------------------------------------------------------------------------------------ |\n| Create Teams | `create_team` | Only **Admins** or **Owners** with proper template reference may create teams. |\n| List Teams | `list_teams` | Limited to user\u2019s visible teams or global admins. |\n| Update Team | `update_team` | Modifiable fields: `displayName`, `description`, `visibility`, `settings`. Cannot overwrite ownership or template. |\n| Delete Team | `delete_team` | Allowed only by **Admins** or **Owners**. Must cascade cleanup of associated channels, tabs, and installed apps. |\n\n---\n\n### **3. Channel Management**\n\n| Function | Tools | Rules |\n| --------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |\n| Create Channel | `create_channel` | Requires valid `teamId`. Cannot duplicate `displayName`. For private/shared channels, must specify `members`. |\n| Update Channel | `update_channel` | Only team owners or admins can change display name, description, or favorite status. |\n| List Channels | `list_channels`, `list_all_channels`, `get_primary_channel` | Visible only to members of that team. |\n| Archive Channel | `archive_channel` | Prevents posting; content remains viewable. |\n| Manage Members | `add_channel_member` | Allowed for private/shared channels only. Validates that users exist and aren\u2019t disabled. |\n\n---\n\n### **4. Chat & Messaging**\n\n| Function | Tools | Rules |\n| ---------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------- |\n| Create Chat | `create_chat` | Must include authenticated user in members. Only one-on-one chat per user pair. |\n| Send Message | `send_chat_message`, `send_channel_message` | Requires existing chat or channel ID. No long-term logs; messages must be human-contextual. |\n| React to Message | `set_chat_message_reaction`, `set_channel_message_reaction` | Reaction emojis must be supported Unicode types. |\n| Pin Message | `pin_chat_message` | Pins only allowed by chat owners or participants. |\n| List Messages | `list_channel_messages` | Members-only access; must respect channel visibility. |\n\n---\n\n### **5. Tabs & App Integration**\n\n| Function | Tools | Rules |\n| ---------- | ----------------------------------------- | -------------------------------------------------------------------------------------------------- |\n| Add Tab | `add_tab_to_chat`, `add_tabs_to_channels` | The app must already be installed. Only configurable tabs can accept `contentUrl` or `websiteUrl`. |\n| Update Tab | `update_channel_tab` | Only `displayName` and `configuration` fields may be updated. |\n| Delete Tab | `delete_channel_tab` | Permanently removes tab; cannot restore. |\n| List Tabs | `list_tabs_in_channel` | Admins and team members may view; excludes native Files tab. |\n\n---\n\n### **6. Membership & Access Control**\n\n| Function | Tools | Rules |\n| ------------------- | --------------------------------------------- | ------------------------------------------------------------------------ |\n| Add Team Members | `add_team_member`, `add_team_members_in_bulk` | At least one owner required. Validate email and user existence. |\n| Update Member Roles | `update_team_member` | Only owners/admins can modify roles. |\n| Remove Members | `remove_team_member` | Removes access to team resources. Cascade revokes across chats/channels. |\n| List Members | `list_team_members` | Members and owners only. |\n\n---\n\n### **7. Meetings & Calls**\n\n| Function | Tools | Rules |\n| ------------------------ | ----------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |\n| Create Meeting / Call | `create_call`, `create_virtual_event_webinar`, `create_virtual_event_townhall` | Requires valid participants, time zones, and no overlap of start/end. |\n| Manage Call Audio | `create_audio_routing_group`, `hold_music_operations`, `send_dtmf_tones_operations` | Restricted to service bots or admins. Must operate on active calls. |\n| Recordings / Transcripts | `call_recordings`, `call_transcripts` tables | Only organizers and admins can access or delete. Stored \u2264 30 days by default. |\n| Attendance Tracking | `meeting_attendance_reports`, `attendance_records` | Recorded automatically upon meeting end. Read-only for hosts. |\n\n---\n\n### **8. File & Folder Access**\n\n* File references stored in **`drive_items`** and **`channel_files_folders`**.\n* Access must respect SharePoint permissions.\n* Retrieval through:\n\n* `get_files_folder` \u2014 for channel-level root folder.\n* `list_tabs_in_channel` \u2014 to discover file integrations.\n\nRules:\n\n* No file may be shared externally unless organization policy allows.\n* Read/write limited to team membership scope.\n\n---\n\n### **9. Tagging & Mentions**\n\n| Function | Tools | Rules |\n| -------------- | ---------------------------- | ------------------------------------- |\n| Create Tag | `create_teamwork_tag` | Tag names \u2264 40 chars. Max 25 members. |\n| Update Tag | `update_teamwork_tag` | Only tag owners or admins. |\n| Add Tag Member | `create_teamwork_tag_member` | Member must belong to the same team. |\n| List Tags | `list_teamwork_tags` | Read-only for team members. |\n\n---\n\n### **10. Groups & Permissions**\n\n* Groups back teams and define membership synchronization.\n* Managed via:\n\n* `create_group`, `update_group`, `list_groups`, `add_group_owner`.\n* Enforce:\n\n* `mailNickname` unique.\n* Security vs. mail-enabled group consistency.\n* Dynamic membership (`groupTypes` includes `DynamicMembership`) rules must be syntactically valid.\n\n---\n\n### **11. Virtual Events**\n\n#### Webinars\n\n* Tools: `create_virtual_event_webinar`, `get_virtual_event_webinar`, `publish_virtual_event_webinar`, `cancel_virtual_event_webinar`\n* Constraints:\n\n* Only **Organizers** may publish or cancel.\n* Status transitions:\n\n* `draft \u2192 published \u2192 canceled`\n* `canceled` webinars cannot be republished.\n* Validations: `endDateTime > startDateTime`.\n\n#### Townhalls\n\n* Tools: `create_virtual_event_townhall`, `list_virtual_event_townhalls`, `cancel_virtual_event_townhall`\n* Rules:\n\n* `isInviteOnly` only allowed if `audience='organization'`.\n* Co-organizers must exist in `teams_users`.\n* Organizer-only cancellation rights.\n\n---\n\n## **Security & Integrity**\n\n* All actions validated against `teams_user_roles`, `resource_access`, and `teams_orgs`.\n* `soft_delete` flags are respected across all entities \u2014 no physical deletion unless explicitly stated.\n* Channel, chat, and file visibility determined by membership and ACLs.\n* Private data (emails, messages) cannot be exposed via list APIs without filters.\n\n---\n\n## **Free-Form Text & Naming Conventions**\n\n| Field | Limit | Format / Example |\n| -------------------------- | ----------- | ------------------------------------------------------- |\n| `displayName` | 1\u2013256 chars | \"Project Phoenix \u2013 Engineering\" |\n| `description` | \u22641024 chars | \"Internal collaboration space for release coordination\" |\n| `chatMessage.body.content` | \u22645000 chars | Rich text (HTML or plain) |\n| `tag.displayName` | \u226440 chars | Must be unique per team |\n| `team.displayName` | \u2264255 chars | No reserved keywords (e.g., \"General\", \"Admin\") |\n\n---\n\n## **Enumerations (Strict Values)**\n\n### Teams & Channels\n\n* `team.visibility`: `private`, `public`\n* `channel.membershipType`: `standard`, `private`, `shared`\n* `channelMessage.importance`: `normal`, `high`, `urgent`\n\n### Chats\n\n* `chat.chatType`: `oneOnOne`, `group`\n* `chatMessage.messageType`: `message`, `chatEvent`, `systemEventMessage`\n\n### Meetings\n\n* `meeting.allowMeetingChat`: `enabled`, `disabled`\n* `meeting.allowedPresenters`: `everyone`, `organizer`, `none`\n\n### Virtual Events\n\n* `audience`: `everyone`, `organization`, `unknownFutureValue`\n* `status`: `draft`, `published`, `canceled`\n\n### Presence\n\n* `availability`: `Available`, `Busy`, `DoNotDisturb`, `Away`, `Offline`\n* `activity`: `InMeeting`, `Available`, `Presenting`, `Away`, `BeRightBack`\n\n---\n\n## **Audit & Logging Requirements**\n\nEvery operation must record:\n\n* `org_id`, `user_id`, and timestamp.\n* `resource_id` and `operation_type`.\n* System must update `updated_at` fields on every modification.\n* Retain audit logs for \u2265 30 days for compliance.\n\n---\n\n## **Service-Level Policies**\n\n* API rate limits per Microsoft Graph standards (429 handling).\n* Call records, transcripts, and meeting data retained max **30 days**.\n* Archived channels and teams are read-only.\n* Bots may only perform operations within granted permissions (`Chat.ReadWrite`, `Team.ReadBasic.All`, etc.).\n\n---\n\n## **Violation Handling**\n\nIf an operation:\n\n* Modifies unrelated entities,\n* References non-existent IDs,\n* Violates permission hierarchy,\n* Or attempts disallowed state transitions,\nthe agent must **abort immediately** and return a policy violation notice.\n\n---"
+        },
+        {
+          "type": "user_message",
+          "content": "Please create a group named Deliverables Coordination, including Bob, me (James), and Dave as members. This group is mainly a conceptual record for this coordination set and will be used to keep track of us for sprint planning and related email, but it does not need to be turned into a team or linked to any existing team. It should have email enabled for internal communication, use our standard security capabilities across the organization, and use deliverables-coordination as its email alias. Make me the owner of the group. Once the group is ready, separately in the existing team named TechCorp Solutions Team, create a new private channel called Deliverables Coordination Channel. When creating this channel, set me as the owner and include Bob and Dave as members. Give the channel a short description explaining that it will serve as the primary communication space for the Deliverables Coordination conceptual group. After the channel is created, post a message that addresses everyone (except me) by their full names, explains that this channel will function as the communication hub for the Deliverables Coordination conceptual group, and asks all members to review the updated sprint plan and confirm their deliverables before tomorrow\u2019s stand-up."
+        },
+        {
+          "type": "ai_message",
+          "content": "",
+          "usage_metadata": {
+            "input_tokens": 5926,
+            "output_tokens": 2362,
+            "total_tokens": 8288,
+            "input_token_details": {
+              "audio": 0,
+              "cache_read": 4224
+            },
+            "output_token_details": {
+              "audio": 0,
+              "reasoning": 2240
+            }
+          },
+          "response_metadata": {
+            "token_usage": {
+              "completion_tokens": 2362,
+              "prompt_tokens": 5926,
+              "total_tokens": 8288,
+              "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 2240,
+                "rejected_prediction_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 4224
+              },
+              "latency_checkpoint": {
+                "engine_tbt_ms": 11,
+                "engine_ttft_ms": 467,
+                "engine_ttlt_ms": 27369,
+                "pre_inference_ms": 184,
+                "service_tbt_ms": 11,
+                "service_ttft_ms": 1015,
+                "service_ttlt_ms": 27918,
+                "total_duration_ms": 27742,
+                "user_visible_ttft_ms": 830
+              }
+            },
+            "model_provider": "openai",
+            "model_name": "Azure/gpt-5-2025-08-07",
+            "system_fingerprint": null,
+            "id": "chatcmpl-DqxCoBxYGs608sq7a5lyh4Xe22qn0",
+            "service_tier": "default",
+            "finish_reason": "tool_calls",
+            "logprobs": null
+          },
+          "tool_calls": [
+            {
+              "name": "list_users",
+              "args": {
+                "_filter": "displayName eq 'Bob' or displayName eq 'Dave' or displayName eq 'James'",
+                "_select": "id,displayName,mail,userPrincipalName,givenName,surname",
+                "_top": 50
+              }
+            },
+            {
+              "name": "list_teams",
+              "args": {
+                "_filter": "displayName eq 'TechCorp Solutions Team'",
+                "_select": "id,displayName,description",
+                "_top": 50
+              }
+            }
+          ]
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "list_users",
+          "result": {
+            "success": true,
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\n  \"@odata.context\": \"https://graph.microsoft.com/v1.0/$metadata#users\",\n  \"value\": []\n}"
+                }
+              ],
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "gym-teams-mcp"
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "list_teams",
+          "result": {
+            "success": true,
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\n  \"@odata.context\": \"https://graph.microsoft.com/v1.0/$metadata#teams\",\n  \"value\": [\n    {\n      \"id\": \"team_techcorp_001\",\n      \"displayName\": \"TechCorp Solutions Team\",\n      \"description\": \"Main collaboration team for TechCorp Solutions organization\"\n    }\n  ]\n}"
+                }
+              ],
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "gym-teams-mcp"
+        },
+        {
+          "type": "ai_message",
+          "content": "I can\u2019t proceed yet because I couldn\u2019t find the users you referenced. Directory lookup returned no matches for \u201cBob\u201d, \u201cDave\u201d, or \u201cJames,\u201d and I can\u2019t create the group or private channel without valid user identities.\n\nWhat I need from you:\n- The email addresses or userPrincipalNames for:\n  - You (James)\n  - Bob\n  - Dave\n- Optional but recommended: confirm the preferred group visibility (Private or Public). Given your \u201cinternal communication\u201d note, Private is usually chosen, but I won\u2019t assume.\n\nOnce you provide the user identifiers, I will:\n1) Create a Microsoft 365 group (no Team provisioned) with:\n   - displayName: Deliverables Coordination\n   - mailEnabled: true\n   - securityEnabled: true\n   - groupTypes: [\"Unified\"]\n   - mailNickname: deliverables-coordination\n   - visibility: Private (if you confirm this)\n   - owner: you (James)\n   - members: Bob, you (James), Dave\n\n2) In the existing team \u201cTechCorp Solutions Team\u201d (found), create a private channel:\n   - Name: Deliverables Coordination Channel\n   - Description: Primary communication space for the Deliverables Coordination conceptual group\n   - Owner: you (James)\n   - Members: Bob and Dave\n\n3) Post a message in that channel addressing Bob and Dave by their full names, explaining the channel\u2019s purpose as the group\u2019s communication hub, and asking them to review the updated sprint plan and confirm their deliverables before tomorrow\u2019s stand-up.\n\nPlease share the three email addresses (or UPNs) and your visibility preference, and I\u2019ll complete this in one pass.",
+          "usage_metadata": {
+            "input_tokens": 6211,
+            "output_tokens": 2145,
+            "total_tokens": 8356,
+            "input_token_details": {
+              "audio": 0,
+              "cache_read": 5760
+            },
+            "output_token_details": {
+              "audio": 0,
+              "reasoning": 1792
+            }
+          },
+          "response_metadata": {
+            "token_usage": {
+              "completion_tokens": 2145,
+              "prompt_tokens": 6211,
+              "total_tokens": 8356,
+              "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 1792,
+                "rejected_prediction_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 5760
+              },
+              "latency_checkpoint": {
+                "engine_tbt_ms": 11,
+                "engine_ttft_ms": 473,
+                "engine_ttlt_ms": 24964,
+                "pre_inference_ms": 274,
+                "service_tbt_ms": 11,
+                "service_ttft_ms": 1125,
+                "service_ttlt_ms": 25625,
+                "total_duration_ms": 25356,
+                "user_visible_ttft_ms": 851
+              }
+            },
+            "model_provider": "openai",
+            "model_name": "Azure/gpt-5-2025-08-07",
+            "system_fingerprint": null,
+            "id": "chatcmpl-DqxDH9tQzbd9C1GBE37nF10nj2XUF",
+            "service_tier": "default",
+            "finish_reason": "stop",
+            "logprobs": null
+          },
+          "tool_calls": []
+        }
+      ],
+      "tools_used": [
+        "list_users",
+        "list_teams"
+      ],
+      "tool_results": [
+        {
+          "tool_name": "list_users",
+          "arguments": {
+            "_filter": "displayName eq 'Bob' or displayName eq 'Dave' or displayName eq 'James'",
+            "_select": "id,displayName,mail,userPrincipalName,givenName,surname",
+            "_top": 50
+          },
+          "result": {
+            "success": true,
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\n  \"@odata.context\": \"https://graph.microsoft.com/v1.0/$metadata#users\",\n  \"value\": []\n}"
+                }
+              ],
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "gym-teams-mcp"
+        },
+        {
+          "tool_name": "list_teams",
+          "arguments": {
+            "_filter": "displayName eq 'TechCorp Solutions Team'",
+            "_select": "id,displayName,description",
+            "_top": 50
+          },
+          "result": {
+            "success": true,
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\n  \"@odata.context\": \"https://graph.microsoft.com/v1.0/$metadata#teams\",\n  \"value\": [\n    {\n      \"id\": \"team_techcorp_001\",\n      \"displayName\": \"TechCorp Solutions Team\",\n      \"description\": \"Main collaboration team for TechCorp Solutions organization\"\n    }\n  ]\n}"
+                }
+              ],
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "gym-teams-mcp"
+        }
+      ],
+      "verification_results": {
+        "verify_group_created": {
+          "passed": false,
+          "expected": 1,
+          "actual": 0,
+          "comparison_type": "equals",
+          "query": "SELECT COUNT(*) FROM groups g WHERE g.display_name = 'Deliverables Coordination' AND g.mail_enabled = 1 AND g.security_enabled = 1 AND g.mail_nickname = 'deliverables-coordination' AND JSON_EXTRACT(g.owners, '$') LIKE '%james.wilson%' AND JSON_EXTRACT(g.members, '$') LIKE '%dave.brown%' AND JSON_EXTRACT(g.members, '$') LIKE '%bob.smith%' AND JSON_EXTRACT(g.members, '$') LIKE '%james.wilson%'",
+          "details": "Comparison equals: 0 vs 1"
+        },
+        "verify_channel_created": {
+          "passed": false,
+          "expected": 1,
+          "actual": 0,
+          "comparison_type": "equals",
+          "query": "SELECT COUNT(*) FROM channels c JOIN teams t ON t.team_id = c.team_id WHERE c.display_name = 'Deliverables Coordination Channel' AND t.display_name = 'TechCorp Solutions Team' AND c.membership_type = 'private' AND LOWER(c.description) LIKE '%primary%' AND LOWER(c.description) LIKE '%deliverables coordination%'",
+          "details": "Comparison equals: 0 vs 1"
+        },
+        "verify_channel_members": {
+          "passed": false,
+          "expected": 3,
+          "actual": 0,
+          "comparison_type": "equals",
+          "query": "SELECT COUNT(*) FROM channel_members cm JOIN channels c ON c.channel_id = cm.channel_id JOIN teams t ON t.team_id = c.team_id WHERE c.display_name = 'Deliverables Coordination Channel' AND t.display_name = 'TechCorp Solutions Team' AND ((cm.user_id = 'james.wilson' AND cm.roles = 'owner') OR (cm.user_id IN ('bob.smith', 'dave.brown') AND cm.roles = 'member'))",
+          "details": "Comparison equals: 0 vs 3"
+        },
+        "verify_kickoff_message": {
+          "passed": false,
+          "expected": 1,
+          "actual": 0,
+          "comparison_type": "equals",
+          "query": "SELECT COUNT(*) FROM channel_messages m JOIN channels c ON c.channel_id = m.channel_id JOIN teams t ON t.team_id = c.team_id WHERE c.display_name = 'Deliverables Coordination Channel' AND t.display_name = 'TechCorp Solutions Team' AND LOWER(m.body_json) LIKE '%Bob Smith%' AND LOWER(m.body_json) LIKE '%Dave Brown%' AND LOWER(m.body_json) LIKE '%sprint%' AND LOWER(m.body_json) LIKE '%deliverable%' AND LOWER(m.body_json) LIKE '%tomorrow%'",
+          "details": "Comparison equals: 0 vs 1"
+        }
+      },
+      "verification_summary": {
+        "total": 4,
+        "passed": 0,
+        "failed": 4,
+        "pass_rate": 0.0
+      },
+      "overall_success": false
+    }
+  ],
+  "statistics": {
+    "total_runs": 1,
+    "successful_runs": 0,
+    "overall_success_rate": 0.0,
+    "pass_at_1": 0.0,
+    "verifier_level_pass_rate": 0.0,
+    "total_verifiers_checked": 4,
+    "total_verifiers_passed": 0,
+    "individual_verifier_stats": {
+      "verify_group_created": {
+        "passed": 0,
+        "total": 1,
+        "pass_rate": 0.0
+      },
+      "verify_channel_created": {
+        "passed": 0,
+        "total": 1,
+        "pass_rate": 0.0
+      },
+      "verify_channel_members": {
+        "passed": 0,
+        "total": 1,
+        "pass_rate": 0.0
+      },
+      "verify_kickoff_message": {
+        "passed": 0,
+        "total": 1,
+        "pass_rate": 0.0
+      }
+    },
+    "mean_execution_time_ms": 56253.0,
+    "tool_usage": {
+      "list_users": 1,
+      "list_teams": 1
+    }
+  }
+}

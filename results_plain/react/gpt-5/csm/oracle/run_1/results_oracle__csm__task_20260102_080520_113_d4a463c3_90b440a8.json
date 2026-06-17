@@ -1,0 +1,810 @@
+{
+  "benchmark_config": {
+    "model": "vllm/Azure/gpt-5-2025-08-07",
+    "number_of_runs": 1,
+    "user_prompt": "We got an update that ServiceNow's current active tokyo branch is closing down, and they will restart the other one. Help me update the same on our side to reflect the same. They had a product with serial number something like 2272 installed there, but now that needs to be moved to their other location in the same city.",
+    "gym_servers": [
+      {
+        "name": "sn-csm-server",
+        "url": "http://localhost:8001",
+        "seed_database_file": "Domain Wise DBs and Task-DB Mappings/csm/dbs/db_1762254390925_u5icw4thh.sql",
+        "uses_cloning": true
+      }
+    ],
+    "total_gyms": 1,
+    "total_tools_available": 5
+  },
+  "runs": [
+    {
+      "run_number": 1,
+      "started_at": "2026-06-15T11:01:34.544426+00:00",
+      "execution_time_ms": 148022,
+      "model_response": "I\u2019ve updated ServiceNow\u2019s Tokyo locations and moved the specified asset accordingly.\n\nWhat I did:\n- Account: ServiceNow (account_id: 1)\n- Locations\n  - Servicenow Hq - Tokyo (location_id: 803): set active = true\n  - Servicenow Site A - Tokyo (location_id: 804): set active = false\n- Installed product move\n  - Found asset matching \u201c\u20262272\u201d: installed_product_id: 4, serial_number: P237-136518-2272 (account_id: 1, product_id: 237)\n  - Moved from location_id 804 to location_id 803\n  - Status left unchanged (in_stock), warranty_end: 2026-10-21\n\nIf you\u2019d like this asset marked as in_use at the new site or need any other ServiceNow Tokyo assets moved, tell me which ones and I\u2019ll update them.",
+      "conversation_flow": [
+        {
+          "type": "system_message",
+          "content": "CSM Agent Policy\n\nYou are a Customer Service Management assistant. Your goal is to assist users in the Customer Service Management lifecycle by helping them register cases, validate entitlements, manage customer assets, raise escalations, attach relevant knowledge, close cases, and in other related processes effectively.\n\nYou should always act based on confirmed user context, ing record relationships, and database integrity best practices. Avoid actions that assume data, do not provide enough context, or seem to be in violation of this policy.\n\nGeneral Instructions\n\nBy default, you should assume the roles and responsibilities of an admin to complete a particular request. If a user request violates policy, do not act on it. Perform one operation at a time. Do not provide knowledge or procedures not in the system. Do not ask for any information or confirmation from the user, if you cannot proceed ahead provide the reason for that before pausing.\n\nRoles & Responsibilities\n\nAdministrator\n\nHas full access across all tables. Can create, update, and deactivate: Users, user groups, and group memberships. Accounts, contacts, locations, and entitlements. Products, installed products, SLAs, contracts, and knowledge. Manages assignment rules, workflows, and escalations.\n\nAgent\n\nFrontline support representative handling customer cases. Read-only access to all records (accounts, contacts, products, contracts, entitlements). Can: Create and update customer cases, interactions, and case work notes. Associate knowledge articles with cases. View entitlements and SLAs linked to accounts and cases. Update case assignment, state, and resolution. Cannot modify user, group, or membership data.\n\nManager\n\nSupervises agents and case queues. Has agent privileges plus: Can reassign cases across groups and users. Can escalate cases and override case prioritization. Monitors SLA compliance, case trends, and escalations. Can approve exceptions (e.g., entitlement overrides or escalations). May contribute to knowledge management as reviewers.\n\nCustomer (Portal User)\n\nEnd user accessing the customer portal. Can: View and update their own profile. Create new cases and track the status of their submitted cases. Search and view knowledge articles (based on visibility: internal/external). Participate in community forums (if enabled). Initiate interactions (chat, email, web, etc.). Limited to their own account\u2019s data (cannot see other accounts/customers). Cannot access internal system data (users, groups, SLAs, contracts of other customers).\n\nCore Operations\n\nRegistering a Customer Case\n\nBegin by identifying the reporting contact and verifying association with an account. Collect necessary inputs: Issue description (short_description) Product or installed product involved Contact channel (channel) Priority (if not provided \u2192 default = moderate) Default state = new. Verify the product or installed product belongs to the customer\u2019s account.\n\nAssigning a Case\n\nA case may be assigned to: An assignment group (assignment_group_id), or A user (assigned_to) within that group. Agents must: Be active, and Be members of the assigned group. Assignment constraints: assigned_to must reference a user with role agent or manager and (if used) member of assignment_group_id.\n\nWorking on a Case\n\nAgents may: Update cause, resolution notes, or other internal fields. Change state (new \u2192 in_progress, in_progress \u2192 pending/resolved). Attach a missing product or installed product. Link relevant knowledge articles. Important: Cases cannot be closed directly. They must first be moved to resolved, then to closed. If a case is invalid, it may be canceled.\n\nCase Lifecycle Management\n\nValid state transitions: new \u2192 in_progress / pending / resolved in_progress \u2192 pending / resolved pending \u2192 in_progress / resolved resolved \u2192 closed / new canceled At each step: Validate acting user\u2019s relationship to the case. Capture timestamps (sys_updated_on, closed_on where applicable). Prevent premature closure without resolution.\n\nEntitlement Validation\n\nBefore applying entitlement: Check it is active and within contract validity. Product-specific entitlements must match the case product (unless entitlement is account-wide). max_cases_per_month = 0 means unlimited; otherwise enforce limits. If entitlement is invalid \u2192 inform the user.\n\nInstalled Product Management\n\nInstalled products must: Be active / in_use. Belong to the reporting account. Do not attach items in retired / repair status to new cases. Ensure installed product\u2019s product matches the case product.\n\nLinking Knowledge Articles\n\nWhen linking knowledge: Articles must be in state = published. Visibility rules apply: internal = agents only external = customers can view Link articles to cases via case_knowledge (usage = suggested, applied, resolution). Ownership is tracked via owner_id.\n\nEscalations\n\nEscalations may be raised when: SLA breach risk exists, or Customer explicitly requests escalation, or High business risk/impact. Steps: Record escalation = true on case. Capture escalation_reason. Ensure justification is logged in case notes. There is no separate escalation record. Escalation is tracked within the case.\n\nProduct Handling\n\nProducts must be: Present in product table, In lifecycle_state = active. Installed products must match the product and account context.\n\nSecurity\n\nUsers may only view or update cases they own, are assigned to, or are in the assigned group. Do not disclose personal data or case details outside these permissions.\n\nValidation, Error Handling & Logging\n\nAlways validate existence and integrity of: Users, accounts, contacts, products, entitlements, and cases. State transitions follow lifecycle rules. All actions must: Update sys_updated_on. Capture timestamps (e.g., closed_on for case closure).\n\nService Levels & Timelines\n\nCase handling Response and resolution timelines are determined by the entitlements (entitlement table) linked to the customer account and product. Applicable SLAs (sla_definition and case_sla tables) set the exact targets for response or resolution, and may vary by case priority, support level, and coverage hours. SLA pause behavior: Obey sla_definition.pause_on_pending; when case state is pending, pause applicable SLAs. If no entitlement or SLA is associated with the account/product, no service level commitments are in scope. Installed product repair / replacement Commitments depend on warranty contracts or support agreements (contract table). The applicable SLA target will be enforced only if defined under the customer\u2019s entitlement. In absence of a valid contract or entitlement, no guaranteed turnaround applies. Knowledge article publication / retirement Service levels for publishing or retiring knowledge are governed by internal operational policies and are not bound by customer-facing SLAs. Unless explicitly defined in entitlements or SLAs, no service level commitments are in scope. User & group management (administrative actions) Internal administrative tasks (user/group creation, role updates, membership changes) are not subject to customer-facing SLAs. Unless an internal SLA is defined, no service level commitments are in scope.\n\nPredefined Lists (Enumerations)\n\nOnly the following values are allowed for these fields:\n\nUsers & Groups user.role: admin, agent, manager, customer user_group.type: support, backoffice, field, vendor\n\nGeography location.city: new_york, london, mumbai, tokyo, sydney location.country: usa, uk, india, japan, australia\n\nAccounts & Contacts account.account_type: customer, partner, internal\n\nProducts & Installed Base product.category: software, hardware, service product.lifecycle_state: active, retired installed_product.status: in_use, in_stock, repair, retired\n\nContracts, Entitlements, SLAs contract.contract_type: support, warranty, subscription contract.status: active, suspended, expired entitlement.support_level: standard, premium, enterprise entitlement.coverage_hours: h8x5, h12x6, h24x7 sla_definition.metric: response, resolution sla_definition.applies_to_priority: critical, high, moderate, low\n\nCase Management customer_case.channel: web, email, phone, chat, social, alert, community customer_case.priority: critical, high, moderate, low customer_case.state: new, in_progress, pending, resolved, closed, canceled customer_case.escalation_reason: urgency, vip, impact, breach_risk, customer_request\n\nInteractions & Knowledge interaction.channel: web, email, phone, chat, social, alert, community knowledge.state: draft, published, retired knowledge.visibility: internal, external case_knowledge.used_as: suggested, applied, resolution Enforcement: reject any value outside the list with INVALID_ENUM_VALUE.\n\nKnowledge Related Policies: When a new case is created and is asked to be investigated, then a knowledge base search should be performed. For all cases the entitlement for the product should be verified and should be actively running. If no relevant knowledge is found and case is being closed, a new knowledge article should be created to capture the findings and resolution steps. If a knowledge article is created, it should be linked to the case for future reference. When new case moves to work in progress appropriate SLA should be aligned to it. Used as for knowledge base to case: When the knowledge is found through automated search it should be linked as suggested. If the knowledge is found to be useful to resolve the case or is being created after case resolution it should have used as type to resolution in linking. In other cases if knowledge is linked it should as applied. If knowledge article is found then it should be used to assist in the next set of actions. For example, it might details regarding product configuration, troubleshooting steps, or best practices or team that should work on it.\n\nFree form text policies: (For texts like short description of cases, title of knowledge, escalation reason and content/body of knowledge) Character limits: 30\u2013120 chars Case Short Description: It can be something like: \"Product: \" + Product name + \", Issue: is not working as expected.\" KB title: Issue Resolution related to , step-by-step guide KB content/body: This kind of issues are tackled by Assignment Group: , Assigned to: . Steps to resolve the issue: , Suggested Priority: . Escalation reason: The case could not be completed on time/exceeds the time limit or has priority beyond the defined list of priorities."
+        },
+        {
+          "type": "user_message",
+          "content": "We got an update that ServiceNow's current active tokyo branch is closing down, and they will restart the other one. Help me update the same on our side to reflect the same. They had a product with serial number something like 2272 installed there, but now that needs to be moved to their other location in the same city."
+        },
+        {
+          "type": "ai_message",
+          "content": "",
+          "usage_metadata": {
+            "input_tokens": 2989,
+            "output_tokens": 2073,
+            "total_tokens": 5062,
+            "input_token_details": {
+              "audio": 0,
+              "cache_read": 2816
+            },
+            "output_token_details": {
+              "audio": 0,
+              "reasoning": 2048
+            }
+          },
+          "response_metadata": {
+            "token_usage": {
+              "completion_tokens": 2073,
+              "prompt_tokens": 2989,
+              "total_tokens": 5062,
+              "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 2048,
+                "rejected_prediction_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 2816
+              },
+              "latency_checkpoint": {
+                "engine_tbt_ms": 13,
+                "engine_ttft_ms": 330,
+                "engine_ttlt_ms": 27063,
+                "pre_inference_ms": 312,
+                "service_tbt_ms": 13,
+                "service_ttft_ms": 799,
+                "service_ttlt_ms": 27531,
+                "total_duration_ms": 27231,
+                "user_visible_ttft_ms": 487
+              }
+            },
+            "model_provider": "openai",
+            "model_name": "Azure/gpt-5-2025-08-07",
+            "system_fingerprint": null,
+            "id": "chatcmpl-DqzMO2ivrbt3Br63qocyvoJZMRuxA",
+            "service_tier": "default",
+            "finish_reason": "tool_calls",
+            "logprobs": null
+          },
+          "tool_calls": [
+            {
+              "name": "find_account",
+              "args": {
+                "name": "ServiceNow"
+              }
+            }
+          ]
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "find_account",
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"account_id\": 1, \"name\": \"ServiceNow\", \"account_type\": \"internal\", \"email_domain\": \"servicenow.com\", \"active\": 1}",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "type": "ai_message",
+          "content": "",
+          "usage_metadata": {
+            "input_tokens": 3094,
+            "output_tokens": 1310,
+            "total_tokens": 4404,
+            "input_token_details": {
+              "audio": 0,
+              "cache_read": 2816
+            },
+            "output_token_details": {
+              "audio": 0,
+              "reasoning": 1280
+            }
+          },
+          "response_metadata": {
+            "token_usage": {
+              "completion_tokens": 1310,
+              "prompt_tokens": 3094,
+              "total_tokens": 4404,
+              "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 1280,
+                "rejected_prediction_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 2816
+              },
+              "latency_checkpoint": {
+                "engine_tbt_ms": 11,
+                "engine_ttft_ms": 354,
+                "engine_ttlt_ms": 15329,
+                "pre_inference_ms": 185,
+                "service_tbt_ms": 11,
+                "service_ttft_ms": 673,
+                "service_ttlt_ms": 15654,
+                "total_duration_ms": 15480,
+                "user_visible_ttft_ms": 488
+              }
+            },
+            "model_provider": "openai",
+            "model_name": "Azure/gpt-5-2025-08-07",
+            "system_fingerprint": null,
+            "id": "chatcmpl-DqzMqGrf6HNeTkNLFlvCHQO0VG3hs",
+            "service_tier": "default",
+            "finish_reason": "tool_calls",
+            "logprobs": null
+          },
+          "tool_calls": [
+            {
+              "name": "find_locations",
+              "args": {
+                "city": "tokyo",
+                "country": "japan"
+              }
+            }
+          ]
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "find_locations",
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "[{\"location_id\": 4, \"name\": \"User 4 - Tokyo\", \"plot_no\": \"Plot 229\", \"street\": \"Cristian Greens\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:41:29\"}, {\"location_id\": 9, \"name\": \"User 9 - Tokyo\", \"plot_no\": \"Plot 125\", \"street\": \"Ross Keys\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:43:47\"}, {\"location_id\": 14, \"name\": \"User 14 - Tokyo\", \"plot_no\": null, \"street\": \"Tammy Hollow\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:39:53\"}, {\"location_id\": 19, \"name\": \"User 19 - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:33:43\"}, {\"location_id\": 24, \"name\": \"User 24 - Tokyo\", \"plot_no\": \"Plot 569\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:40:14\"}, {\"location_id\": 29, \"name\": \"User 29 - Tokyo\", \"plot_no\": \"Plot 833\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:33:30\"}, {\"location_id\": 34, \"name\": \"User 34 - Tokyo\", \"plot_no\": \"Plot 157\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:33:37\"}, {\"location_id\": 39, \"name\": \"User 39 - Tokyo\", \"plot_no\": \"Plot 312\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:34:59\"}, {\"location_id\": 44, \"name\": \"User 44 - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:46:26\"}, {\"location_id\": 49, \"name\": \"User 49 - Tokyo\", \"plot_no\": \"Plot 45\", \"street\": \"Obrien Mill\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:46:22\"}, {\"location_id\": 54, \"name\": \"User 54 - Tokyo\", \"plot_no\": null, \"street\": \"Doyle Fields\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:42:16\"}, {\"location_id\": 59, \"name\": \"User 59 - Tokyo\", \"plot_no\": null, \"street\": \"Amanda Isle\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:45:37\"}, {\"location_id\": 64, \"name\": \"User 64 - Tokyo\", \"plot_no\": null, \"street\": \"Megan Divide\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:46:59\"}, {\"location_id\": 69, \"name\": \"User 69 - Tokyo\", \"plot_no\": null, \"street\": \"Kelley Rapid\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:38:57\"}, {\"location_id\": 74, \"name\": \"User 74 - Tokyo\", \"plot_no\": \"Plot 820\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:31:58\"}, {\"location_id\": 79, \"name\": \"User 79 - Tokyo\", \"plot_no\": \"Plot 73\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:43:16\"}, {\"location_id\": 84, \"name\": \"User 84 - Tokyo\", \"plot_no\": \"Plot 619\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:39:49\"}, {\"location_id\": 89, \"name\": \"User 89 - Tokyo\", \"plot_no\": \"Plot 125\", \"street\": \"Hernandez Stream\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:36:33\"}, {\"location_id\": 94, \"name\": \"User 94 - Tokyo\", \"plot_no\": \"Plot 41\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:35:04\"}, {\"location_id\": 99, \"name\": \"User 99 - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:38:05\"}, {\"location_id\": 104, \"name\": \"User 104 - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:30:55\"}, {\"location_id\": 109, \"name\": \"User 109 - Tokyo\", \"plot_no\": \"Plot 435\", \"street\": \"Sherri Flat\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:34:58\"}, {\"location_id\": 114, \"name\": \"User 114 - Tokyo\", \"plot_no\": \"Plot 49\", \"street\": \"Gilbert Square\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:41:37\"}, {\"location_id\": 119, \"name\": \"User 119 - Tokyo\", \"plot_no\": \"Plot 700\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:35:06\"}, {\"location_id\": 124, \"name\": \"User 124 - Tokyo\", \"plot_no\": null, \"street\": \"Joshua Squares\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:50:15\"}, {\"location_id\": 129, \"name\": \"User 129 - Tokyo\", \"plot_no\": \"Plot 507\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:50:16\"}, {\"location_id\": 134, \"name\": \"User 134 - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:36:28\"}, {\"location_id\": 139, \"name\": \"User 139 - Tokyo\", \"plot_no\": null, \"street\": \"Taylor Island\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:48:26\"}, {\"location_id\": 144, \"name\": \"User 144 - Tokyo\", \"plot_no\": \"Plot 55\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:43:03\"}, {\"location_id\": 149, \"name\": \"User 149 - Tokyo\", \"plot_no\": \"Plot 358\", \"street\": \"Butler Mountains\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:38:59\"}, {\"location_id\": 154, \"name\": \"User 154 - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:39:12\"}, {\"location_id\": 159, \"name\": \"User 159 - Tokyo\", \"plot_no\": \"Plot 77\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:38:41\"}, {\"location_id\": 164, \"name\": \"User 164 - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:37:16\"}, {\"location_id\": 169, \"name\": \"User 169 - Tokyo\", \"plot_no\": \"Plot 902\", \"street\": \"Johnson Ridges\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:36:06\"}, {\"location_id\": 174, \"name\": \"User 174 - Tokyo\", \"plot_no\": \"Plot 599\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:44:20\"}, {\"location_id\": 179, \"name\": \"User 179 - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:38:37\"}, {\"location_id\": 184, \"name\": \"User 184 - Tokyo\", \"plot_no\": null, \"street\": \"Hernandez Land\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:37:29\"}, {\"location_id\": 189, \"name\": \"User 189 - Tokyo\", \"plot_no\": \"Plot 216\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:41:57\"}, {\"location_id\": 194, \"name\": \"User 194 - Tokyo\", \"plot_no\": null, \"street\": \"Mcmillan Pine\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:49:00\"}, {\"location_id\": 199, \"name\": \"User 199 - Tokyo\", \"plot_no\": null, \"street\": \"Jones Mount\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:36:15\"}, {\"location_id\": 204, \"name\": \"User 204 - Tokyo\", \"plot_no\": \"Plot 267\", \"street\": \"Doyle Islands\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:40:15\"}, {\"location_id\": 209, \"name\": \"User 209 - Tokyo\", \"plot_no\": \"Plot 19\", \"street\": \"Wood Track\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:31:42\"}, {\"location_id\": 214, \"name\": \"User 214 - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:44:17\"}, {\"location_id\": 219, \"name\": \"User 219 - Tokyo\", \"plot_no\": \"Plot 551\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:43:42\"}, {\"location_id\": 224, \"name\": \"User 224 - Tokyo\", \"plot_no\": null, \"street\": \"Mendez Estate\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:36:09\"}, {\"location_id\": 229, \"name\": \"User 229 - Tokyo\", \"plot_no\": \"Plot 286\", \"street\": \"Yang Field\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:35:00\"}, {\"location_id\": 234, \"name\": \"User 234 - Tokyo\", \"plot_no\": null, \"street\": \"David Haven\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:32:02\"}, {\"location_id\": 239, \"name\": \"User 239 - Tokyo\", \"plot_no\": \"Plot 989\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:47:47\"}, {\"location_id\": 244, \"name\": \"User 244 - Tokyo\", \"plot_no\": \"Plot 584\", \"street\": \"Haney Creek\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:37:59\"}, {\"location_id\": 249, \"name\": \"User 249 - Tokyo\", \"plot_no\": null, \"street\": \"Tiffany Circle\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:29:34\"}, {\"location_id\": 254, \"name\": \"User 254 - Tokyo\", \"plot_no\": \"Plot 375\", \"street\": \"Stephen Avenue\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:37:34\"}, {\"location_id\": 259, \"name\": \"User 259 - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:46:54\"}, {\"location_id\": 264, \"name\": \"User 264 - Tokyo\", \"plot_no\": \"Plot 994\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:30:19\"}, {\"location_id\": 269, \"name\": \"User 269 - Tokyo\", \"plot_no\": null, \"street\": \"Kevin Keys\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:43:58\"}, {\"location_id\": 274, \"name\": \"User 274 - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:46:19\"}, {\"location_id\": 279, \"name\": \"User 279 - Tokyo\", \"plot_no\": \"Plot 886\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:40:34\"}, {\"location_id\": 284, \"name\": \"User 284 - Tokyo\", \"plot_no\": null, \"street\": \"Martin Mall\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:41:54\"}, {\"location_id\": 289, \"name\": \"User 289 - Tokyo\", \"plot_no\": null, \"street\": \"Colon Stream\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:47:01\"}, {\"location_id\": 294, \"name\": \"User 294 - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:30:03\"}, {\"location_id\": 299, \"name\": \"User 299 - Tokyo\", \"plot_no\": \"Plot 855\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:37:47\"}, {\"location_id\": 304, \"name\": \"User 304 - Tokyo\", \"plot_no\": \"Plot 124\", \"street\": \"West Bypass\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:39:49\"}, {\"location_id\": 309, \"name\": \"User 309 - Tokyo\", \"plot_no\": \"Plot 43\", \"street\": \"Cruz Valleys\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:33:11\"}, {\"location_id\": 314, \"name\": \"User 314 - Tokyo\", \"plot_no\": null, \"street\": \"Booth Fork\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:38:48\"}, {\"location_id\": 319, \"name\": \"User 319 - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:31:15\"}, {\"location_id\": 324, \"name\": \"User 324 - Tokyo\", \"plot_no\": \"Plot 591\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:40:34\"}, {\"location_id\": 329, \"name\": \"User 329 - Tokyo\", \"plot_no\": \"Plot 239\", \"street\": \"Alan Lane\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:29:42\"}, {\"location_id\": 334, \"name\": \"User 334 - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:30:55\"}, {\"location_id\": 339, \"name\": \"User 339 - Tokyo\", \"plot_no\": \"Plot 192\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:44:31\"}, {\"location_id\": 344, \"name\": \"User 344 - Tokyo\", \"plot_no\": \"Plot 553\", \"street\": \"Burton Vista\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:34:00\"}, {\"location_id\": 349, \"name\": \"User 349 - Tokyo\", \"plot_no\": null, \"street\": \"Chase Falls\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:31:10\"}, {\"location_id\": 354, \"name\": \"User 354 - Tokyo\", \"plot_no\": \"Plot 329\", \"street\": \"Susan Divide\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:50:24\"}, {\"location_id\": 359, \"name\": \"User 359 - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:32:05\"}, {\"location_id\": 364, \"name\": \"User 364 - Tokyo\", \"plot_no\": \"Plot 110\", \"street\": \"Davis Causeway\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:30:05\"}, {\"location_id\": 369, \"name\": \"User 369 - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:38:30\"}, {\"location_id\": 374, \"name\": \"User 374 - Tokyo\", \"plot_no\": \"Plot 966\", \"street\": \"Morgan Extensions\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:42:18\"}, {\"location_id\": 379, \"name\": \"User 379 - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:31:19\"}, {\"location_id\": 384, \"name\": \"User 384 - Tokyo\", \"plot_no\": \"Plot 972\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:47:57\"}, {\"location_id\": 389, \"name\": \"User 389 - Tokyo\", \"plot_no\": null, \"street\": \"Griffith Common\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:47:20\"}, {\"location_id\": 394, \"name\": \"User 394 - Tokyo\", \"plot_no\": null, \"street\": \"Allison Row\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:47:33\"}, {\"location_id\": 399, \"name\": \"User 399 - Tokyo\", \"plot_no\": \"Plot 717\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:37:30\"}, {\"location_id\": 404, \"name\": \"User 404 - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:29:56\"}, {\"location_id\": 409, \"name\": \"User 409 - Tokyo\", \"plot_no\": null, \"street\": \"Nelson Garden\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:44:13\"}, {\"location_id\": 414, \"name\": \"User 414 - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:39:51\"}, {\"location_id\": 419, \"name\": \"User 419 - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:36:17\"}, {\"location_id\": 424, \"name\": \"User 424 - Tokyo\", \"plot_no\": null, \"street\": \"Reid Spur\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:46:50\"}, {\"location_id\": 429, \"name\": \"User 429 - Tokyo\", \"plot_no\": \"Plot 815\", \"street\": \"Timothy Brooks\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:45:07\"}, {\"location_id\": 434, \"name\": \"User 434 - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:34:50\"}, {\"location_id\": 439, \"name\": \"User 439 - Tokyo\", \"plot_no\": null, \"street\": \"Erika Plains\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:40:36\"}, {\"location_id\": 444, \"name\": \"User 444 - Tokyo\", \"plot_no\": \"Plot 368\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:41:30\"}, {\"location_id\": 449, \"name\": \"User 449 - Tokyo\", \"plot_no\": \"Plot 565\", \"street\": \"Rogers Ports\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:31:36\"}, {\"location_id\": 454, \"name\": \"User 454 - Tokyo\", \"plot_no\": \"Plot 600\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:33:25\"}, {\"location_id\": 459, \"name\": \"User 459 - Tokyo\", \"plot_no\": null, \"street\": \"Sandra Dale\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:36:56\"}, {\"location_id\": 464, \"name\": \"User 464 - Tokyo\", \"plot_no\": null, \"street\": \"Juarez Viaduct\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:45:05\"}, {\"location_id\": 469, \"name\": \"User 469 - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:50:24\"}, {\"location_id\": 474, \"name\": \"User 474 - Tokyo\", \"plot_no\": null, \"street\": \"Ryan Cove\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:44:50\"}, {\"location_id\": 479, \"name\": \"User 479 - Tokyo\", \"plot_no\": \"Plot 662\", \"street\": \"Mason Estates\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:30:56\"}, {\"location_id\": 484, \"name\": \"User 484 - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:40:37\"}, {\"location_id\": 489, \"name\": \"User 489 - Tokyo\", \"plot_no\": null, \"street\": \"Lee Station\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:48:18\"}, {\"location_id\": 494, \"name\": \"User 494 - Tokyo\", \"plot_no\": \"Plot 881\", \"street\": \"Kayla Roads\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:32:55\"}, {\"location_id\": 499, \"name\": \"User 499 - Tokyo\", \"plot_no\": \"Plot 580\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:34:49\"}, {\"location_id\": 504, \"name\": \"User 504 - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:35:50\"}, {\"location_id\": 509, \"name\": \"User 509 - Tokyo\", \"plot_no\": null, \"street\": \"Melissa Green\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:44:35\"}, {\"location_id\": 514, \"name\": \"User 514 - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:39:58\"}, {\"location_id\": 519, \"name\": \"User 519 - Tokyo\", \"plot_no\": null, \"street\": \"Randall Throughway\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:34:48\"}, {\"location_id\": 524, \"name\": \"User 524 - Tokyo\", \"plot_no\": \"Plot 9\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:41:25\"}, {\"location_id\": 529, \"name\": \"User 529 - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:49:14\"}, {\"location_id\": 534, \"name\": \"User 534 - Tokyo\", \"plot_no\": \"Plot 287\", \"street\": \"Gardner Mews\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:45:45\"}, {\"location_id\": 539, \"name\": \"User 539 - Tokyo\", \"plot_no\": \"Plot 681\", \"street\": \"Ware Circles\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:40:42\"}, {\"location_id\": 544, \"name\": \"User 544 - Tokyo\", \"plot_no\": null, \"street\": \"Kyle Course\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:35:34\"}, {\"location_id\": 549, \"name\": \"User 549 - Tokyo\", \"plot_no\": \"Plot 702\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:30:13\"}, {\"location_id\": 554, \"name\": \"User 554 - Tokyo\", \"plot_no\": null, \"street\": \"Harvey Burgs\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:47:32\"}, {\"location_id\": 559, \"name\": \"User 559 - Tokyo\", \"plot_no\": \"Plot 398\", \"street\": \"Miller Square\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:41:44\"}, {\"location_id\": 564, \"name\": \"User 564 - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:31:29\"}, {\"location_id\": 569, \"name\": \"User 569 - Tokyo\", \"plot_no\": \"Plot 214\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:49:01\"}, {\"location_id\": 574, \"name\": \"User 574 - Tokyo\", \"plot_no\": \"Plot 380\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:47:49\"}, {\"location_id\": 579, \"name\": \"User 579 - Tokyo\", \"plot_no\": \"Plot 343\", \"street\": \"Mary Squares\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:31:17\"}, {\"location_id\": 584, \"name\": \"User 584 - Tokyo\", \"plot_no\": \"Plot 95\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:38:05\"}, {\"location_id\": 589, \"name\": \"User 589 - Tokyo\", \"plot_no\": \"Plot 469\", \"street\": \"Gardner Prairie\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:47:33\"}, {\"location_id\": 594, \"name\": \"User 594 - Tokyo\", \"plot_no\": \"Plot 579\", \"street\": \"Freeman Falls\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:30:01\"}, {\"location_id\": 599, \"name\": \"User 599 - Tokyo\", \"plot_no\": \"Plot 581\", \"street\": \"Todd Keys\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:39:52\"}, {\"location_id\": 604, \"name\": \"User 604 - Tokyo\", \"plot_no\": \"Plot 908\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:32:10\"}, {\"location_id\": 609, \"name\": \"User 609 - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:35:28\"}, {\"location_id\": 614, \"name\": \"User 614 - Tokyo\", \"plot_no\": null, \"street\": \"Laura Squares\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:35:49\"}, {\"location_id\": 619, \"name\": \"User 619 - Tokyo\", \"plot_no\": null, \"street\": \"Parrish Crossroad\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:50:13\"}, {\"location_id\": 624, \"name\": \"User 624 - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:45:52\"}, {\"location_id\": 629, \"name\": \"User 629 - Tokyo\", \"plot_no\": \"Plot 602\", \"street\": \"Michaela Tunnel\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:42:59\"}, {\"location_id\": 634, \"name\": \"User 634 - Tokyo\", \"plot_no\": null, \"street\": \"Jorge Oval\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:45:21\"}, {\"location_id\": 639, \"name\": \"User 639 - Tokyo\", \"plot_no\": \"Plot 64\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:37:04\"}, {\"location_id\": 644, \"name\": \"User 644 - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:35:59\"}, {\"location_id\": 649, \"name\": \"User 649 - Tokyo\", \"plot_no\": null, \"street\": \"Martin Parkway\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:30:46\"}, {\"location_id\": 654, \"name\": \"User 654 - Tokyo\", \"plot_no\": \"Plot 615\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:30:00\"}, {\"location_id\": 659, \"name\": \"User 659 - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:43:46\"}, {\"location_id\": 664, \"name\": \"User 664 - Tokyo\", \"plot_no\": \"Plot 228\", \"street\": \"Mcclain Summit\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:48:25\"}, {\"location_id\": 669, \"name\": \"User 669 - Tokyo\", \"plot_no\": \"Plot 293\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:39:02\"}, {\"location_id\": 674, \"name\": \"User 674 - Tokyo\", \"plot_no\": \"Plot 259\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:30:37\"}, {\"location_id\": 679, \"name\": \"User 679 - Tokyo\", \"plot_no\": \"Plot 784\", \"street\": \"Jeffery Summit\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:49:01\"}, {\"location_id\": 684, \"name\": \"User 684 - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:30:29\"}, {\"location_id\": 689, \"name\": \"User 689 - Tokyo\", \"plot_no\": \"Plot 469\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:49:51\"}, {\"location_id\": 694, \"name\": \"User 694 - Tokyo\", \"plot_no\": \"Plot 822\", \"street\": \"King Station\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:38:02\"}, {\"location_id\": 699, \"name\": \"User 699 - Tokyo\", \"plot_no\": null, \"street\": \"Hannah Trail\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:42:27\"}, {\"location_id\": 704, \"name\": \"User 704 - Tokyo\", \"plot_no\": null, \"street\": \"Zimmerman Lodge\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:46:22\"}, {\"location_id\": 709, \"name\": \"User 709 - Tokyo\", \"plot_no\": null, \"street\": \"Anderson Stream\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:39:15\"}, {\"location_id\": 714, \"name\": \"User 714 - Tokyo\", \"plot_no\": \"Plot 916\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:34:24\"}, {\"location_id\": 719, \"name\": \"User 719 - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:35:08\"}, {\"location_id\": 724, \"name\": \"User 724 - Tokyo\", \"plot_no\": \"Plot 274\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:31:39\"}, {\"location_id\": 729, \"name\": \"User 729 - Tokyo\", \"plot_no\": \"Plot 925\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:35:48\"}, {\"location_id\": 734, \"name\": \"User 734 - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:50:03\"}, {\"location_id\": 739, \"name\": \"User 739 - Tokyo\", \"plot_no\": null, \"street\": \"Ramirez Rest\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:34:47\"}, {\"location_id\": 744, \"name\": \"User 744 - Tokyo\", \"plot_no\": \"Plot 763\", \"street\": \"Todd Dam\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:33:33\"}, {\"location_id\": 749, \"name\": \"User 749 - Tokyo\", \"plot_no\": null, \"street\": \"Gerald Knoll\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:36:00\"}, {\"location_id\": 754, \"name\": \"User 754 - Tokyo\", \"plot_no\": \"Plot 883\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:45:28\"}, {\"location_id\": 759, \"name\": \"User 759 - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:37:23\"}, {\"location_id\": 764, \"name\": \"User 764 - Tokyo\", \"plot_no\": null, \"street\": \"Jason Run\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:32:11\"}, {\"location_id\": 769, \"name\": \"User 769 - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:30:30\"}, {\"location_id\": 774, \"name\": \"User 774 - Tokyo\", \"plot_no\": null, \"street\": \"Williams Ways\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:45:13\"}, {\"location_id\": 779, \"name\": \"User 779 - Tokyo\", \"plot_no\": \"Plot 767\", \"street\": \"Douglas Junction\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:37:05\"}, {\"location_id\": 784, \"name\": \"User 784 - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:29:34\"}, {\"location_id\": 789, \"name\": \"User 789 - Tokyo\", \"plot_no\": null, \"street\": \"Lindsay Locks\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:44:16\"}, {\"location_id\": 794, \"name\": \"User 794 - Tokyo\", \"plot_no\": \"Plot 26\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:47:38\"}, {\"location_id\": 799, \"name\": \"User 799 - Tokyo\", \"plot_no\": null, \"street\": \"Robert Extensions\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:32:51\"}, {\"location_id\": 802, \"name\": \"User 802 - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:30:48\"}, {\"location_id\": 803, \"name\": \"Servicenow Hq - Tokyo\", \"plot_no\": null, \"street\": \"Janice Landing\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 0, \"sys_created_on\": \"2025-08-27 15:49:29\"}, {\"location_id\": 804, \"name\": \"Servicenow Site A - Tokyo\", \"plot_no\": \"Plot 738\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:47:05\"}, {\"location_id\": 805, \"name\": \"Zebra Partners Hq - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:41:19\"}, {\"location_id\": 806, \"name\": \"Zebra Partners Site A - Tokyo\", \"plot_no\": \"Plot 403\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:38:44\"}, {\"location_id\": 810, \"name\": \"Globex Site A - Tokyo\", \"plot_no\": \"Plot 675\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:47:13\"}, {\"location_id\": 812, \"name\": \"Initech Site A - Tokyo\", \"plot_no\": \"Plot 888\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:39:30\"}, {\"location_id\": 814, \"name\": \"Umbrella Site A - Tokyo\", \"plot_no\": null, \"street\": \"James Plain\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:49:20\"}, {\"location_id\": 822, \"name\": \"Hooli Site A - Tokyo\", \"plot_no\": \"Plot 599\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:49:08\"}, {\"location_id\": 824, \"name\": \"Vehement Capital Partners Site A - Tokyo\", \"plot_no\": null, \"street\": \"Torres Pine\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:32:04\"}, {\"location_id\": 828, \"name\": \"Miller, Monroe And Arroyo Site A - Tokyo\", \"plot_no\": \"Plot 140\", \"street\": \"Ortega Common\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:34:00\"}, {\"location_id\": 829, \"name\": \"Smith, Mcpherson And Hudson Hq - Tokyo\", \"plot_no\": \"Plot 35\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:42:01\"}, {\"location_id\": 831, \"name\": \"Reyes Inc Hq - Tokyo\", \"plot_no\": null, \"street\": \"Ann Burg\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:42:29\"}, {\"location_id\": 833, \"name\": \"Wilson And Sons Hq - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:42:27\"}, {\"location_id\": 837, \"name\": \"Spencer Inc Hq - Tokyo\", \"plot_no\": \"Plot 194\", \"street\": \"Bass Greens\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:48:58\"}, {\"location_id\": 840, \"name\": \"Carrillo Inc Site A - Tokyo\", \"plot_no\": null, \"street\": \"Jensen Alley\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:40:40\"}, {\"location_id\": 841, \"name\": \"Perez, Hartman And Casey Hq - Tokyo\", \"plot_no\": \"Plot 191\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:42:12\"}, {\"location_id\": 843, \"name\": \"Morse-Gomez Hq - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:38:51\"}, {\"location_id\": 847, \"name\": \"Clark And Sons Hq - Tokyo\", \"plot_no\": null, \"street\": \"Newman Wall\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:50:15\"}, {\"location_id\": 853, \"name\": \"Ramos-Case Hq - Tokyo\", \"plot_no\": \"Plot 1\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:40:50\"}, {\"location_id\": 856, \"name\": \"Carson Llc Site A - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:46:41\"}, {\"location_id\": 857, \"name\": \"Griffin, Lloyd And Bryant Hq - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:45:39\"}, {\"location_id\": 858, \"name\": \"Griffin, Lloyd And Bryant Site A - Tokyo\", \"plot_no\": \"Plot 883\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:44:14\"}, {\"location_id\": 871, \"name\": \"Hill, Little And Hernandez Hq - Tokyo\", \"plot_no\": \"Plot 178\", \"street\": \"Paige Prairie\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:29:53\"}, {\"location_id\": 873, \"name\": \"Escobar-Dudley Hq - Tokyo\", \"plot_no\": \"Plot 265\", \"street\": \"Aguirre Tunnel\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:48:46\"}, {\"location_id\": 874, \"name\": \"Escobar-Dudley Site A - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:46:27\"}, {\"location_id\": 884, \"name\": \"Thomas Group Site A - Tokyo\", \"plot_no\": \"Plot 107\", \"street\": \"Alvarez Parkways\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 0, \"sys_created_on\": \"2025-08-27 15:34:30\"}, {\"location_id\": 890, \"name\": \"Avery Ltd Site A - Tokyo\", \"plot_no\": null, \"street\": \"Myers Square\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:37:33\"}, {\"location_id\": 893, \"name\": \"Velez, Taylor And Fuller Hq - Tokyo\", \"plot_no\": \"Plot 209\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:35:32\"}, {\"location_id\": 900, \"name\": \"Hernandez, Barnett And Stewart Site A - Tokyo\", \"plot_no\": null, \"street\": \"Shepherd Orchard\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:31:49\"}, {\"location_id\": 902, \"name\": \"Owen, Leonard And Chapman Site A - Tokyo\", \"plot_no\": null, \"street\": \"Marc Turnpike\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:38:41\"}, {\"location_id\": 905, \"name\": \"Klein, Black And Wood Hq - Tokyo\", \"plot_no\": \"Plot 883\", \"street\": \"Clark Walks\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:29:59\"}]",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "type": "ai_message",
+          "content": "",
+          "usage_metadata": {
+            "input_tokens": 17081,
+            "output_tokens": 1565,
+            "total_tokens": 18646,
+            "input_token_details": {
+              "audio": 0,
+              "cache_read": 2944
+            },
+            "output_token_details": {
+              "audio": 0,
+              "reasoning": 1536
+            }
+          },
+          "response_metadata": {
+            "token_usage": {
+              "completion_tokens": 1565,
+              "prompt_tokens": 17081,
+              "total_tokens": 18646,
+              "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 1536,
+                "rejected_prediction_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 2944
+              },
+              "latency_checkpoint": {
+                "engine_tbt_ms": 12,
+                "engine_ttft_ms": 528,
+                "engine_ttlt_ms": 20244,
+                "pre_inference_ms": 304,
+                "service_tbt_ms": 12,
+                "service_ttft_ms": 1035,
+                "service_ttlt_ms": 20749,
+                "total_duration_ms": 20456,
+                "user_visible_ttft_ms": 731
+              }
+            },
+            "model_provider": "openai",
+            "model_name": "Azure/gpt-5-2025-08-07",
+            "system_fingerprint": null,
+            "id": "chatcmpl-DqzN8VlsobVo1qxDcz6ij2ydorndS",
+            "service_tier": "default",
+            "finish_reason": "tool_calls",
+            "logprobs": null
+          },
+          "tool_calls": [
+            {
+              "name": "update_location",
+              "args": {
+                "location_id": 803,
+                "active": true
+              }
+            }
+          ]
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "update_location",
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"location_id\": 803, \"name\": \"Servicenow Hq - Tokyo\", \"plot_no\": null, \"street\": \"Janice Landing\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:49:29\", \"sys_updated_on\": \"2026-06-15 11:02:43\"}",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "type": "ai_message",
+          "content": "",
+          "usage_metadata": {
+            "input_tokens": 17245,
+            "output_tokens": 1245,
+            "total_tokens": 18490,
+            "input_token_details": {
+              "audio": 0,
+              "cache_read": 16896
+            },
+            "output_token_details": {
+              "audio": 0,
+              "reasoning": 1216
+            }
+          },
+          "response_metadata": {
+            "token_usage": {
+              "completion_tokens": 1245,
+              "prompt_tokens": 17245,
+              "total_tokens": 18490,
+              "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 1216,
+                "rejected_prediction_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 16896
+              },
+              "latency_checkpoint": {
+                "engine_tbt_ms": 12,
+                "engine_ttft_ms": 365,
+                "engine_ttlt_ms": 15863,
+                "pre_inference_ms": 311,
+                "service_tbt_ms": 12,
+                "service_ttft_ms": 872,
+                "service_ttlt_ms": 16369,
+                "total_duration_ms": 16069,
+                "user_visible_ttft_ms": 561
+              }
+            },
+            "model_provider": "openai",
+            "model_name": "Azure/gpt-5-2025-08-07",
+            "system_fingerprint": null,
+            "id": "chatcmpl-DqzNUiEcKBpF8uDeYWDwPmuzDxEWD",
+            "service_tier": "default",
+            "finish_reason": "tool_calls",
+            "logprobs": null
+          },
+          "tool_calls": [
+            {
+              "name": "update_location",
+              "args": {
+                "location_id": 804,
+                "active": false
+              }
+            }
+          ]
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "update_location",
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"location_id\": 804, \"name\": \"Servicenow Site A - Tokyo\", \"plot_no\": \"Plot 738\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 0, \"sys_created_on\": \"2025-08-27 15:47:05\", \"sys_updated_on\": \"2026-06-15 11:03:02\"}",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "type": "ai_message",
+          "content": "",
+          "usage_metadata": {
+            "input_tokens": 17409,
+            "output_tokens": 672,
+            "total_tokens": 18081,
+            "input_token_details": {
+              "audio": 0,
+              "cache_read": 17152
+            },
+            "output_token_details": {
+              "audio": 0,
+              "reasoning": 640
+            }
+          },
+          "response_metadata": {
+            "token_usage": {
+              "completion_tokens": 672,
+              "prompt_tokens": 17409,
+              "total_tokens": 18081,
+              "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 640,
+                "rejected_prediction_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 17152
+              },
+              "latency_checkpoint": {
+                "engine_tbt_ms": 15,
+                "engine_ttft_ms": 365,
+                "engine_ttlt_ms": 10696,
+                "pre_inference_ms": 240,
+                "service_tbt_ms": 15,
+                "service_ttft_ms": 783,
+                "service_ttlt_ms": 11113,
+                "total_duration_ms": 10883,
+                "user_visible_ttft_ms": 543
+              }
+            },
+            "model_provider": "openai",
+            "model_name": "Azure/gpt-5-2025-08-07",
+            "system_fingerprint": null,
+            "id": "chatcmpl-DqzNnH9M4RnfNlMMPCvOIdSyKWmbf",
+            "service_tier": "default",
+            "finish_reason": "tool_calls",
+            "logprobs": null
+          },
+          "tool_calls": [
+            {
+              "name": "retrieve_installed_products",
+              "args": {
+                "account_id": 1,
+                "location_id": 804
+              }
+            }
+          ]
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "retrieve_installed_products",
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "[{\"installed_product_id\": 2, \"account_id\": 1, \"product_id\": 130, \"location_id\": 804, \"serial_number\": \"P130-588531-9296\", \"status\": \"in_use\", \"warranty_end\": \"2028-01-14\", \"sys_created_on\": \"2025-08-27 15:37:49\"}, {\"installed_product_id\": 3, \"account_id\": 1, \"product_id\": 128, \"location_id\": 804, \"serial_number\": \"P128-889629-8734\", \"status\": \"in_use\", \"warranty_end\": \"2028-04-13\", \"sys_created_on\": \"2025-08-27 15:32:21\"}, {\"installed_product_id\": 4, \"account_id\": 1, \"product_id\": 237, \"location_id\": 804, \"serial_number\": \"P237-136518-2272\", \"status\": \"in_stock\", \"warranty_end\": \"2026-10-21\", \"sys_created_on\": \"2025-08-27 15:44:15\"}, {\"installed_product_id\": 5, \"account_id\": 1, \"product_id\": 221, \"location_id\": 804, \"serial_number\": \"P221-749826-2677\", \"status\": \"in_use\", \"warranty_end\": \"2028-04-13\", \"sys_created_on\": \"2025-08-27 15:43:19\"}]",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "type": "ai_message",
+          "content": "",
+          "usage_metadata": {
+            "input_tokens": 17823,
+            "output_tokens": 994,
+            "total_tokens": 18817,
+            "input_token_details": {
+              "audio": 0,
+              "cache_read": 1920
+            },
+            "output_token_details": {
+              "audio": 0,
+              "reasoning": 960
+            }
+          },
+          "response_metadata": {
+            "token_usage": {
+              "completion_tokens": 994,
+              "prompt_tokens": 17823,
+              "total_tokens": 18817,
+              "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 960,
+                "rejected_prediction_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 1920
+              },
+              "latency_checkpoint": {
+                "engine_tbt_ms": 10,
+                "engine_ttft_ms": 849,
+                "engine_ttlt_ms": 11539,
+                "pre_inference_ms": 302,
+                "service_tbt_ms": 10,
+                "service_ttft_ms": 1503,
+                "service_ttlt_ms": 12167,
+                "total_duration_ms": 11875,
+                "user_visible_ttft_ms": 1202
+              }
+            },
+            "model_provider": "openai",
+            "model_name": "Azure/gpt-5-2025-08-07",
+            "system_fingerprint": null,
+            "id": "chatcmpl-DqzNzjQzDE2ATR0o61QYqA2a1pJYS",
+            "service_tier": "default",
+            "finish_reason": "tool_calls",
+            "logprobs": null
+          },
+          "tool_calls": [
+            {
+              "name": "update_installed_product_details",
+              "args": {
+                "installed_product_id": 4,
+                "location_id": 803
+              }
+            }
+          ]
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "update_installed_product_details",
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"installed_product_id\": 4, \"account_id\": 1, \"product_id\": 237, \"location_id\": 803, \"serial_number\": \"P237-136518-2272\", \"status\": \"in_stock\", \"warranty_end\": \"2026-10-21\", \"sys_created_on\": \"2025-08-27 15:44:15\", \"sys_updated_on\": \"2026-06-15 11:03:29\"}",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "type": "ai_message",
+          "content": "I\u2019ve updated ServiceNow\u2019s Tokyo locations and moved the specified asset accordingly.\n\nWhat I did:\n- Account: ServiceNow (account_id: 1)\n- Locations\n  - Servicenow Hq - Tokyo (location_id: 803): set active = true\n  - Servicenow Site A - Tokyo (location_id: 804): set active = false\n- Installed product move\n  - Found asset matching \u201c\u20262272\u201d: installed_product_id: 4, serial_number: P237-136518-2272 (account_id: 1, product_id: 237)\n  - Moved from location_id 804 to location_id 803\n  - Status left unchanged (in_stock), warranty_end: 2026-10-21\n\nIf you\u2019d like this asset marked as in_use at the new site or need any other ServiceNow Tokyo assets moved, tell me which ones and I\u2019ll update them.",
+          "usage_metadata": {
+            "input_tokens": 18005,
+            "output_tokens": 1800,
+            "total_tokens": 19805,
+            "input_token_details": {
+              "audio": 0,
+              "cache_read": 17280
+            },
+            "output_token_details": {
+              "audio": 0,
+              "reasoning": 1600
+            }
+          },
+          "response_metadata": {
+            "token_usage": {
+              "completion_tokens": 1800,
+              "prompt_tokens": 18005,
+              "total_tokens": 19805,
+              "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 1600,
+                "rejected_prediction_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 17280
+              },
+              "latency_checkpoint": {
+                "engine_tbt_ms": 15,
+                "engine_ttft_ms": 361,
+                "engine_ttlt_ms": 28252,
+                "pre_inference_ms": 275,
+                "service_tbt_ms": 15,
+                "service_ttft_ms": 820,
+                "service_ttlt_ms": 28738,
+                "total_duration_ms": 28493,
+                "user_visible_ttft_ms": 546
+              }
+            },
+            "model_provider": "openai",
+            "model_name": "Azure/gpt-5-2025-08-07",
+            "system_fingerprint": null,
+            "id": "chatcmpl-DqzOGCsTbRJKvQu1KNvwST1Ro89K8",
+            "service_tier": "default",
+            "finish_reason": "stop",
+            "logprobs": null
+          },
+          "tool_calls": []
+        }
+      ],
+      "tools_used": [
+        "find_account",
+        "find_locations",
+        "update_location",
+        "retrieve_installed_products",
+        "update_installed_product_details"
+      ],
+      "tool_results": [
+        {
+          "tool_name": "find_account",
+          "arguments": {
+            "name": "ServiceNow"
+          },
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"account_id\": 1, \"name\": \"ServiceNow\", \"account_type\": \"internal\", \"email_domain\": \"servicenow.com\", \"active\": 1}",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "tool_name": "find_locations",
+          "arguments": {
+            "city": "tokyo",
+            "country": "japan"
+          },
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "[{\"location_id\": 4, \"name\": \"User 4 - Tokyo\", \"plot_no\": \"Plot 229\", \"street\": \"Cristian Greens\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:41:29\"}, {\"location_id\": 9, \"name\": \"User 9 - Tokyo\", \"plot_no\": \"Plot 125\", \"street\": \"Ross Keys\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:43:47\"}, {\"location_id\": 14, \"name\": \"User 14 - Tokyo\", \"plot_no\": null, \"street\": \"Tammy Hollow\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:39:53\"}, {\"location_id\": 19, \"name\": \"User 19 - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:33:43\"}, {\"location_id\": 24, \"name\": \"User 24 - Tokyo\", \"plot_no\": \"Plot 569\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:40:14\"}, {\"location_id\": 29, \"name\": \"User 29 - Tokyo\", \"plot_no\": \"Plot 833\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:33:30\"}, {\"location_id\": 34, \"name\": \"User 34 - Tokyo\", \"plot_no\": \"Plot 157\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:33:37\"}, {\"location_id\": 39, \"name\": \"User 39 - Tokyo\", \"plot_no\": \"Plot 312\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:34:59\"}, {\"location_id\": 44, \"name\": \"User 44 - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:46:26\"}, {\"location_id\": 49, \"name\": \"User 49 - Tokyo\", \"plot_no\": \"Plot 45\", \"street\": \"Obrien Mill\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:46:22\"}, {\"location_id\": 54, \"name\": \"User 54 - Tokyo\", \"plot_no\": null, \"street\": \"Doyle Fields\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:42:16\"}, {\"location_id\": 59, \"name\": \"User 59 - Tokyo\", \"plot_no\": null, \"street\": \"Amanda Isle\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:45:37\"}, {\"location_id\": 64, \"name\": \"User 64 - Tokyo\", \"plot_no\": null, \"street\": \"Megan Divide\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:46:59\"}, {\"location_id\": 69, \"name\": \"User 69 - Tokyo\", \"plot_no\": null, \"street\": \"Kelley Rapid\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:38:57\"}, {\"location_id\": 74, \"name\": \"User 74 - Tokyo\", \"plot_no\": \"Plot 820\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:31:58\"}, {\"location_id\": 79, \"name\": \"User 79 - Tokyo\", \"plot_no\": \"Plot 73\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:43:16\"}, {\"location_id\": 84, \"name\": \"User 84 - Tokyo\", \"plot_no\": \"Plot 619\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:39:49\"}, {\"location_id\": 89, \"name\": \"User 89 - Tokyo\", \"plot_no\": \"Plot 125\", \"street\": \"Hernandez Stream\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:36:33\"}, {\"location_id\": 94, \"name\": \"User 94 - Tokyo\", \"plot_no\": \"Plot 41\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:35:04\"}, {\"location_id\": 99, \"name\": \"User 99 - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:38:05\"}, {\"location_id\": 104, \"name\": \"User 104 - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:30:55\"}, {\"location_id\": 109, \"name\": \"User 109 - Tokyo\", \"plot_no\": \"Plot 435\", \"street\": \"Sherri Flat\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:34:58\"}, {\"location_id\": 114, \"name\": \"User 114 - Tokyo\", \"plot_no\": \"Plot 49\", \"street\": \"Gilbert Square\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:41:37\"}, {\"location_id\": 119, \"name\": \"User 119 - Tokyo\", \"plot_no\": \"Plot 700\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:35:06\"}, {\"location_id\": 124, \"name\": \"User 124 - Tokyo\", \"plot_no\": null, \"street\": \"Joshua Squares\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:50:15\"}, {\"location_id\": 129, \"name\": \"User 129 - Tokyo\", \"plot_no\": \"Plot 507\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:50:16\"}, {\"location_id\": 134, \"name\": \"User 134 - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:36:28\"}, {\"location_id\": 139, \"name\": \"User 139 - Tokyo\", \"plot_no\": null, \"street\": \"Taylor Island\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:48:26\"}, {\"location_id\": 144, \"name\": \"User 144 - Tokyo\", \"plot_no\": \"Plot 55\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:43:03\"}, {\"location_id\": 149, \"name\": \"User 149 - Tokyo\", \"plot_no\": \"Plot 358\", \"street\": \"Butler Mountains\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:38:59\"}, {\"location_id\": 154, \"name\": \"User 154 - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:39:12\"}, {\"location_id\": 159, \"name\": \"User 159 - Tokyo\", \"plot_no\": \"Plot 77\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:38:41\"}, {\"location_id\": 164, \"name\": \"User 164 - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:37:16\"}, {\"location_id\": 169, \"name\": \"User 169 - Tokyo\", \"plot_no\": \"Plot 902\", \"street\": \"Johnson Ridges\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:36:06\"}, {\"location_id\": 174, \"name\": \"User 174 - Tokyo\", \"plot_no\": \"Plot 599\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:44:20\"}, {\"location_id\": 179, \"name\": \"User 179 - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:38:37\"}, {\"location_id\": 184, \"name\": \"User 184 - Tokyo\", \"plot_no\": null, \"street\": \"Hernandez Land\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:37:29\"}, {\"location_id\": 189, \"name\": \"User 189 - Tokyo\", \"plot_no\": \"Plot 216\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:41:57\"}, {\"location_id\": 194, \"name\": \"User 194 - Tokyo\", \"plot_no\": null, \"street\": \"Mcmillan Pine\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:49:00\"}, {\"location_id\": 199, \"name\": \"User 199 - Tokyo\", \"plot_no\": null, \"street\": \"Jones Mount\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:36:15\"}, {\"location_id\": 204, \"name\": \"User 204 - Tokyo\", \"plot_no\": \"Plot 267\", \"street\": \"Doyle Islands\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:40:15\"}, {\"location_id\": 209, \"name\": \"User 209 - Tokyo\", \"plot_no\": \"Plot 19\", \"street\": \"Wood Track\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:31:42\"}, {\"location_id\": 214, \"name\": \"User 214 - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:44:17\"}, {\"location_id\": 219, \"name\": \"User 219 - Tokyo\", \"plot_no\": \"Plot 551\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:43:42\"}, {\"location_id\": 224, \"name\": \"User 224 - Tokyo\", \"plot_no\": null, \"street\": \"Mendez Estate\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:36:09\"}, {\"location_id\": 229, \"name\": \"User 229 - Tokyo\", \"plot_no\": \"Plot 286\", \"street\": \"Yang Field\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:35:00\"}, {\"location_id\": 234, \"name\": \"User 234 - Tokyo\", \"plot_no\": null, \"street\": \"David Haven\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:32:02\"}, {\"location_id\": 239, \"name\": \"User 239 - Tokyo\", \"plot_no\": \"Plot 989\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:47:47\"}, {\"location_id\": 244, \"name\": \"User 244 - Tokyo\", \"plot_no\": \"Plot 584\", \"street\": \"Haney Creek\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:37:59\"}, {\"location_id\": 249, \"name\": \"User 249 - Tokyo\", \"plot_no\": null, \"street\": \"Tiffany Circle\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:29:34\"}, {\"location_id\": 254, \"name\": \"User 254 - Tokyo\", \"plot_no\": \"Plot 375\", \"street\": \"Stephen Avenue\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:37:34\"}, {\"location_id\": 259, \"name\": \"User 259 - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:46:54\"}, {\"location_id\": 264, \"name\": \"User 264 - Tokyo\", \"plot_no\": \"Plot 994\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:30:19\"}, {\"location_id\": 269, \"name\": \"User 269 - Tokyo\", \"plot_no\": null, \"street\": \"Kevin Keys\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:43:58\"}, {\"location_id\": 274, \"name\": \"User 274 - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:46:19\"}, {\"location_id\": 279, \"name\": \"User 279 - Tokyo\", \"plot_no\": \"Plot 886\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:40:34\"}, {\"location_id\": 284, \"name\": \"User 284 - Tokyo\", \"plot_no\": null, \"street\": \"Martin Mall\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:41:54\"}, {\"location_id\": 289, \"name\": \"User 289 - Tokyo\", \"plot_no\": null, \"street\": \"Colon Stream\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:47:01\"}, {\"location_id\": 294, \"name\": \"User 294 - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:30:03\"}, {\"location_id\": 299, \"name\": \"User 299 - Tokyo\", \"plot_no\": \"Plot 855\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:37:47\"}, {\"location_id\": 304, \"name\": \"User 304 - Tokyo\", \"plot_no\": \"Plot 124\", \"street\": \"West Bypass\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:39:49\"}, {\"location_id\": 309, \"name\": \"User 309 - Tokyo\", \"plot_no\": \"Plot 43\", \"street\": \"Cruz Valleys\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:33:11\"}, {\"location_id\": 314, \"name\": \"User 314 - Tokyo\", \"plot_no\": null, \"street\": \"Booth Fork\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:38:48\"}, {\"location_id\": 319, \"name\": \"User 319 - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:31:15\"}, {\"location_id\": 324, \"name\": \"User 324 - Tokyo\", \"plot_no\": \"Plot 591\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:40:34\"}, {\"location_id\": 329, \"name\": \"User 329 - Tokyo\", \"plot_no\": \"Plot 239\", \"street\": \"Alan Lane\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:29:42\"}, {\"location_id\": 334, \"name\": \"User 334 - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:30:55\"}, {\"location_id\": 339, \"name\": \"User 339 - Tokyo\", \"plot_no\": \"Plot 192\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:44:31\"}, {\"location_id\": 344, \"name\": \"User 344 - Tokyo\", \"plot_no\": \"Plot 553\", \"street\": \"Burton Vista\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:34:00\"}, {\"location_id\": 349, \"name\": \"User 349 - Tokyo\", \"plot_no\": null, \"street\": \"Chase Falls\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:31:10\"}, {\"location_id\": 354, \"name\": \"User 354 - Tokyo\", \"plot_no\": \"Plot 329\", \"street\": \"Susan Divide\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:50:24\"}, {\"location_id\": 359, \"name\": \"User 359 - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:32:05\"}, {\"location_id\": 364, \"name\": \"User 364 - Tokyo\", \"plot_no\": \"Plot 110\", \"street\": \"Davis Causeway\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:30:05\"}, {\"location_id\": 369, \"name\": \"User 369 - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:38:30\"}, {\"location_id\": 374, \"name\": \"User 374 - Tokyo\", \"plot_no\": \"Plot 966\", \"street\": \"Morgan Extensions\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:42:18\"}, {\"location_id\": 379, \"name\": \"User 379 - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:31:19\"}, {\"location_id\": 384, \"name\": \"User 384 - Tokyo\", \"plot_no\": \"Plot 972\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:47:57\"}, {\"location_id\": 389, \"name\": \"User 389 - Tokyo\", \"plot_no\": null, \"street\": \"Griffith Common\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:47:20\"}, {\"location_id\": 394, \"name\": \"User 394 - Tokyo\", \"plot_no\": null, \"street\": \"Allison Row\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:47:33\"}, {\"location_id\": 399, \"name\": \"User 399 - Tokyo\", \"plot_no\": \"Plot 717\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:37:30\"}, {\"location_id\": 404, \"name\": \"User 404 - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:29:56\"}, {\"location_id\": 409, \"name\": \"User 409 - Tokyo\", \"plot_no\": null, \"street\": \"Nelson Garden\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:44:13\"}, {\"location_id\": 414, \"name\": \"User 414 - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:39:51\"}, {\"location_id\": 419, \"name\": \"User 419 - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:36:17\"}, {\"location_id\": 424, \"name\": \"User 424 - Tokyo\", \"plot_no\": null, \"street\": \"Reid Spur\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:46:50\"}, {\"location_id\": 429, \"name\": \"User 429 - Tokyo\", \"plot_no\": \"Plot 815\", \"street\": \"Timothy Brooks\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:45:07\"}, {\"location_id\": 434, \"name\": \"User 434 - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:34:50\"}, {\"location_id\": 439, \"name\": \"User 439 - Tokyo\", \"plot_no\": null, \"street\": \"Erika Plains\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:40:36\"}, {\"location_id\": 444, \"name\": \"User 444 - Tokyo\", \"plot_no\": \"Plot 368\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:41:30\"}, {\"location_id\": 449, \"name\": \"User 449 - Tokyo\", \"plot_no\": \"Plot 565\", \"street\": \"Rogers Ports\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:31:36\"}, {\"location_id\": 454, \"name\": \"User 454 - Tokyo\", \"plot_no\": \"Plot 600\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:33:25\"}, {\"location_id\": 459, \"name\": \"User 459 - Tokyo\", \"plot_no\": null, \"street\": \"Sandra Dale\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:36:56\"}, {\"location_id\": 464, \"name\": \"User 464 - Tokyo\", \"plot_no\": null, \"street\": \"Juarez Viaduct\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:45:05\"}, {\"location_id\": 469, \"name\": \"User 469 - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:50:24\"}, {\"location_id\": 474, \"name\": \"User 474 - Tokyo\", \"plot_no\": null, \"street\": \"Ryan Cove\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:44:50\"}, {\"location_id\": 479, \"name\": \"User 479 - Tokyo\", \"plot_no\": \"Plot 662\", \"street\": \"Mason Estates\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:30:56\"}, {\"location_id\": 484, \"name\": \"User 484 - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:40:37\"}, {\"location_id\": 489, \"name\": \"User 489 - Tokyo\", \"plot_no\": null, \"street\": \"Lee Station\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:48:18\"}, {\"location_id\": 494, \"name\": \"User 494 - Tokyo\", \"plot_no\": \"Plot 881\", \"street\": \"Kayla Roads\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:32:55\"}, {\"location_id\": 499, \"name\": \"User 499 - Tokyo\", \"plot_no\": \"Plot 580\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:34:49\"}, {\"location_id\": 504, \"name\": \"User 504 - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:35:50\"}, {\"location_id\": 509, \"name\": \"User 509 - Tokyo\", \"plot_no\": null, \"street\": \"Melissa Green\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:44:35\"}, {\"location_id\": 514, \"name\": \"User 514 - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:39:58\"}, {\"location_id\": 519, \"name\": \"User 519 - Tokyo\", \"plot_no\": null, \"street\": \"Randall Throughway\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:34:48\"}, {\"location_id\": 524, \"name\": \"User 524 - Tokyo\", \"plot_no\": \"Plot 9\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:41:25\"}, {\"location_id\": 529, \"name\": \"User 529 - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:49:14\"}, {\"location_id\": 534, \"name\": \"User 534 - Tokyo\", \"plot_no\": \"Plot 287\", \"street\": \"Gardner Mews\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:45:45\"}, {\"location_id\": 539, \"name\": \"User 539 - Tokyo\", \"plot_no\": \"Plot 681\", \"street\": \"Ware Circles\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:40:42\"}, {\"location_id\": 544, \"name\": \"User 544 - Tokyo\", \"plot_no\": null, \"street\": \"Kyle Course\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:35:34\"}, {\"location_id\": 549, \"name\": \"User 549 - Tokyo\", \"plot_no\": \"Plot 702\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:30:13\"}, {\"location_id\": 554, \"name\": \"User 554 - Tokyo\", \"plot_no\": null, \"street\": \"Harvey Burgs\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:47:32\"}, {\"location_id\": 559, \"name\": \"User 559 - Tokyo\", \"plot_no\": \"Plot 398\", \"street\": \"Miller Square\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:41:44\"}, {\"location_id\": 564, \"name\": \"User 564 - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:31:29\"}, {\"location_id\": 569, \"name\": \"User 569 - Tokyo\", \"plot_no\": \"Plot 214\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:49:01\"}, {\"location_id\": 574, \"name\": \"User 574 - Tokyo\", \"plot_no\": \"Plot 380\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:47:49\"}, {\"location_id\": 579, \"name\": \"User 579 - Tokyo\", \"plot_no\": \"Plot 343\", \"street\": \"Mary Squares\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:31:17\"}, {\"location_id\": 584, \"name\": \"User 584 - Tokyo\", \"plot_no\": \"Plot 95\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:38:05\"}, {\"location_id\": 589, \"name\": \"User 589 - Tokyo\", \"plot_no\": \"Plot 469\", \"street\": \"Gardner Prairie\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:47:33\"}, {\"location_id\": 594, \"name\": \"User 594 - Tokyo\", \"plot_no\": \"Plot 579\", \"street\": \"Freeman Falls\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:30:01\"}, {\"location_id\": 599, \"name\": \"User 599 - Tokyo\", \"plot_no\": \"Plot 581\", \"street\": \"Todd Keys\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:39:52\"}, {\"location_id\": 604, \"name\": \"User 604 - Tokyo\", \"plot_no\": \"Plot 908\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:32:10\"}, {\"location_id\": 609, \"name\": \"User 609 - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:35:28\"}, {\"location_id\": 614, \"name\": \"User 614 - Tokyo\", \"plot_no\": null, \"street\": \"Laura Squares\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:35:49\"}, {\"location_id\": 619, \"name\": \"User 619 - Tokyo\", \"plot_no\": null, \"street\": \"Parrish Crossroad\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:50:13\"}, {\"location_id\": 624, \"name\": \"User 624 - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:45:52\"}, {\"location_id\": 629, \"name\": \"User 629 - Tokyo\", \"plot_no\": \"Plot 602\", \"street\": \"Michaela Tunnel\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:42:59\"}, {\"location_id\": 634, \"name\": \"User 634 - Tokyo\", \"plot_no\": null, \"street\": \"Jorge Oval\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:45:21\"}, {\"location_id\": 639, \"name\": \"User 639 - Tokyo\", \"plot_no\": \"Plot 64\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:37:04\"}, {\"location_id\": 644, \"name\": \"User 644 - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:35:59\"}, {\"location_id\": 649, \"name\": \"User 649 - Tokyo\", \"plot_no\": null, \"street\": \"Martin Parkway\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:30:46\"}, {\"location_id\": 654, \"name\": \"User 654 - Tokyo\", \"plot_no\": \"Plot 615\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:30:00\"}, {\"location_id\": 659, \"name\": \"User 659 - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:43:46\"}, {\"location_id\": 664, \"name\": \"User 664 - Tokyo\", \"plot_no\": \"Plot 228\", \"street\": \"Mcclain Summit\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:48:25\"}, {\"location_id\": 669, \"name\": \"User 669 - Tokyo\", \"plot_no\": \"Plot 293\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:39:02\"}, {\"location_id\": 674, \"name\": \"User 674 - Tokyo\", \"plot_no\": \"Plot 259\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:30:37\"}, {\"location_id\": 679, \"name\": \"User 679 - Tokyo\", \"plot_no\": \"Plot 784\", \"street\": \"Jeffery Summit\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:49:01\"}, {\"location_id\": 684, \"name\": \"User 684 - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:30:29\"}, {\"location_id\": 689, \"name\": \"User 689 - Tokyo\", \"plot_no\": \"Plot 469\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:49:51\"}, {\"location_id\": 694, \"name\": \"User 694 - Tokyo\", \"plot_no\": \"Plot 822\", \"street\": \"King Station\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:38:02\"}, {\"location_id\": 699, \"name\": \"User 699 - Tokyo\", \"plot_no\": null, \"street\": \"Hannah Trail\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:42:27\"}, {\"location_id\": 704, \"name\": \"User 704 - Tokyo\", \"plot_no\": null, \"street\": \"Zimmerman Lodge\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:46:22\"}, {\"location_id\": 709, \"name\": \"User 709 - Tokyo\", \"plot_no\": null, \"street\": \"Anderson Stream\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:39:15\"}, {\"location_id\": 714, \"name\": \"User 714 - Tokyo\", \"plot_no\": \"Plot 916\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:34:24\"}, {\"location_id\": 719, \"name\": \"User 719 - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:35:08\"}, {\"location_id\": 724, \"name\": \"User 724 - Tokyo\", \"plot_no\": \"Plot 274\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:31:39\"}, {\"location_id\": 729, \"name\": \"User 729 - Tokyo\", \"plot_no\": \"Plot 925\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:35:48\"}, {\"location_id\": 734, \"name\": \"User 734 - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:50:03\"}, {\"location_id\": 739, \"name\": \"User 739 - Tokyo\", \"plot_no\": null, \"street\": \"Ramirez Rest\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:34:47\"}, {\"location_id\": 744, \"name\": \"User 744 - Tokyo\", \"plot_no\": \"Plot 763\", \"street\": \"Todd Dam\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:33:33\"}, {\"location_id\": 749, \"name\": \"User 749 - Tokyo\", \"plot_no\": null, \"street\": \"Gerald Knoll\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:36:00\"}, {\"location_id\": 754, \"name\": \"User 754 - Tokyo\", \"plot_no\": \"Plot 883\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:45:28\"}, {\"location_id\": 759, \"name\": \"User 759 - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:37:23\"}, {\"location_id\": 764, \"name\": \"User 764 - Tokyo\", \"plot_no\": null, \"street\": \"Jason Run\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:32:11\"}, {\"location_id\": 769, \"name\": \"User 769 - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:30:30\"}, {\"location_id\": 774, \"name\": \"User 774 - Tokyo\", \"plot_no\": null, \"street\": \"Williams Ways\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:45:13\"}, {\"location_id\": 779, \"name\": \"User 779 - Tokyo\", \"plot_no\": \"Plot 767\", \"street\": \"Douglas Junction\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:37:05\"}, {\"location_id\": 784, \"name\": \"User 784 - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:29:34\"}, {\"location_id\": 789, \"name\": \"User 789 - Tokyo\", \"plot_no\": null, \"street\": \"Lindsay Locks\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:44:16\"}, {\"location_id\": 794, \"name\": \"User 794 - Tokyo\", \"plot_no\": \"Plot 26\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:47:38\"}, {\"location_id\": 799, \"name\": \"User 799 - Tokyo\", \"plot_no\": null, \"street\": \"Robert Extensions\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:32:51\"}, {\"location_id\": 802, \"name\": \"User 802 - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:30:48\"}, {\"location_id\": 803, \"name\": \"Servicenow Hq - Tokyo\", \"plot_no\": null, \"street\": \"Janice Landing\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 0, \"sys_created_on\": \"2025-08-27 15:49:29\"}, {\"location_id\": 804, \"name\": \"Servicenow Site A - Tokyo\", \"plot_no\": \"Plot 738\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:47:05\"}, {\"location_id\": 805, \"name\": \"Zebra Partners Hq - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:41:19\"}, {\"location_id\": 806, \"name\": \"Zebra Partners Site A - Tokyo\", \"plot_no\": \"Plot 403\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:38:44\"}, {\"location_id\": 810, \"name\": \"Globex Site A - Tokyo\", \"plot_no\": \"Plot 675\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:47:13\"}, {\"location_id\": 812, \"name\": \"Initech Site A - Tokyo\", \"plot_no\": \"Plot 888\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:39:30\"}, {\"location_id\": 814, \"name\": \"Umbrella Site A - Tokyo\", \"plot_no\": null, \"street\": \"James Plain\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:49:20\"}, {\"location_id\": 822, \"name\": \"Hooli Site A - Tokyo\", \"plot_no\": \"Plot 599\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:49:08\"}, {\"location_id\": 824, \"name\": \"Vehement Capital Partners Site A - Tokyo\", \"plot_no\": null, \"street\": \"Torres Pine\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:32:04\"}, {\"location_id\": 828, \"name\": \"Miller, Monroe And Arroyo Site A - Tokyo\", \"plot_no\": \"Plot 140\", \"street\": \"Ortega Common\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:34:00\"}, {\"location_id\": 829, \"name\": \"Smith, Mcpherson And Hudson Hq - Tokyo\", \"plot_no\": \"Plot 35\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:42:01\"}, {\"location_id\": 831, \"name\": \"Reyes Inc Hq - Tokyo\", \"plot_no\": null, \"street\": \"Ann Burg\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:42:29\"}, {\"location_id\": 833, \"name\": \"Wilson And Sons Hq - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:42:27\"}, {\"location_id\": 837, \"name\": \"Spencer Inc Hq - Tokyo\", \"plot_no\": \"Plot 194\", \"street\": \"Bass Greens\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:48:58\"}, {\"location_id\": 840, \"name\": \"Carrillo Inc Site A - Tokyo\", \"plot_no\": null, \"street\": \"Jensen Alley\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:40:40\"}, {\"location_id\": 841, \"name\": \"Perez, Hartman And Casey Hq - Tokyo\", \"plot_no\": \"Plot 191\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:42:12\"}, {\"location_id\": 843, \"name\": \"Morse-Gomez Hq - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:38:51\"}, {\"location_id\": 847, \"name\": \"Clark And Sons Hq - Tokyo\", \"plot_no\": null, \"street\": \"Newman Wall\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:50:15\"}, {\"location_id\": 853, \"name\": \"Ramos-Case Hq - Tokyo\", \"plot_no\": \"Plot 1\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:40:50\"}, {\"location_id\": 856, \"name\": \"Carson Llc Site A - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:46:41\"}, {\"location_id\": 857, \"name\": \"Griffin, Lloyd And Bryant Hq - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:45:39\"}, {\"location_id\": 858, \"name\": \"Griffin, Lloyd And Bryant Site A - Tokyo\", \"plot_no\": \"Plot 883\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:44:14\"}, {\"location_id\": 871, \"name\": \"Hill, Little And Hernandez Hq - Tokyo\", \"plot_no\": \"Plot 178\", \"street\": \"Paige Prairie\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:29:53\"}, {\"location_id\": 873, \"name\": \"Escobar-Dudley Hq - Tokyo\", \"plot_no\": \"Plot 265\", \"street\": \"Aguirre Tunnel\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:48:46\"}, {\"location_id\": 874, \"name\": \"Escobar-Dudley Site A - Tokyo\", \"plot_no\": null, \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:46:27\"}, {\"location_id\": 884, \"name\": \"Thomas Group Site A - Tokyo\", \"plot_no\": \"Plot 107\", \"street\": \"Alvarez Parkways\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 0, \"sys_created_on\": \"2025-08-27 15:34:30\"}, {\"location_id\": 890, \"name\": \"Avery Ltd Site A - Tokyo\", \"plot_no\": null, \"street\": \"Myers Square\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:37:33\"}, {\"location_id\": 893, \"name\": \"Velez, Taylor And Fuller Hq - Tokyo\", \"plot_no\": \"Plot 209\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:35:32\"}, {\"location_id\": 900, \"name\": \"Hernandez, Barnett And Stewart Site A - Tokyo\", \"plot_no\": null, \"street\": \"Shepherd Orchard\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:31:49\"}, {\"location_id\": 902, \"name\": \"Owen, Leonard And Chapman Site A - Tokyo\", \"plot_no\": null, \"street\": \"Marc Turnpike\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:38:41\"}, {\"location_id\": 905, \"name\": \"Klein, Black And Wood Hq - Tokyo\", \"plot_no\": \"Plot 883\", \"street\": \"Clark Walks\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:29:59\"}]",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "tool_name": "update_location",
+          "arguments": {
+            "location_id": 803,
+            "active": true
+          },
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"location_id\": 803, \"name\": \"Servicenow Hq - Tokyo\", \"plot_no\": null, \"street\": \"Janice Landing\", \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:49:29\", \"sys_updated_on\": \"2026-06-15 11:02:43\"}",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "tool_name": "update_location",
+          "arguments": {
+            "location_id": 804,
+            "active": false
+          },
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"location_id\": 804, \"name\": \"Servicenow Site A - Tokyo\", \"plot_no\": \"Plot 738\", \"street\": null, \"city\": \"tokyo\", \"country\": \"japan\", \"active\": 0, \"sys_created_on\": \"2025-08-27 15:47:05\", \"sys_updated_on\": \"2026-06-15 11:03:02\"}",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "tool_name": "retrieve_installed_products",
+          "arguments": {
+            "account_id": 1,
+            "location_id": 804
+          },
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "[{\"installed_product_id\": 2, \"account_id\": 1, \"product_id\": 130, \"location_id\": 804, \"serial_number\": \"P130-588531-9296\", \"status\": \"in_use\", \"warranty_end\": \"2028-01-14\", \"sys_created_on\": \"2025-08-27 15:37:49\"}, {\"installed_product_id\": 3, \"account_id\": 1, \"product_id\": 128, \"location_id\": 804, \"serial_number\": \"P128-889629-8734\", \"status\": \"in_use\", \"warranty_end\": \"2028-04-13\", \"sys_created_on\": \"2025-08-27 15:32:21\"}, {\"installed_product_id\": 4, \"account_id\": 1, \"product_id\": 237, \"location_id\": 804, \"serial_number\": \"P237-136518-2272\", \"status\": \"in_stock\", \"warranty_end\": \"2026-10-21\", \"sys_created_on\": \"2025-08-27 15:44:15\"}, {\"installed_product_id\": 5, \"account_id\": 1, \"product_id\": 221, \"location_id\": 804, \"serial_number\": \"P221-749826-2677\", \"status\": \"in_use\", \"warranty_end\": \"2028-04-13\", \"sys_created_on\": \"2025-08-27 15:43:19\"}]",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "tool_name": "update_installed_product_details",
+          "arguments": {
+            "installed_product_id": 4,
+            "location_id": 803
+          },
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"installed_product_id\": 4, \"account_id\": 1, \"product_id\": 237, \"location_id\": 803, \"serial_number\": \"P237-136518-2272\", \"status\": \"in_stock\", \"warranty_end\": \"2026-10-21\", \"sys_created_on\": \"2025-08-27 15:44:15\", \"sys_updated_on\": \"2026-06-15 11:03:29\"}",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        }
+      ],
+      "verification_results": {
+        "Verify that the product is moved to new active location": {
+          "passed": true,
+          "expected": 1,
+          "actual": 1,
+          "comparison_type": "equals",
+          "query": "SELECT COUNT(*) FROM installed_product WHERE installed_product_id = 4 AND location_id = 803 AND serial_number = 'P237-136518-2272';",
+          "details": "Comparison equals: 1 vs 1"
+        },
+        "Verify that location is reactivated": {
+          "passed": true,
+          "expected": 1,
+          "actual": 1,
+          "comparison_type": "equals",
+          "query": "SELECT COUNT(*) FROM location WHERE location_id = 803 AND active = true;",
+          "details": "Comparison equals: 1 vs 1"
+        },
+        "Verify that current location is inactivated": {
+          "passed": true,
+          "expected": 1,
+          "actual": 1,
+          "comparison_type": "equals",
+          "query": "SELECT COUNT(*) FROM location WHERE location_id = 804 AND active = false;",
+          "details": "Comparison equals: 1 vs 1"
+        }
+      },
+      "verification_summary": {
+        "total": 3,
+        "passed": 3,
+        "failed": 0,
+        "pass_rate": 1.0
+      },
+      "overall_success": true
+    }
+  ],
+  "statistics": {
+    "total_runs": 1,
+    "successful_runs": 1,
+    "overall_success_rate": 1.0,
+    "pass_at_1": 1.0,
+    "verifier_level_pass_rate": 1.0,
+    "total_verifiers_checked": 3,
+    "total_verifiers_passed": 3,
+    "individual_verifier_stats": {
+      "Verify that the product is moved to new active location": {
+        "passed": 1,
+        "total": 1,
+        "pass_rate": 1.0
+      },
+      "Verify that location is reactivated": {
+        "passed": 1,
+        "total": 1,
+        "pass_rate": 1.0
+      },
+      "Verify that current location is inactivated": {
+        "passed": 1,
+        "total": 1,
+        "pass_rate": 1.0
+      }
+    },
+    "mean_execution_time_ms": 148022.0,
+    "tool_usage": {
+      "find_account": 1,
+      "find_locations": 1,
+      "update_location": 1,
+      "retrieve_installed_products": 1,
+      "update_installed_product_details": 1
+    }
+  }
+}

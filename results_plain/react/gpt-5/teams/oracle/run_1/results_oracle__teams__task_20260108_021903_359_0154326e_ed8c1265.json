@@ -1,0 +1,923 @@
+{
+  "benchmark_config": {
+    "model": "vllm/Azure/gpt-5-2025-08-07",
+    "number_of_runs": 1,
+    "user_prompt": "Service Quality asked us to relight the AMER voice resiliency rehearsal as a formal webinar. I (James Wilson) only want you to work against the TechCorp tenant. Before you do anything else, check our current webinars and see whether anything titled 'AMER Voice Resiliency Fire Drill' already exists. If it does and the schedule matches November 27, 2025 from 15:00 to 16:30 UTC, verify it's ready and proceed to the validation checks. If the existing webinar has the wrong schedule, cancel it first before creating a new one. If the title doesn't exist at all, create and publish a brand new webinar with that exact name scheduled for November 27, 2025 from 15:00 to 16:30 UTC (both timezone fields must be UTC). Use this HTML description: `<p>Voice resiliency drill for AMER hub leads. We will validate PSTN failover paths, document gaps, and lock every site's emergency audio routing checklists.</p>`. Keep the audience scoped to organization and enable attendee email notifications.  Finally, post a confirmation message to the voice-ops channel in the TechCorp Solutions Team - check if the channel exists first and create it if needed - with a message that includes the webinar title, start time in both UTC and ET formats, and mentions that a follow-up townhall is already scheduled. Tell me when everything is complete.",
+    "gym_servers": [
+      {
+        "name": "gym-teams-mcp",
+        "url": "http://localhost:8002",
+        "seed_database_file": "Domain Wise DBs and Task-DB Mappings/teams/dbs/db_1764056995448_d8bull5d3.sql",
+        "uses_cloning": true
+      }
+    ],
+    "total_gyms": 1,
+    "total_tools_available": 7
+  },
+  "runs": [
+    {
+      "run_number": 1,
+      "started_at": "2026-06-15T08:20:18.490628+00:00",
+      "execution_time_ms": 89527,
+      "model_response": "Here\u2019s what I did in the TechCorp tenant:\n\n- Checked current webinars: none titled \u201cAMER Voice Resiliency Fire Drill\u201d exist.\n- Created a new webinar in draft, then published it:\n  - Title: AMER Voice Resiliency Fire Drill\n  - Description (HTML): <p>Voice resiliency drill for AMER hub leads. We will validate PSTN failover paths, document gaps, and lock every site's emergency audio routing checklists.</p>\n  - Schedule: November 27, 2025, 15:00\u201316:30 (UTC for both start and end time zones)\n  - Audience: organization\n  - Attendee email notifications: enabled\n- Located the TechCorp Solutions Team (verified) and checked for a \u201cvoice-ops\u201d channel. It didn\u2019t exist, so I created it.\n- Posted a confirmation message to voice-ops including:\n  - Title: AMER Voice Resiliency Fire Drill\n  - Start time: 2025-11-27 15:00 UTC (10:00 ET)\n  - Note that a follow-up townhall is already scheduled\n\nEverything is complete.",
+      "conversation_flow": [
+        {
+          "type": "system_message",
+          "content": "# **Teams Assistant Policy**\n\nYou are a **Microsoft Teams Management Assistant**.\n\nYour goal is to assist users in managing Teams, channels, chats, meetings, and related collaboration objects while adhering to organizational security, access, and data governance policies.\n\nYou must always act on **confirmed context** and **existing relationships**, ensuring all actions maintain system integrity and Microsoft Graph API consistency.\n\n---\n\n## **General Instructions [Must follow]**\n\n* **Never infer** user/team/channel data \u2014 act only on existing verified records.\n\n* If a request violates access control or schema constraints, **abort** with a reason.\n\n* Do not expose internal data, app configurations, or identities outside the permitted scope.\n\n* Follow **Microsoft Graph API** semantics for all CRUD and OData operations.\n\n* You do not need to ask for confirmation or permission before taking action.\n\n* When identifiers such as names or IDs are missing, perform exactly one lookup per entity type, verify that you are reusing correct values from previous responses, and proceed using the retrieved data.\n\n* Never assume or fabricate IDs, responses, or outcomes \u2014 rely solely on verified API results.\n\n* Complete each task in a single, logical, and efficient execution flow.\n\n---\n\n## **Roles & Responsibilities**\n\n### **Administrator**\n\n* Has **full access** to the organization\u2019s Teams environment.\n\n* Can:\n\n* Create, update, and delete **teams**, **channels**, **users**, **groups**, **apps**, and **tags**.\n\n* Configure global and per-team policies (e.g., **guest access**, **fun settings**, **messaging settings**).\n\n* Manage **permissions**, **roles**, **installed apps**, and **templates**.\n\n* Oversee **meetings**, **recordings**, and **compliance data**.\n\n* Responsible for lifecycle management, archival, and compliance enforcement.\n\n---\n\n### **Team Owner**\n\n* Has full access to their **own teams**.\n\n* Can:\n\n* Create and manage **channels**, **members**, **tabs**, and **apps** within owned teams.\n\n* Modify team-level settings such as visibility, messaging, and permissions.\n\n* Archive or unarchive teams, and manage **tags** and **roles**.\n\n* Cannot:\n\n* Modify organization-wide resources or teams owned by others.\n\n---\n\n### **Team Member**\n\n* Can participate in collaboration within the teams they belong to.\n\n* Can:\n\n* Send and edit messages in channels.\n\n* Add files, reactions, mentions, and app tabs (where permissions allow).\n\n* Cannot:\n\n* Create or delete teams.\n\n* Alter team-level settings or membership lists.\n\n---\n\n### **Guest User**\n\n* External user invited to collaborate within a team or channel.\n\n* Can:\n\n* View and post in shared channels.\n\n* Access shared files and participate in chats/meetings.\n\n* Cannot:\n\n* Create or delete teams or channels.\n\n* Add apps, bots, or connectors.\n\n* Access internal (private) data.\n\n---\n\n### **Meeting Organizer / Host**\n\n* Creates and manages **online meetings**, webinars, and townhalls.\n\n* Can:\n\n* Schedule, update, or cancel meetings (`create_meeting`, `update_meeting`, `delete_meeting`).\n\n* View attendance, recordings, and transcripts.\n\n* Assign presenters and co-organizers.\n\n* Must ensure meeting end times follow start times and participants are valid users.\n\n---\n\n## **Core Operations**\n\n### **1. User Management**\n\n| Function\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Tools\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Policy\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n| ------------------------------ | ------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |\n\n| Create / Update / Delete Users | `create_user`, `update_user`, `delete_user` | Only **Admins** can create or deactivate users. `userPrincipalName` must be unique and valid email format. |\n\n| Retrieve Users\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| `get_user`, `list_users`\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Accessible by admins and compliance auditors. No bulk data leaks permitted.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n| Presence & Status\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| `set_user_status_message`\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Users can set their own status. Admins can override only with explicit policy.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n---\n\n### **2. Team Lifecycle**\n\n| Function\u00a0\u00a0\u00a0| Tools\u00a0\u00a0\u00a0\u00a0\u00a0| Rules\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n| ------------ | ------------- | ------------------------------------------------------------------------------------------------------------------ |\n\n| Create Teams | `create_team` | Only **Admins** or **Owners** with proper template reference may create teams.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n| List Teams\u00a0\u00a0| `list_teams`\u00a0| Limited to user\u2019s visible teams or global admins.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n| Update Team\u00a0| `update_team` | Modifiable fields: `displayName`, `description`, `visibility`, `settings`. Cannot overwrite ownership or template. |\n\n| Delete Team\u00a0| `delete_team` | Allowed only by **Admins** or **Owners**. Must cascade cleanup of associated channels, tabs, and installed apps.\u00a0\u00a0|\n\n---\n\n### **3. Channel Management**\n\n| Function\u00a0\u00a0\u00a0\u00a0| Tools\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Rules\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n| --------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |\n\n| Create Channel\u00a0| `create_channel`\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Requires valid `teamId`. Cannot duplicate `displayName`. For private/shared channels, must specify `members`. |\n\n| Update Channel\u00a0| `update_channel`\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Only team owners or admins can change display name, description, or favorite status.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n| List Channels\u00a0\u00a0| `list_channels`, `list_all_channels`, `get_primary_channel` | Visible only to members of that team.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n| Archive Channel | `archive_channel`\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Prevents posting; content remains viewable.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n| Manage Members\u00a0| `add_channel_member`\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Allowed for private/shared channels only. Validates that users exist and aren\u2019t disabled.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n---\n\n### **4. Chat & Messaging**\n\n| Function\u00a0\u00a0\u00a0\u00a0\u00a0| Tools\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Rules\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n| ---------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------- |\n\n| Create Chat\u00a0\u00a0\u00a0| `create_chat`\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Must include authenticated user in members. Only one-on-one chat per user pair.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n| Send Message\u00a0\u00a0\u00a0| `send_chat_message`, `send_channel_message`\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Requires existing chat or channel ID. No long-term logs; messages must be human-contextual. |\n\n| React to Message | `set_chat_message_reaction`, `set_channel_message_reaction` | Reaction emojis must be supported Unicode types.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n| Pin Message\u00a0\u00a0\u00a0| `pin_chat_message`\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Pins only allowed by chat owners or participants.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n| List Messages\u00a0\u00a0| `list_channel_messages`\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Members-only access; must respect channel visibility.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n---\n\n### **5. Tabs & App Integration**\n\n| Function\u00a0\u00a0| Tools\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Rules\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n| ---------- | ----------------------------------------- | -------------------------------------------------------------------------------------------------- |\n\n| Add Tab\u00a0\u00a0| `add_tab_to_chat`, `add_tabs_to_channels` | The app must already be installed. Only configurable tabs can accept `contentUrl` or `websiteUrl`. |\n\n| Update Tab | `update_channel_tab`\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Only `displayName` and `configuration` fields may be updated.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n| Delete Tab | `delete_channel_tab`\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Permanently removes tab; cannot restore.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n| List Tabs\u00a0| `list_tabs_in_channel`\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Admins and team members may view; excludes native Files tab.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n---\n\n### **6. Membership & Access Control**\n\n| Function\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Tools\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Rules\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n| ------------------- | --------------------------------------------- | ------------------------------------------------------------------------ |\n\n| Add Team Members\u00a0\u00a0| `add_team_member`, `add_team_members_in_bulk` | At least one owner required. Validate email and user existence.\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n| Update Member Roles | `update_team_member`\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Only owners/admins can modify roles.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n| Remove Members\u00a0\u00a0\u00a0| `remove_team_member`\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Removes access to team resources. Cascade revokes across chats/channels. |\n\n| List Members\u00a0\u00a0\u00a0\u00a0| `list_team_members`\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Members and owners only.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n---\n\n### **7. Meetings & Calls**\n\n| Function\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Tools\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Rules\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n| ------------------------ | ----------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |\n\n| Create Meeting / Call\u00a0\u00a0| `create_call`, `create_virtual_event_webinar`, `create_virtual_event_townhall`\u00a0\u00a0\u00a0| Requires valid participants, time zones, and no overlap of start/end.\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n| Manage Call Audio\u00a0\u00a0\u00a0\u00a0| `create_audio_routing_group`, `hold_music_operations`, `send_dtmf_tones_operations` | Restricted to service bots or admins. Must operate on active calls.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n| Recordings / Transcripts | `call_recordings`, `call_transcripts` tables\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Only organizers and admins can access or delete. Stored \u2264 30 days by default. |\n\n| Attendance Tracking\u00a0\u00a0\u00a0| `meeting_attendance_reports`, `attendance_records`\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Recorded automatically upon meeting end. Read-only for hosts.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n---\n\n### **8. File & Folder Access**\n\n* File references stored in **`drive_items`** and **`channel_files_folders`**.\n\n* Access must respect SharePoint permissions.\n\n* Retrieval through:\n\n* `get_files_folder` \u2014 for channel-level root folder.\n\n* `list_tabs_in_channel` \u2014 to discover file integrations.\n\nRules:\n\n* No file may be shared externally unless organization policy allows.\n\n* Read/write limited to team membership scope.\n\n---\n\n### **9. Tagging & Mentions**\n\n| Function\u00a0\u00a0\u00a0\u00a0| Tools\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Rules\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n| -------------- | ---------------------------- | ------------------------------------- |\n\n| Create Tag\u00a0\u00a0\u00a0| `create_teamwork_tag`\u00a0\u00a0\u00a0\u00a0| Tag names \u2264 40 chars. Max 25 members. |\n\n| Update Tag\u00a0\u00a0\u00a0| `update_teamwork_tag`\u00a0\u00a0\u00a0\u00a0| Only tag owners or admins.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n| Add Tag Member | `create_teamwork_tag_member` | Member must belong to the same team.\u00a0|\n\n| List Tags\u00a0\u00a0\u00a0| `list_teamwork_tags`\u00a0\u00a0\u00a0\u00a0\u00a0| Read-only for team members.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n---\n\n### **10. Groups & Permissions**\n\n* Groups back teams and define membership synchronization.\n\n* Managed via:\n\n* `create_group`, `update_group`, `list_groups`, `add_group_owner`.\n\n* Enforce:\n\n* `mailNickname` unique.\n\n* Security vs. mail-enabled group consistency.\n\n* Dynamic membership (`groupTypes` includes `DynamicMembership`) rules must be syntactically valid.\n\n---\n\n### **11. Virtual Events**\n\n#### Webinars\n\n* Tools: `create_virtual_event_webinar`, `get_virtual_event_webinar`, `publish_virtual_event_webinar`, `cancel_virtual_event_webinar`\n\n* Constraints:\n\n* Only **Organizers** may publish or cancel.\n\n* Status transitions:\n\n* `draft \u2192 published \u2192 canceled`\n\n* `canceled` webinars cannot be republished.\n\n* Validations: `endDateTime > startDateTime`.\n\n#### Townhalls\n\n* Tools: `create_virtual_event_townhall`, `list_virtual_event_townhalls`, `cancel_virtual_event_townhall`\n\n* Rules:\n\n* `isInviteOnly` only allowed if `audience='organization'`.\n\n* Co-organizers must exist in `teams_users`.\n\n* Organizer-only cancellation rights.\n\n---\n\n## **Security & Integrity**\n\n* All actions validated against `teams_user_roles`, `resource_access`, and `teams_orgs`.\n\n* `soft_delete` flags are respected across all entities \u2014 no physical deletion unless explicitly stated.\n\n* Channel, chat, and file visibility determined by membership and ACLs.\n\n* Private data (emails, messages) cannot be exposed via list APIs without filters.\n\n---\n\n## **Free-Form Text & Naming Conventions**\n\n| Field\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| Limit\u00a0\u00a0\u00a0\u00a0| Format / Example\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n| -------------------------- | ----------- | ------------------------------------------------------- |\n\n| `displayName`\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| 1\u2013256 chars | \"Project Phoenix \u2013 Engineering\"\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n| `description`\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0| \u22641024 chars | \"Internal collaboration space for release coordination\" |\n\n| `chatMessage.body.content` | \u22645000 chars | Rich text (HTML or plain)\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n| `tag.displayName`\u00a0\u00a0\u00a0\u00a0\u00a0| \u226440 chars\u00a0\u00a0| Must be unique per team\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n| `team.displayName`\u00a0\u00a0\u00a0\u00a0\u00a0| \u2264255 chars\u00a0| No reserved keywords (e.g., \"General\", \"Admin\")\u00a0\u00a0\u00a0\u00a0\u00a0|\n\n---\n\n## **Enumerations (Strict Values)**\n\n### Teams & Channels\n\n* `team.visibility`: `private`, `public`\n\n* `channel.membershipType`: `standard`, `private`, `shared`\n\n* `channelMessage.importance`: `normal`, `high`, `urgent`\n\n### Chats\n\n* `chat.chatType`: `oneOnOne`, `group`\n\n* `chatMessage.messageType`: `message`, `chatEvent`, `systemEventMessage`\n\n### Meetings\n\n* `meeting.allowMeetingChat`: `enabled`, `disabled`\n\n* `meeting.allowedPresenters`: `everyone`, `organizer`, `none`\n\n### Virtual Events\n\n* `audience`: `everyone`, `organization`, `unknownFutureValue`\n\n* `status`: `draft`, `published`, `canceled`\n\n### Presence\n\n* `availability`: `Available`, `Busy`, `DoNotDisturb`, `Away`, `Offline`\n\n* `activity`: `InMeeting`, `Available`, `Presenting`, `Away`, `BeRightBack`\n\n---\n\n## **Audit & Logging Requirements**\n\nEvery operation must record:\n\n* `org_id`, `user_id`, and timestamp.\n\n* `resource_id` and `operation_type`.\n\n* System must update `updated_at` fields on every modification.\n\n* Retain audit logs for \u2265 30 days for compliance.\n\n---\n\n## **Service-Level Policies**\n\n* API rate limits per Microsoft Graph standards (429 handling).\n\n* Call records, transcripts, and meeting data retained max **30 days**.\n\n* Archived channels and teams are read-only.\n\n* Bots may only perform operations within granted permissions (`Chat.ReadWrite`, `Team.ReadBasic.All`, etc.).\n\n---\n\n## **Violation Handling**\n\nIf an operation:\n\n* Modifies unrelated entities,\n\n* References non-existent IDs,\n\n* Violates permission hierarchy,\n\n* Or attempts disallowed state transitions,\n\nthe agent must **abort immediately** and return a policy violation notice.\n\n---"
+        },
+        {
+          "type": "user_message",
+          "content": "Service Quality asked us to relight the AMER voice resiliency rehearsal as a formal webinar. I (James Wilson) only want you to work against the TechCorp tenant. Before you do anything else, check our current webinars and see whether anything titled 'AMER Voice Resiliency Fire Drill' already exists. If it does and the schedule matches November 27, 2025 from 15:00 to 16:30 UTC, verify it's ready and proceed to the validation checks. If the existing webinar has the wrong schedule, cancel it first before creating a new one. If the title doesn't exist at all, create and publish a brand new webinar with that exact name scheduled for November 27, 2025 from 15:00 to 16:30 UTC (both timezone fields must be UTC). Use this HTML description: `<p>Voice resiliency drill for AMER hub leads. We will validate PSTN failover paths, document gaps, and lock every site's emergency audio routing checklists.</p>`. Keep the audience scoped to organization and enable attendee email notifications.  Finally, post a confirmation message to the voice-ops channel in the TechCorp Solutions Team - check if the channel exists first and create it if needed - with a message that includes the webinar title, start time in both UTC and ET formats, and mentions that a follow-up townhall is already scheduled. Tell me when everything is complete."
+        },
+        {
+          "type": "ai_message",
+          "content": "",
+          "usage_metadata": {
+            "input_tokens": 6646,
+            "output_tokens": 2387,
+            "total_tokens": 9033,
+            "input_token_details": {
+              "audio": 0,
+              "cache_read": 2944
+            },
+            "output_token_details": {
+              "audio": 0,
+              "reasoning": 2304
+            }
+          },
+          "response_metadata": {
+            "token_usage": {
+              "completion_tokens": 2387,
+              "prompt_tokens": 6646,
+              "total_tokens": 9033,
+              "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 2304,
+                "rejected_prediction_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 2944
+              },
+              "latency_checkpoint": {
+                "engine_tbt_ms": 10,
+                "engine_ttft_ms": 107,
+                "engine_ttlt_ms": 23953,
+                "pre_inference_ms": 258,
+                "service_tbt_ms": 10,
+                "service_ttft_ms": 506,
+                "service_ttlt_ms": 24348,
+                "total_duration_ms": 24101,
+                "user_visible_ttft_ms": 248
+              }
+            },
+            "model_provider": "openai",
+            "model_name": "Azure/gpt-5-2025-08-07",
+            "system_fingerprint": null,
+            "id": "chatcmpl-DqwqKcoDDtDLRzcQAxrs6gS9g1NXc",
+            "service_tier": "default",
+            "finish_reason": "tool_calls",
+            "logprobs": null
+          },
+          "tool_calls": [
+            {
+              "name": "list_virtual_event_webinars",
+              "args": {
+                "_count": true
+              }
+            },
+            {
+              "name": "list_teams",
+              "args": {
+                "_filter": "displayName eq 'TechCorp Solutions Team'",
+                "_select": "id,displayName,description",
+                "_top": 50
+              }
+            }
+          ]
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "list_virtual_event_webinars",
+          "result": {
+            "success": true,
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\n  \"@odata.context\": \"https://graph.microsoft.com/v1.0/$metadata#solutions/virtualEvents/webinars\",\n  \"@odata.count\": 0,\n  \"value\": []\n}"
+                }
+              ],
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "gym-teams-mcp"
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "list_teams",
+          "result": {
+            "success": true,
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\n  \"@odata.context\": \"https://graph.microsoft.com/v1.0/$metadata#teams\",\n  \"value\": [\n    {\n      \"id\": \"team_techcorp_001\",\n      \"displayName\": \"TechCorp Solutions Team\",\n      \"description\": \"Main collaboration team for TechCorp Solutions organization\"\n    }\n  ]\n}"
+                }
+              ],
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "gym-teams-mcp"
+        },
+        {
+          "type": "ai_message",
+          "content": "",
+          "usage_metadata": {
+            "input_tokens": 6907,
+            "output_tokens": 1303,
+            "total_tokens": 8210,
+            "input_token_details": {
+              "audio": 0,
+              "cache_read": 2944
+            },
+            "output_token_details": {
+              "audio": 0,
+              "reasoning": 1152
+            }
+          },
+          "response_metadata": {
+            "token_usage": {
+              "completion_tokens": 1303,
+              "prompt_tokens": 6907,
+              "total_tokens": 8210,
+              "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 1152,
+                "rejected_prediction_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 2944
+              },
+              "latency_checkpoint": {
+                "engine_tbt_ms": 8,
+                "engine_ttft_ms": 422,
+                "engine_ttlt_ms": 10989,
+                "pre_inference_ms": 220,
+                "service_tbt_ms": 8,
+                "service_ttft_ms": 1108,
+                "service_ttlt_ms": 11672,
+                "total_duration_ms": 11461,
+                "user_visible_ttft_ms": 889
+              }
+            },
+            "model_provider": "openai",
+            "model_name": "Azure/gpt-5-2025-08-07",
+            "system_fingerprint": null,
+            "id": "chatcmpl-DqwqjjGdC6NbvJV29kuWjIHVU9D8t",
+            "service_tier": "default",
+            "finish_reason": "tool_calls",
+            "logprobs": null
+          },
+          "tool_calls": [
+            {
+              "name": "create_virtual_event_webinar",
+              "args": {
+                "displayName": "AMER Voice Resiliency Fire Drill",
+                "description": {
+                  "contentType": "html",
+                  "content": "<p>Voice resiliency drill for AMER hub leads. We will validate PSTN failover paths, document gaps, and lock every site's emergency audio routing checklists.</p>"
+                },
+                "startDateTime": {
+                  "dateTime": "2025-11-27T15:00:00",
+                  "timeZone": "UTC"
+                },
+                "endDateTime": {
+                  "dateTime": "2025-11-27T16:30:00",
+                  "timeZone": "UTC"
+                },
+                "audience": "organization",
+                "settings": {
+                  "isAttendeeEmailNotificationEnabled": true
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "create_virtual_event_webinar",
+          "result": {
+            "success": true,
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\n  \"@odata.type\": \"#microsoft.graph.virtualEventWebinar\",\n  \"id\": \"5dabe775-4279-449b-951e-db21c7bbd533@4e6bee98-8e4e-458b-81bf-a9c8ef35a179\",\n  \"status\": \"draft\",\n  \"displayName\": \"AMER Voice Resiliency Fire Drill\",\n  \"description\": {\n    \"contentType\": \"html\",\n    \"content\": \"<p>Voice resiliency drill for AMER hub leads. We will validate PSTN failover paths, document gaps, and lock every site's emergency audio routing checklists.</p>\"\n  },\n  \"startDateTime\": {\n    \"dateTime\": \"2025-11-27T15:00:00\",\n    \"timeZone\": \"UTC\"\n  },\n  \"endDateTime\": {\n    \"dateTime\": \"2025-11-27T16:30:00\",\n    \"timeZone\": \"UTC\"\n  },\n  \"audience\": \"organization\",\n  \"createdBy\": {\n    \"application\": null,\n    \"device\": null,\n    \"user\": {\n      \"@odata.type\": \"#microsoft.graph.communicationsUserIdentity\",\n      \"id\": \"james.wilson\",\n      \"displayName\": \"James Wilson\",\n      \"tenantId\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\"\n    }\n  },\n  \"coOrganizers\": [],\n  \"settings\": {\n    \"isAttendeeEmailNotificationEnabled\": true\n  },\n  \"externalEventInformation\": []\n}"
+                }
+              ],
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "gym-teams-mcp"
+        },
+        {
+          "type": "ai_message",
+          "content": "",
+          "usage_metadata": {
+            "input_tokens": 7479,
+            "output_tokens": 67,
+            "total_tokens": 7546,
+            "input_token_details": {
+              "audio": 0,
+              "cache_read": 6784
+            },
+            "output_token_details": {
+              "audio": 0,
+              "reasoning": 0
+            }
+          },
+          "response_metadata": {
+            "token_usage": {
+              "completion_tokens": 67,
+              "prompt_tokens": 7479,
+              "total_tokens": 7546,
+              "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 0,
+                "rejected_prediction_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 6784
+              },
+              "latency_checkpoint": {
+                "engine_tbt_ms": 4,
+                "engine_ttft_ms": 284,
+                "engine_ttlt_ms": 549,
+                "pre_inference_ms": 343,
+                "service_tbt_ms": 4,
+                "service_ttft_ms": 1144,
+                "service_ttlt_ms": 1384,
+                "total_duration_ms": 1049,
+                "user_visible_ttft_ms": 802
+              }
+            },
+            "model_provider": "openai",
+            "model_name": "Azure/gpt-5-2025-08-07",
+            "system_fingerprint": null,
+            "id": "chatcmpl-Dqwqwc7GOEQabQgTdV9jVkQRpZkw8",
+            "service_tier": "default",
+            "finish_reason": "tool_calls",
+            "logprobs": null
+          },
+          "tool_calls": [
+            {
+              "name": "publish_virtual_event_webinar",
+              "args": {
+                "webinar_id": "5dabe775-4279-449b-951e-db21c7bbd533@4e6bee98-8e4e-458b-81bf-a9c8ef35a179"
+              }
+            }
+          ]
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "publish_virtual_event_webinar",
+          "result": {
+            "success": true,
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Operation completed successfully"
+                }
+              ],
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "gym-teams-mcp"
+        },
+        {
+          "type": "ai_message",
+          "content": "",
+          "usage_metadata": {
+            "input_tokens": 7583,
+            "output_tokens": 1129,
+            "total_tokens": 8712,
+            "input_token_details": {
+              "audio": 0,
+              "cache_read": 2816
+            },
+            "output_token_details": {
+              "audio": 0,
+              "reasoning": 1088
+            }
+          },
+          "response_metadata": {
+            "token_usage": {
+              "completion_tokens": 1129,
+              "prompt_tokens": 7583,
+              "total_tokens": 8712,
+              "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 1088,
+                "rejected_prediction_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 2816
+              },
+              "latency_checkpoint": {
+                "engine_tbt_ms": 11,
+                "engine_ttft_ms": 320,
+                "engine_ttlt_ms": 13239,
+                "pre_inference_ms": 330,
+                "service_tbt_ms": 11,
+                "service_ttft_ms": 698,
+                "service_ttlt_ms": 13732,
+                "total_duration_ms": 13415,
+                "user_visible_ttft_ms": 368
+              }
+            },
+            "model_provider": "openai",
+            "model_name": "Azure/gpt-5-2025-08-07",
+            "system_fingerprint": null,
+            "id": "chatcmpl-DqwqytbFelZPx1j94shwUSFcyvFFL",
+            "service_tier": "default",
+            "finish_reason": "tool_calls",
+            "logprobs": null
+          },
+          "tool_calls": [
+            {
+              "name": "list_channels",
+              "args": {
+                "teamId": "team_techcorp_001",
+                "_select": "id,displayName,membershipType"
+              }
+            }
+          ]
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "list_channels",
+          "result": {
+            "success": true,
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\n  \"@odata.context\": \"https://graph.microsoft.com/v1.0/$metadata#teams('team_techcorp_001')/channels\",\n  \"@odata.count\": 4,\n  \"value\": [\n    {\n      \"@odata.id\": \"https://graph.microsoft.com/v1.0/tenants/a1b2c3d4-e5f6-7890-abcd-ef1234567890/teams/team_techcorp_001/channels/2da4cc29dd784156a8903cc978016bd6\",\n      \"id\": \"2da4cc29dd784156a8903cc978016bd6\",\n      \"displayName\": \"General\",\n      \"membershipType\": \"standard\"\n    },\n    {\n      \"@odata.id\": \"https://graph.microsoft.com/v1.0/tenants/a1b2c3d4-e5f6-7890-abcd-ef1234567890/teams/team_techcorp_001/channels/5d8f4b2f9c8e4a1b847b6c3d7e8f9a0b\",\n      \"id\": \"5d8f4b2f9c8e4a1b847b6c3d7e8f9a0b\",\n      \"displayName\": \"Development\",\n      \"membershipType\": \"standard\"\n    },\n    {\n      \"@odata.id\": \"https://graph.microsoft.com/v1.0/tenants/a1b2c3d4-e5f6-7890-abcd-ef1234567890/teams/team_techcorp_001/channels/channel_shared_001\",\n      \"id\": \"channel_shared_001\",\n      \"displayName\": \"Cross-Team Collaboration\",\n      \"membershipType\": \"shared\"\n    },\n    {\n      \"@odata.id\": \"https://graph.microsoft.com/v1.0/tenants/a1b2c3d4-e5f6-7890-abcd-ef1234567890/teams/team_techcorp_001/channels/channel_shared_003\",\n      \"id\": \"channel_shared_003\",\n      \"displayName\": \"External Partners Hub\",\n      \"membershipType\": \"shared\"\n    }\n  ]\n}"
+                }
+              ],
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "gym-teams-mcp"
+        },
+        {
+          "type": "ai_message",
+          "content": "",
+          "usage_metadata": {
+            "input_tokens": 8162,
+            "output_tokens": 53,
+            "total_tokens": 8215,
+            "input_token_details": {
+              "audio": 0,
+              "cache_read": 6528
+            },
+            "output_token_details": {
+              "audio": 0,
+              "reasoning": 0
+            }
+          },
+          "response_metadata": {
+            "token_usage": {
+              "completion_tokens": 53,
+              "prompt_tokens": 8162,
+              "total_tokens": 8215,
+              "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 0,
+                "rejected_prediction_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 6528
+              },
+              "latency_checkpoint": {
+                "engine_tbt_ms": 7,
+                "engine_ttft_ms": 88,
+                "engine_ttlt_ms": 469,
+                "pre_inference_ms": 275,
+                "service_tbt_ms": 7,
+                "service_ttft_ms": 476,
+                "service_ttlt_ms": 852,
+                "total_duration_ms": 588,
+                "user_visible_ttft_ms": 201
+              }
+            },
+            "model_provider": "openai",
+            "model_name": "Azure/gpt-5-2025-08-07",
+            "system_fingerprint": null,
+            "id": "chatcmpl-DqwrD36SwiCcbiF4TMW2hmhwJDSvH",
+            "service_tier": "default",
+            "finish_reason": "tool_calls",
+            "logprobs": null
+          },
+          "tool_calls": [
+            {
+              "name": "create_channel",
+              "args": {
+                "teamId": "team_techcorp_001",
+                "displayName": "voice-ops",
+                "description": "Operations updates and coordination for voice services.",
+                "membershipType": "standard",
+                "isFavoriteByDefault": true
+              }
+            }
+          ]
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "create_channel",
+          "result": {
+            "success": true,
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\n  \"@odata.context\": \"https://graph.microsoft.com/v1.0/$metadata#teams('team_techcorp_001')/channels/$entity\",\n  \"@odata.type\": \"#microsoft.graph.channel\",\n  \"id\": \"channel_5e143b9ee01946acae37e318d0a4856f\",\n  \"displayName\": \"voice-ops\",\n  \"description\": \"Operations updates and coordination for voice services.\",\n  \"membershipType\": \"standard\",\n  \"isFavoriteByDefault\": true,\n  \"tenantId\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n  \"teamId\": \"team_techcorp_001\",\n  \"isArchived\": false,\n  \"createdDateTime\": \"2026-06-15T08:21:17.376594Z\"\n}"
+                }
+              ],
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "gym-teams-mcp"
+        },
+        {
+          "type": "ai_message",
+          "content": "",
+          "usage_metadata": {
+            "input_tokens": 8449,
+            "output_tokens": 140,
+            "total_tokens": 8589,
+            "input_token_details": {
+              "audio": 0,
+              "cache_read": 8192
+            },
+            "output_token_details": {
+              "audio": 0,
+              "reasoning": 0
+            }
+          },
+          "response_metadata": {
+            "token_usage": {
+              "completion_tokens": 140,
+              "prompt_tokens": 8449,
+              "total_tokens": 8589,
+              "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 0,
+                "rejected_prediction_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 8192
+              },
+              "latency_checkpoint": {
+                "engine_tbt_ms": 6,
+                "engine_ttft_ms": 468,
+                "engine_ttlt_ms": 1301,
+                "pre_inference_ms": 200,
+                "service_tbt_ms": 6,
+                "service_ttft_ms": 782,
+                "service_ttlt_ms": 1612,
+                "total_duration_ms": 1421,
+                "user_visible_ttft_ms": 582
+              }
+            },
+            "model_provider": "openai",
+            "model_name": "Azure/gpt-5-2025-08-07",
+            "system_fingerprint": null,
+            "id": "chatcmpl-DqwrGDTNbeWNsQ0mrkscJm4YKzohz",
+            "service_tier": "default",
+            "finish_reason": "tool_calls",
+            "logprobs": null
+          },
+          "tool_calls": [
+            {
+              "name": "send_channel_message",
+              "args": {
+                "teamId": "team_techcorp_001",
+                "channelId": "channel_5e143b9ee01946acae37e318d0a4856f",
+                "body": {
+                  "contentType": "html",
+                  "content": "<p>Webinar scheduled: <strong>AMER Voice Resiliency Fire Drill</strong></p><p>Start time: 2025-11-27 15:00 UTC (10:00 ET)</p><p>Audience: Organization. Attendee email notifications are enabled.</p><p>A follow-up townhall is already scheduled.</p>"
+                },
+                "importance": "normal"
+              }
+            }
+          ]
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "send_channel_message",
+          "result": {
+            "success": true,
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\n  \"@odata.context\": \"https://graph.microsoft.com/v1.0/$metadata#teams('team_techcorp_001')/channels('channel_5e143b9ee01946acae37e318d0a4856f')/messages/$entity\",\n  \"id\": \"msg_b46c248d8004485880e646449bacd943\",\n  \"replyToId\": null,\n  \"etag\": \"etag_msg_b46c248d8004485880e646449bacd943\",\n  \"messageType\": \"message\",\n  \"createdDateTime\": \"2026-06-15T08:21:19.861899Z\",\n  \"lastModifiedDateTime\": \"2026-06-15T08:21:19.861899Z\",\n  \"lastEditedDateTime\": null,\n  \"deletedDateTime\": null,\n  \"subject\": null,\n  \"summary\": null,\n  \"chatId\": null,\n  \"importance\": \"normal\",\n  \"locale\": \"en-us\",\n  \"webUrl\": \"https://teams.microsoft.com/l/message/channel_5e143b9ee01946acae37e318d0a4856f/msg_b46c248d8004485880e646449bacd943\",\n  \"policyViolation\": null,\n  \"eventDetail\": null,\n  \"from\": {\n    \"application\": null,\n    \"device\": null,\n    \"user\": {\n      \"id\": \"james.wilson\",\n      \"displayName\": \"Current User\",\n      \"userIdentityType\": \"aadUser\"\n    }\n  },\n  \"body\": {\n    \"contentType\": \"text\",\n    \"content\": \"<p>Webinar scheduled: <strong>AMER Voice Resiliency Fire Drill</strong></p><p>Start time: 2025-11-27 15:00 UTC (10:00 ET)</p><p>Audience: Organization. Attendee email notifications are enabled.</p><p>A follow-up townhall is already scheduled.</p>\"\n  },\n  \"channelIdentity\": {\n    \"teamId\": \"team_techcorp_001\",\n    \"channelId\": \"channel_5e143b9ee01946acae37e318d0a4856f\"\n  },\n  \"attachments\": [],\n  \"mentions\": [],\n  \"reactions\": [],\n  \"messageHistory\": []\n}"
+                }
+              ],
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "gym-teams-mcp"
+        },
+        {
+          "type": "ai_message",
+          "content": "Here\u2019s what I did in the TechCorp tenant:\n\n- Checked current webinars: none titled \u201cAMER Voice Resiliency Fire Drill\u201d exist.\n- Created a new webinar in draft, then published it:\n  - Title: AMER Voice Resiliency Fire Drill\n  - Description (HTML): <p>Voice resiliency drill for AMER hub leads. We will validate PSTN failover paths, document gaps, and lock every site's emergency audio routing checklists.</p>\n  - Schedule: November 27, 2025, 15:00\u201316:30 (UTC for both start and end time zones)\n  - Audience: organization\n  - Attendee email notifications: enabled\n- Located the TechCorp Solutions Team (verified) and checked for a \u201cvoice-ops\u201d channel. It didn\u2019t exist, so I created it.\n- Posted a confirmation message to voice-ops including:\n  - Title: AMER Voice Resiliency Fire Drill\n  - Start time: 2025-11-27 15:00 UTC (10:00 ET)\n  - Note that a follow-up townhall is already scheduled\n\nEverything is complete.",
+          "usage_metadata": {
+            "input_tokens": 9176,
+            "output_tokens": 2936,
+            "total_tokens": 12112,
+            "input_token_details": {
+              "audio": 0,
+              "cache_read": 8576
+            },
+            "output_token_details": {
+              "audio": 0,
+              "reasoning": 2688
+            }
+          },
+          "response_metadata": {
+            "token_usage": {
+              "completion_tokens": 2936,
+              "prompt_tokens": 9176,
+              "total_tokens": 12112,
+              "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 2688,
+                "rejected_prediction_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 8576
+              },
+              "latency_checkpoint": {
+                "engine_tbt_ms": 9,
+                "engine_ttft_ms": 70,
+                "engine_ttlt_ms": 26847,
+                "pre_inference_ms": 256,
+                "service_tbt_ms": 9,
+                "service_ttft_ms": 536,
+                "service_ttlt_ms": 27231,
+                "total_duration_ms": 26985,
+                "user_visible_ttft_ms": 280
+              }
+            },
+            "model_provider": "openai",
+            "model_name": "Azure/gpt-5-2025-08-07",
+            "system_fingerprint": null,
+            "id": "chatcmpl-DqwrIEFG3twV5s9okLnPIdUoYUxSi",
+            "service_tier": "default",
+            "finish_reason": "stop",
+            "logprobs": null
+          },
+          "tool_calls": []
+        }
+      ],
+      "tools_used": [
+        "list_virtual_event_webinars",
+        "list_teams",
+        "create_virtual_event_webinar",
+        "publish_virtual_event_webinar",
+        "list_channels",
+        "create_channel",
+        "send_channel_message"
+      ],
+      "tool_results": [
+        {
+          "tool_name": "list_virtual_event_webinars",
+          "arguments": {
+            "_count": true
+          },
+          "result": {
+            "success": true,
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\n  \"@odata.context\": \"https://graph.microsoft.com/v1.0/$metadata#solutions/virtualEvents/webinars\",\n  \"@odata.count\": 0,\n  \"value\": []\n}"
+                }
+              ],
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "gym-teams-mcp"
+        },
+        {
+          "tool_name": "list_teams",
+          "arguments": {
+            "_filter": "displayName eq 'TechCorp Solutions Team'",
+            "_select": "id,displayName,description",
+            "_top": 50
+          },
+          "result": {
+            "success": true,
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\n  \"@odata.context\": \"https://graph.microsoft.com/v1.0/$metadata#teams\",\n  \"value\": [\n    {\n      \"id\": \"team_techcorp_001\",\n      \"displayName\": \"TechCorp Solutions Team\",\n      \"description\": \"Main collaboration team for TechCorp Solutions organization\"\n    }\n  ]\n}"
+                }
+              ],
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "gym-teams-mcp"
+        },
+        {
+          "tool_name": "create_virtual_event_webinar",
+          "arguments": {
+            "displayName": "AMER Voice Resiliency Fire Drill",
+            "description": {
+              "contentType": "html",
+              "content": "<p>Voice resiliency drill for AMER hub leads. We will validate PSTN failover paths, document gaps, and lock every site's emergency audio routing checklists.</p>"
+            },
+            "startDateTime": {
+              "dateTime": "2025-11-27T15:00:00",
+              "timeZone": "UTC"
+            },
+            "endDateTime": {
+              "dateTime": "2025-11-27T16:30:00",
+              "timeZone": "UTC"
+            },
+            "audience": "organization",
+            "settings": {
+              "isAttendeeEmailNotificationEnabled": true
+            }
+          },
+          "result": {
+            "success": true,
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\n  \"@odata.type\": \"#microsoft.graph.virtualEventWebinar\",\n  \"id\": \"5dabe775-4279-449b-951e-db21c7bbd533@4e6bee98-8e4e-458b-81bf-a9c8ef35a179\",\n  \"status\": \"draft\",\n  \"displayName\": \"AMER Voice Resiliency Fire Drill\",\n  \"description\": {\n    \"contentType\": \"html\",\n    \"content\": \"<p>Voice resiliency drill for AMER hub leads. We will validate PSTN failover paths, document gaps, and lock every site's emergency audio routing checklists.</p>\"\n  },\n  \"startDateTime\": {\n    \"dateTime\": \"2025-11-27T15:00:00\",\n    \"timeZone\": \"UTC\"\n  },\n  \"endDateTime\": {\n    \"dateTime\": \"2025-11-27T16:30:00\",\n    \"timeZone\": \"UTC\"\n  },\n  \"audience\": \"organization\",\n  \"createdBy\": {\n    \"application\": null,\n    \"device\": null,\n    \"user\": {\n      \"@odata.type\": \"#microsoft.graph.communicationsUserIdentity\",\n      \"id\": \"james.wilson\",\n      \"displayName\": \"James Wilson\",\n      \"tenantId\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\"\n    }\n  },\n  \"coOrganizers\": [],\n  \"settings\": {\n    \"isAttendeeEmailNotificationEnabled\": true\n  },\n  \"externalEventInformation\": []\n}"
+                }
+              ],
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "gym-teams-mcp"
+        },
+        {
+          "tool_name": "publish_virtual_event_webinar",
+          "arguments": {
+            "webinar_id": "5dabe775-4279-449b-951e-db21c7bbd533@4e6bee98-8e4e-458b-81bf-a9c8ef35a179"
+          },
+          "result": {
+            "success": true,
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Operation completed successfully"
+                }
+              ],
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "gym-teams-mcp"
+        },
+        {
+          "tool_name": "list_channels",
+          "arguments": {
+            "teamId": "team_techcorp_001",
+            "_select": "id,displayName,membershipType"
+          },
+          "result": {
+            "success": true,
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\n  \"@odata.context\": \"https://graph.microsoft.com/v1.0/$metadata#teams('team_techcorp_001')/channels\",\n  \"@odata.count\": 4,\n  \"value\": [\n    {\n      \"@odata.id\": \"https://graph.microsoft.com/v1.0/tenants/a1b2c3d4-e5f6-7890-abcd-ef1234567890/teams/team_techcorp_001/channels/2da4cc29dd784156a8903cc978016bd6\",\n      \"id\": \"2da4cc29dd784156a8903cc978016bd6\",\n      \"displayName\": \"General\",\n      \"membershipType\": \"standard\"\n    },\n    {\n      \"@odata.id\": \"https://graph.microsoft.com/v1.0/tenants/a1b2c3d4-e5f6-7890-abcd-ef1234567890/teams/team_techcorp_001/channels/5d8f4b2f9c8e4a1b847b6c3d7e8f9a0b\",\n      \"id\": \"5d8f4b2f9c8e4a1b847b6c3d7e8f9a0b\",\n      \"displayName\": \"Development\",\n      \"membershipType\": \"standard\"\n    },\n    {\n      \"@odata.id\": \"https://graph.microsoft.com/v1.0/tenants/a1b2c3d4-e5f6-7890-abcd-ef1234567890/teams/team_techcorp_001/channels/channel_shared_001\",\n      \"id\": \"channel_shared_001\",\n      \"displayName\": \"Cross-Team Collaboration\",\n      \"membershipType\": \"shared\"\n    },\n    {\n      \"@odata.id\": \"https://graph.microsoft.com/v1.0/tenants/a1b2c3d4-e5f6-7890-abcd-ef1234567890/teams/team_techcorp_001/channels/channel_shared_003\",\n      \"id\": \"channel_shared_003\",\n      \"displayName\": \"External Partners Hub\",\n      \"membershipType\": \"shared\"\n    }\n  ]\n}"
+                }
+              ],
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "gym-teams-mcp"
+        },
+        {
+          "tool_name": "create_channel",
+          "arguments": {
+            "teamId": "team_techcorp_001",
+            "displayName": "voice-ops",
+            "description": "Operations updates and coordination for voice services.",
+            "membershipType": "standard",
+            "isFavoriteByDefault": true
+          },
+          "result": {
+            "success": true,
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\n  \"@odata.context\": \"https://graph.microsoft.com/v1.0/$metadata#teams('team_techcorp_001')/channels/$entity\",\n  \"@odata.type\": \"#microsoft.graph.channel\",\n  \"id\": \"channel_5e143b9ee01946acae37e318d0a4856f\",\n  \"displayName\": \"voice-ops\",\n  \"description\": \"Operations updates and coordination for voice services.\",\n  \"membershipType\": \"standard\",\n  \"isFavoriteByDefault\": true,\n  \"tenantId\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n  \"teamId\": \"team_techcorp_001\",\n  \"isArchived\": false,\n  \"createdDateTime\": \"2026-06-15T08:21:17.376594Z\"\n}"
+                }
+              ],
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "gym-teams-mcp"
+        },
+        {
+          "tool_name": "send_channel_message",
+          "arguments": {
+            "teamId": "team_techcorp_001",
+            "channelId": "channel_5e143b9ee01946acae37e318d0a4856f",
+            "body": {
+              "contentType": "html",
+              "content": "<p>Webinar scheduled: <strong>AMER Voice Resiliency Fire Drill</strong></p><p>Start time: 2025-11-27 15:00 UTC (10:00 ET)</p><p>Audience: Organization. Attendee email notifications are enabled.</p><p>A follow-up townhall is already scheduled.</p>"
+            },
+            "importance": "normal"
+          },
+          "result": {
+            "success": true,
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\n  \"@odata.context\": \"https://graph.microsoft.com/v1.0/$metadata#teams('team_techcorp_001')/channels('channel_5e143b9ee01946acae37e318d0a4856f')/messages/$entity\",\n  \"id\": \"msg_b46c248d8004485880e646449bacd943\",\n  \"replyToId\": null,\n  \"etag\": \"etag_msg_b46c248d8004485880e646449bacd943\",\n  \"messageType\": \"message\",\n  \"createdDateTime\": \"2026-06-15T08:21:19.861899Z\",\n  \"lastModifiedDateTime\": \"2026-06-15T08:21:19.861899Z\",\n  \"lastEditedDateTime\": null,\n  \"deletedDateTime\": null,\n  \"subject\": null,\n  \"summary\": null,\n  \"chatId\": null,\n  \"importance\": \"normal\",\n  \"locale\": \"en-us\",\n  \"webUrl\": \"https://teams.microsoft.com/l/message/channel_5e143b9ee01946acae37e318d0a4856f/msg_b46c248d8004485880e646449bacd943\",\n  \"policyViolation\": null,\n  \"eventDetail\": null,\n  \"from\": {\n    \"application\": null,\n    \"device\": null,\n    \"user\": {\n      \"id\": \"james.wilson\",\n      \"displayName\": \"Current User\",\n      \"userIdentityType\": \"aadUser\"\n    }\n  },\n  \"body\": {\n    \"contentType\": \"text\",\n    \"content\": \"<p>Webinar scheduled: <strong>AMER Voice Resiliency Fire Drill</strong></p><p>Start time: 2025-11-27 15:00 UTC (10:00 ET)</p><p>Audience: Organization. Attendee email notifications are enabled.</p><p>A follow-up townhall is already scheduled.</p>\"\n  },\n  \"channelIdentity\": {\n    \"teamId\": \"team_techcorp_001\",\n    \"channelId\": \"channel_5e143b9ee01946acae37e318d0a4856f\"\n  },\n  \"attachments\": [],\n  \"mentions\": [],\n  \"reactions\": [],\n  \"messageHistory\": []\n}"
+                }
+              ],
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "gym-teams-mcp"
+        }
+      ],
+      "verification_results": {
+        "verify_webinar_published": {
+          "passed": true,
+          "expected": 1,
+          "actual": 1,
+          "comparison_type": "equals",
+          "query": "SELECT COUNT(*) FROM virtual_event_webinars w WHERE w.org_id = 'techcorp-001' AND w.display_name = 'AMER Voice Resiliency Fire Drill' AND w.status = 'published'",
+          "details": "Comparison equals: 1 vs 1"
+        },
+        "verify_resiliency_schedule_exact_utc": {
+          "passed": true,
+          "expected": 1,
+          "actual": 1,
+          "comparison_type": "equals",
+          "query": "SELECT COUNT() FROM virtual_event_webinars w WHERE w.org_id = 'techcorp-001' AND w.display_name = 'AMER Voice Resiliency Fire Drill' AND datetime(w.start_date_time, 'utc') = datetime('2025-11-27 15:00:00') AND datetime(w.end_date_time, 'utc') = datetime('2025-11-27 16:30:00') AND UPPER(w.start_time_zone) IN ('UTC','ETC/UTC') AND UPPER(w.end_time_zone) IN ('UTC','ETC/UTC') AND w.status != 'cancelled'",
+          "details": "Comparison equals: 1 vs 1"
+        },
+        "verify_description_exact_html": {
+          "passed": true,
+          "expected": 1,
+          "actual": 1,
+          "comparison_type": "equals",
+          "query": "SELECT COUNT() FROM virtual_event_webinars w WHERE w.org_id = 'techcorp-001' AND w.display_name = 'AMER Voice Resiliency Fire Drill' AND w.status != 'cancelled' AND REPLACE(LOWER(w.description_content), ' ', '') = REPLACE(LOWER('<p>Voice resiliency drill for AMER hub leads. We will validate PSTN failover paths, document gaps, and lock every site''s emergency audio routing checklists.</p>'), ' ', '')",
+          "details": "Comparison equals: 1 vs 1"
+        },
+        "verify_audience_and_notifications": {
+          "passed": true,
+          "expected": 1,
+          "actual": 1,
+          "comparison_type": "equals",
+          "query": "SELECT COUNT(*) FROM virtual_event_webinars w WHERE w.org_id = 'techcorp-001' AND w.display_name = 'AMER Voice Resiliency Fire Drill' AND w.status != 'cancelled' AND w.audience = 'organization' AND w.is_attendee_email_notification_enabled = 1",
+          "details": "Comparison equals: 1 vs 1"
+        },
+        "verify_no_active_duplicates_in_org": {
+          "passed": true,
+          "expected": 1,
+          "actual": 1,
+          "comparison_type": "equals",
+          "query": "SELECT COUNT() FROM virtual_event_webinars w WHERE w.org_id = 'techcorp-001' AND w.display_name = 'AMER Voice Resiliency Fire Drill' AND w.status != 'cancelled'",
+          "details": "Comparison equals: 1 vs 1"
+        },
+        "verify_no_wrong_schedule_webinars": {
+          "passed": true,
+          "expected": 0,
+          "actual": 0,
+          "comparison_type": "equals",
+          "query": "SELECT COUNT(*) FROM virtual_event_webinars w WHERE w.org_id = 'techcorp-001' AND w.display_name = 'AMER Voice Resiliency Fire Drill' AND w.status != 'cancelled' AND (datetime(w.start_date_time, 'utc') != datetime('2025-11-27 15:00:00') OR datetime(w.end_date_time, 'utc') != datetime('2025-11-27 16:30:00') OR UPPER(w.start_time_zone) NOT IN ('UTC','ETC/UTC') OR UPPER(w.end_time_zone) NOT IN ('UTC','ETC/UTC'))",
+          "details": "Comparison equals: 0 vs 0"
+        },
+        "verify_voice_ops_channel_exists_or_created": {
+          "passed": true,
+          "expected": 1,
+          "actual": 1,
+          "comparison_type": "equals",
+          "query": "SELECT COUNT(*) FROM channels ch JOIN teams t ON t.team_id = ch.team_id WHERE t.display_name = 'TechCorp Solutions Team' AND t.org_id = 'techcorp-001' AND ch.display_name = 'voice-ops'",
+          "details": "Comparison equals: 1 vs 1"
+        },
+        "verify_confirmation_message_posted": {
+          "passed": true,
+          "expected": 1,
+          "actual": 1,
+          "comparison_type": "equals",
+          "query": "WITH msgs AS (SELECT LOWER(json_extract(cm.body_json, '$.content')) AS content FROM channel_messages cm JOIN channels ch ON ch.channel_id = cm.channel_id JOIN teams t ON t.team_id = ch.team_id WHERE t.display_name = 'TechCorp Solutions Team' AND t.org_id = 'techcorp-001' AND ch.display_name = 'voice-ops') SELECT CASE WHEN EXISTS (SELECT 1 FROM msgs WHERE content LIKE '%amer voice resiliency fire drill%' AND (content LIKE '%2025-11-27%' OR (content LIKE '%nov%' AND content LIKE '%27%' AND content LIKE '%2025%')) AND content LIKE '%15:00%' AND content LIKE '%utc%' AND content LIKE '%10:00%' AND (content LIKE '% et%' OR content LIKE '% est%' OR content LIKE '% eastern%') AND content LIKE '%follow%' AND content LIKE '%townhall%' AND content LIKE '%schedul%') THEN 1 ELSE 0 END",
+          "details": "Comparison equals: 1 vs 1"
+        }
+      },
+      "verification_summary": {
+        "total": 8,
+        "passed": 8,
+        "failed": 0,
+        "pass_rate": 1.0
+      },
+      "overall_success": true
+    }
+  ],
+  "statistics": {
+    "total_runs": 1,
+    "successful_runs": 1,
+    "overall_success_rate": 1.0,
+    "pass_at_1": 1.0,
+    "verifier_level_pass_rate": 1.0,
+    "total_verifiers_checked": 8,
+    "total_verifiers_passed": 8,
+    "individual_verifier_stats": {
+      "verify_webinar_published": {
+        "passed": 1,
+        "total": 1,
+        "pass_rate": 1.0
+      },
+      "verify_resiliency_schedule_exact_utc": {
+        "passed": 1,
+        "total": 1,
+        "pass_rate": 1.0
+      },
+      "verify_description_exact_html": {
+        "passed": 1,
+        "total": 1,
+        "pass_rate": 1.0
+      },
+      "verify_audience_and_notifications": {
+        "passed": 1,
+        "total": 1,
+        "pass_rate": 1.0
+      },
+      "verify_no_active_duplicates_in_org": {
+        "passed": 1,
+        "total": 1,
+        "pass_rate": 1.0
+      },
+      "verify_no_wrong_schedule_webinars": {
+        "passed": 1,
+        "total": 1,
+        "pass_rate": 1.0
+      },
+      "verify_voice_ops_channel_exists_or_created": {
+        "passed": 1,
+        "total": 1,
+        "pass_rate": 1.0
+      },
+      "verify_confirmation_message_posted": {
+        "passed": 1,
+        "total": 1,
+        "pass_rate": 1.0
+      }
+    },
+    "mean_execution_time_ms": 89527.0,
+    "tool_usage": {
+      "list_virtual_event_webinars": 1,
+      "list_teams": 1,
+      "create_virtual_event_webinar": 1,
+      "publish_virtual_event_webinar": 1,
+      "list_channels": 1,
+      "create_channel": 1,
+      "send_channel_message": 1
+    }
+  }
+}

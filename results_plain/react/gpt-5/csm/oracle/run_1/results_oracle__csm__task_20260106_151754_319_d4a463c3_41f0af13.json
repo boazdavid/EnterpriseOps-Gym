@@ -1,0 +1,1410 @@
+{
+  "benchmark_config": {
+    "model": "vllm/Azure/gpt-5-2025-08-07",
+    "number_of_runs": 1,
+    "user_prompt": "I need to process a warranty replacement for a customer. The serial number mentioned starts with \u201cP140-\u201d. Please review the active installed products that match this pattern, and determine the most contextually relevant unit based on active case load and business impact. If more than one unit appears relevant, lean toward the one that\u2019s closer to its warranty boundary at this point, as long as it fits the current support situation.\nIf the warranty is still valid, create a replacement unit at the same customer location, retire the old one, update any open cases still tied to that unit, and complete the usual cleanup done during hardware swaps, including keeping product details and related linkages consistent. Send update notifications to the primary contact associated with the affected account.",
+    "gym_servers": [
+      {
+        "name": "sn-csm-server",
+        "url": "http://localhost:8001",
+        "seed_database_file": "Domain Wise DBs and Task-DB Mappings/csm/dbs/db_1764770976094_b37f1eqwl.sql",
+        "uses_cloning": true
+      }
+    ],
+    "total_gyms": 1,
+    "total_tools_available": 11
+  },
+  "runs": [
+    {
+      "run_number": 1,
+      "started_at": "2026-06-15T10:42:07.235969+00:00",
+      "execution_time_ms": 205428,
+      "model_response": "Here\u2019s what I found and what I can proceed with:\n\nMatched installed products with serial starting \u201cP140-\u201d (status = in_use):\n- Installed product 42 (account 8, location 817): warranty_end 2026-12-20; open cases: 3 (1 high, 2 moderate)\n- Installed product 113 (account 21, location 843): warranty_end 2029-04-08; open cases: 2 (1 high, 1 moderate)\n- Installed product 243 (account 44, location 890): warranty_end 2028-03-14; open cases: 1 (1 high)\n- Installed product 182 (account 33, location 867): warranty_end 2027-09-16; open cases: 3 (1 critical, 1 moderate, 1 low)\n\nMost contextually relevant unit\n- Installed product 182 (account 33) is the most relevant because it has an active CRITICAL case (CS-0000747) and the highest business impact. It also has multiple open cases (CS-0000747 critical, CS-0000768 moderate, CS-0000769 low).\n- Warranty/entitlement check: Product 140 is active. Account 33 has active entitlement(s) for product 140 tied to an active warranty contract (contract 82, warranty, status active, through 2027-03-19). The installed product\u2019s warranty_end is 2027-09-16. Both are currently valid.\n\nNext actions required to process the warranty replacement\n- Create replacement installed product for account 33 at location 867 with the same product (product_id 140).\n- Retire the old installed product (id 182).\n- Update all open cases tied to the old unit (CS-0000747, CS-0000768, CS-0000769) to reference the new installed product.\n- Send update notifications to the account\u2019s primary contact (Angela Brooks, angela.brooks@phillips-jones.com) for the affected cases.\n\nWhy I\u2019m pausing\n- I cannot register the replacement unit without a valid, unique serial_number for the new device. The register operation requires this field, and creating a placeholder serial would violate data integrity.\n\nAs soon as a replacement serial is allocated, I will:\n1) Register the new installed product (account_id 33, location_id 867, product_id 140, status = in_use).\n2) Update cases 747, 768, and 769 to point to the new installed product.\n3) Set the old installed product (id 182) to status = retired.\n4) Send update notifications to Angela Brooks for each affected case.\n\nI\u2019m ready to proceed immediately once the replacement serial is available.",
+      "conversation_flow": [
+        {
+          "type": "system_message",
+          "content": "CSM Agent Policy\n\nYou are a Customer Service Management assistant. Your goal is to assist users in the Customer Service Management lifecycle by helping them register cases, validate entitlements, manage customer assets, raise escalations, attach relevant knowledge, close cases, and in other related processes effectively.\n\nYou should always act based on confirmed user context, ing record relationships, and database integrity best practices. Avoid actions that assume data, do not provide enough context, or seem to be in violation of this policy.\n\nGeneral Instructions\n\nBy default, you should assume the roles and responsibilities of an admin to complete a particular request. If a user request violates policy, do not act on it. Perform one operation at a time. Do not provide knowledge or procedures not in the system. Do not ask for any information or confirmation from the user, if you cannot proceed ahead provide the reason for that before pausing.\n\nRoles & Responsibilities\n\nAdministrator\n\nHas full access across all tables. Can create, update, and deactivate: Users, user groups, and group memberships. Accounts, contacts, locations, and entitlements. Products, installed products, SLAs, contracts, and knowledge. Manages assignment rules, workflows, and escalations.\n\nAgent\n\nFrontline support representative handling customer cases. Read-only access to all records (accounts, contacts, products, contracts, entitlements). Can: Create and update customer cases, interactions, and case work notes. Associate knowledge articles with cases. View entitlements and SLAs linked to accounts and cases. Update case assignment, state, and resolution. Cannot modify user, group, or membership data.\n\nManager\n\nSupervises agents and case queues. Has agent privileges plus: Can reassign cases across groups and users. Can escalate cases and override case prioritization. Monitors SLA compliance, case trends, and escalations. Can approve exceptions (e.g., entitlement overrides or escalations). May contribute to knowledge management as reviewers.\n\nCustomer (Portal User)\n\nEnd user accessing the customer portal. Can: View and update their own profile. Create new cases and track the status of their submitted cases. Search and view knowledge articles (based on visibility: internal/external). Participate in community forums (if enabled). Initiate interactions (chat, email, web, etc.). Limited to their own account\u2019s data (cannot see other accounts/customers). Cannot access internal system data (users, groups, SLAs, contracts of other customers).\n\nCore Operations\n\nRegistering a Customer Case\n\nBegin by identifying the reporting contact and verifying association with an account. Collect necessary inputs: Issue description (short_description) Product or installed product involved Contact channel (channel) Priority (if not provided \u2192 default = moderate) Default state = new. Verify the product or installed product belongs to the customer\u2019s account.\n\nAssigning a Case\n\nA case may be assigned to: An assignment group (assignment_group_id), or A user (assigned_to) within that group. Agents must: Be active, and Be members of the assigned group. Assignment constraints: assigned_to must reference a user with role agent or manager and (if used) member of assignment_group_id.\n\nWorking on a Case\n\nAgents may: Update cause, resolution notes, or other internal fields. Change state (new \u2192 in_progress, in_progress \u2192 pending/resolved). Attach a missing product or installed product. Link relevant knowledge articles. Important: Cases cannot be closed directly. They must first be moved to resolved, then to closed. If a case is invalid, it may be canceled.\n\nCase Lifecycle Management\n\nValid state transitions: new \u2192 in_progress / pending / resolved in_progress \u2192 pending / resolved pending \u2192 in_progress / resolved resolved \u2192 closed / new canceled At each step: Validate acting user\u2019s relationship to the case. Capture timestamps (sys_updated_on, closed_on where applicable). Prevent premature closure without resolution.\n\nEntitlement Validation\n\nBefore applying entitlement: Check it is active and within contract validity. Product-specific entitlements must match the case product (unless entitlement is account-wide). max_cases_per_month = 0 means unlimited; otherwise enforce limits. If entitlement is invalid \u2192 inform the user.\n\nInstalled Product Management\n\nInstalled products must: Be active / in_use. Belong to the reporting account. Do not attach items in retired / repair status to new cases. Ensure installed product\u2019s product matches the case product.\n\nLinking Knowledge Articles\n\nWhen linking knowledge: Articles must be in state = published. Visibility rules apply: internal = agents only external = customers can view Link articles to cases via case_knowledge (usage = suggested, applied, resolution). Ownership is tracked via owner_id.\n\nEscalations\n\nEscalations may be raised when: SLA breach risk exists, or Customer explicitly requests escalation, or High business risk/impact. Steps: Record escalation = true on case. Capture escalation_reason. Ensure justification is logged in case notes. There is no separate escalation record. Escalation is tracked within the case.\n\nProduct Handling\n\nProducts must be: Present in product table, In lifecycle_state = active. Installed products must match the product and account context.\n\nSecurity\n\nUsers may only view or update cases they own, are assigned to, or are in the assigned group. Do not disclose personal data or case details outside these permissions.\n\nValidation, Error Handling & Logging\n\nAlways validate existence and integrity of: Users, accounts, contacts, products, entitlements, and cases. State transitions follow lifecycle rules. All actions must: Update sys_updated_on. Capture timestamps (e.g., closed_on for case closure).\n\nService Levels & Timelines\n\nCase handling Response and resolution timelines are determined by the entitlements (entitlement table) linked to the customer account and product. Applicable SLAs (sla_definition and case_sla tables) set the exact targets for response or resolution, and may vary by case priority, support level, and coverage hours. SLA pause behavior: Obey sla_definition.pause_on_pending; when case state is pending, pause applicable SLAs. If no entitlement or SLA is associated with the account/product, no service level commitments are in scope. Installed product repair / replacement Commitments depend on warranty contracts or support agreements (contract table). The applicable SLA target will be enforced only if defined under the customer\u2019s entitlement. In absence of a valid contract or entitlement, no guaranteed turnaround applies. Knowledge article publication / retirement Service levels for publishing or retiring knowledge are governed by internal operational policies and are not bound by customer-facing SLAs. Unless explicitly defined in entitlements or SLAs, no service level commitments are in scope. User & group management (administrative actions) Internal administrative tasks (user/group creation, role updates, membership changes) are not subject to customer-facing SLAs. Unless an internal SLA is defined, no service level commitments are in scope.\n\nPredefined Lists (Enumerations)\n\nOnly the following values are allowed for these fields:\n\nUsers & Groups user.role: admin, agent, manager, customer user_group.type: support, backoffice, field, vendor\n\nGeography location.city: new_york, london, mumbai, tokyo, sydney location.country: usa, uk, india, japan, australia\n\nAccounts & Contacts account.account_type: customer, partner, internal\n\nProducts & Installed Base product.category: software, hardware, service product.lifecycle_state: active, retired installed_product.status: in_use, in_stock, repair, retired\n\nContracts, Entitlements, SLAs contract.contract_type: support, warranty, subscription contract.status: active, suspended, expired entitlement.support_level: standard, premium, enterprise entitlement.coverage_hours: h8x5, h12x6, h24x7 sla_definition.metric: response, resolution sla_definition.applies_to_priority: critical, high, moderate, low\n\nCase Management customer_case.channel: web, email, phone, chat, social, alert, community customer_case.priority: critical, high, moderate, low customer_case.state: new, in_progress, pending, resolved, closed, canceled customer_case.escalation_reason: urgency, vip, impact, breach_risk, customer_request\n\nInteractions & Knowledge interaction.channel: web, email, phone, chat, social, alert, community knowledge.state: draft, published, retired knowledge.visibility: internal, external case_knowledge.used_as: suggested, applied, resolution Enforcement: reject any value outside the list with INVALID_ENUM_VALUE.\n\nKnowledge Related Policies: When a new case is created and is asked to be investigated, then a knowledge base search should be performed. For all cases the entitlement for the product should be verified and should be actively running. If no relevant knowledge is found and case is being closed, a new knowledge article should be created to capture the findings and resolution steps. If a knowledge article is created, it should be linked to the case for future reference. When new case moves to work in progress appropriate SLA should be aligned to it. Used as for knowledge base to case: When the knowledge is found through automated search it should be linked as suggested. If the knowledge is found to be useful to resolve the case or is being created after case resolution it should have used as type to resolution in linking. In other cases if knowledge is linked it should as applied. If knowledge article is found then it should be used to assist in the next set of actions. For example, it might details regarding product configuration, troubleshooting steps, or best practices or team that should work on it.\n\nFree form text policies: (For texts like short description of cases, title of knowledge, escalation reason and content/body of knowledge) Character limits: 30\u2013120 chars Case Short Description: It can be something like: \"Product: \" + Product name + \", Issue: is not working as expected.\" KB title: Issue Resolution related to , step-by-step guide KB content/body: This kind of issues are tackled by Assignment Group: , Assigned to: . Steps to resolve the issue: , Suggested Priority: . Escalation reason: The case could not be completed on time/exceeds the time limit or has priority beyond the defined list of priorities."
+        },
+        {
+          "type": "user_message",
+          "content": "I need to process a warranty replacement for a customer. The serial number mentioned starts with \u201cP140-\u201d. Please review the active installed products that match this pattern, and determine the most contextually relevant unit based on active case load and business impact. If more than one unit appears relevant, lean toward the one that\u2019s closer to its warranty boundary at this point, as long as it fits the current support situation.\nIf the warranty is still valid, create a replacement unit at the same customer location, retire the old one, update any open cases still tied to that unit, and complete the usual cleanup done during hardware swaps, including keeping product details and related linkages consistent. Send update notifications to the primary contact associated with the affected account."
+        },
+        {
+          "type": "ai_message",
+          "content": "",
+          "usage_metadata": {
+            "input_tokens": 4554,
+            "output_tokens": 1691,
+            "total_tokens": 6245,
+            "input_token_details": {
+              "audio": 0,
+              "cache_read": 1920
+            },
+            "output_token_details": {
+              "audio": 0,
+              "reasoning": 1664
+            }
+          },
+          "response_metadata": {
+            "token_usage": {
+              "completion_tokens": 1691,
+              "prompt_tokens": 4554,
+              "total_tokens": 6245,
+              "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 1664,
+                "rejected_prediction_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 1920
+              },
+              "latency_checkpoint": {
+                "engine_tbt_ms": 12,
+                "engine_ttft_ms": 221,
+                "engine_ttlt_ms": 21463,
+                "pre_inference_ms": 210,
+                "service_tbt_ms": 12,
+                "service_ttft_ms": 675,
+                "service_ttlt_ms": 21913,
+                "total_duration_ms": 21713,
+                "user_visible_ttft_ms": 465
+              }
+            },
+            "model_provider": "openai",
+            "model_name": "Azure/gpt-5-2025-08-07",
+            "system_fingerprint": null,
+            "id": "chatcmpl-Dqz3YqYCkjPWdH3ohDTRy6UmT13S0",
+            "service_tier": "default",
+            "finish_reason": "tool_calls",
+            "logprobs": null
+          },
+          "tool_calls": [
+            {
+              "name": "retrieve_installed_products",
+              "args": {
+                "status": "in_use"
+              }
+            }
+          ]
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "retrieve_installed_products",
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "[{\"installed_product_id\": 2, \"account_id\": 1, \"product_id\": 130, \"location_id\": 804, \"serial_number\": \"P130-588531-9296\", \"status\": \"in_use\", \"warranty_end\": \"2028-01-14\", \"sys_created_on\": \"2025-08-27 15:37:49\"}, {\"installed_product_id\": 3, \"account_id\": 1, \"product_id\": 128, \"location_id\": 804, \"serial_number\": \"P128-889629-8734\", \"status\": \"in_use\", \"warranty_end\": \"2028-04-13\", \"sys_created_on\": \"2025-08-27 15:32:21\"}, {\"installed_product_id\": 5, \"account_id\": 1, \"product_id\": 221, \"location_id\": 804, \"serial_number\": \"P221-749826-2677\", \"status\": \"in_use\", \"warranty_end\": \"2028-04-13\", \"sys_created_on\": \"2025-08-27 15:43:19\"}, {\"installed_product_id\": 8, \"account_id\": 2, \"product_id\": 128, \"location_id\": 806, \"serial_number\": \"P128-546390-6915\", \"status\": \"in_use\", \"warranty_end\": \"2028-12-09\", \"sys_created_on\": \"2025-08-27 15:44:35\"}, {\"installed_product_id\": 9, \"account_id\": 2, \"product_id\": 151, \"location_id\": null, \"serial_number\": \"P151-676682-2881\", \"status\": \"in_use\", \"warranty_end\": \"2028-02-13\", \"sys_created_on\": \"2025-08-27 15:39:29\"}, {\"installed_product_id\": 13, \"account_id\": 2, \"product_id\": 202, \"location_id\": 805, \"serial_number\": \"P202-892596-5243\", \"status\": \"in_use\", \"warranty_end\": \"2027-11-15\", \"sys_created_on\": \"2025-08-27 15:44:59\"}, {\"installed_product_id\": 14, \"account_id\": 3, \"product_id\": 48, \"location_id\": 807, \"serial_number\": \"P48-657716-2595\", \"status\": \"in_use\", \"warranty_end\": \"2027-08-17\", \"sys_created_on\": \"2025-08-27 15:43:47\"}, {\"installed_product_id\": 15, \"account_id\": 3, \"product_id\": 25, \"location_id\": 808, \"serial_number\": \"P25-390837-3986\", \"status\": \"in_use\", \"warranty_end\": \"2029-07-07\", \"sys_created_on\": \"2025-08-27 15:36:08\"}, {\"installed_product_id\": 16, \"account_id\": 3, \"product_id\": 97, \"location_id\": 807, \"serial_number\": \"P97-684894-6335\", \"status\": \"in_use\", \"warranty_end\": \"2027-01-19\", \"sys_created_on\": \"2025-08-27 15:31:15\"}, {\"installed_product_id\": 18, \"account_id\": 3, \"product_id\": 170, \"location_id\": 808, \"serial_number\": \"P170-333687-4462\", \"status\": \"in_use\", \"warranty_end\": \"2028-03-14\", \"sys_created_on\": \"2025-08-27 15:49:55\"}, {\"installed_product_id\": 19, \"account_id\": 3, \"product_id\": 190, \"location_id\": 807, \"serial_number\": \"P190-434404-9269\", \"status\": \"in_use\", \"warranty_end\": \"2027-02-18\", \"sys_created_on\": \"2025-08-27 15:39:00\"}, {\"installed_product_id\": 20, \"account_id\": 4, \"product_id\": 47, \"location_id\": 809, \"serial_number\": \"P47-622334-4396\", \"status\": \"in_use\", \"warranty_end\": \"2028-03-14\", \"sys_created_on\": \"2025-08-27 15:44:10\"}, {\"installed_product_id\": 24, \"account_id\": 5, \"product_id\": 30, \"location_id\": 811, \"serial_number\": \"P30-865162-9237\", \"status\": \"in_use\", \"warranty_end\": \"2027-03-20\", \"sys_created_on\": \"2025-08-27 15:37:23\"}, {\"installed_product_id\": 27, \"account_id\": 5, \"product_id\": 121, \"location_id\": 812, \"serial_number\": \"P121-383276-1940\", \"status\": \"in_use\", \"warranty_end\": \"2028-04-13\", \"sys_created_on\": \"2025-08-27 15:47:03\"}, {\"installed_product_id\": 28, \"account_id\": 5, \"product_id\": 195, \"location_id\": 812, \"serial_number\": \"P195-652950-8735\", \"status\": \"in_use\", \"warranty_end\": \"2028-02-13\", \"sys_created_on\": \"2025-08-27 15:47:13\"}, {\"installed_product_id\": 29, \"account_id\": 5, \"product_id\": 209, \"location_id\": 812, \"serial_number\": \"P209-464646-2052\", \"status\": \"in_use\", \"warranty_end\": \"2027-05-19\", \"sys_created_on\": \"2025-08-27 15:43:02\"}, {\"installed_product_id\": 32, \"account_id\": 6, \"product_id\": 160, \"location_id\": 814, \"serial_number\": \"P160-368769-7687\", \"status\": \"in_use\", \"warranty_end\": \"2028-04-13\", \"sys_created_on\": \"2025-08-27 15:36:12\"}, {\"installed_product_id\": 33, \"account_id\": 6, \"product_id\": 170, \"location_id\": 814, \"serial_number\": \"P170-375934-2290\", \"status\": \"in_use\", \"warranty_end\": \"2026-08-22\", \"sys_created_on\": \"2025-08-27 15:32:07\"}, {\"installed_product_id\": 35, \"account_id\": 6, \"product_id\": 214, \"location_id\": 814, \"serial_number\": \"P214-210493-2006\", \"status\": \"in_use\", \"warranty_end\": \"2029-04-08\", \"sys_created_on\": \"2025-08-27 15:41:44\"}, {\"installed_product_id\": 37, \"account_id\": 7, \"product_id\": 106, \"location_id\": 815, \"serial_number\": \"P106-863386-4980\", \"status\": \"in_use\", \"warranty_end\": \"2026-09-21\", \"sys_created_on\": \"2025-08-27 15:48:52\"}, {\"installed_product_id\": 40, \"account_id\": 8, \"product_id\": 25, \"location_id\": 817, \"serial_number\": \"P25-458046-6504\", \"status\": \"in_use\", \"warranty_end\": \"2027-06-18\", \"sys_created_on\": \"2025-08-27 15:48:23\"}, {\"installed_product_id\": 42, \"account_id\": 8, \"product_id\": 140, \"location_id\": 817, \"serial_number\": \"P140-898548-8853\", \"status\": \"in_use\", \"warranty_end\": \"2026-12-20\", \"sys_created_on\": \"2025-08-27 15:35:51\"}, {\"installed_product_id\": 43, \"account_id\": 8, \"product_id\": 196, \"location_id\": 817, \"serial_number\": \"P196-381085-6268\", \"status\": \"in_use\", \"warranty_end\": \"2026-11-20\", \"sys_created_on\": \"2025-08-27 15:42:08\"}, {\"installed_product_id\": 46, \"account_id\": 9, \"product_id\": 71, \"location_id\": null, \"serial_number\": \"P71-778910-6696\", \"status\": \"in_use\", \"warranty_end\": \"2026-12-20\", \"sys_created_on\": \"2025-08-27 15:48:43\"}, {\"installed_product_id\": 47, \"account_id\": 9, \"product_id\": 136, \"location_id\": 819, \"serial_number\": \"P136-342430-2858\", \"status\": \"in_use\", \"warranty_end\": \"2028-02-13\", \"sys_created_on\": \"2025-08-27 15:30:28\"}, {\"installed_product_id\": 48, \"account_id\": 9, \"product_id\": 155, \"location_id\": 819, \"serial_number\": \"P155-183640-1621\", \"status\": \"in_use\", \"warranty_end\": \"2028-03-14\", \"sys_created_on\": \"2025-08-27 15:32:42\"}, {\"installed_product_id\": 50, \"account_id\": 9, \"product_id\": 184, \"location_id\": 819, \"serial_number\": \"P184-566964-6762\", \"status\": \"in_use\", \"warranty_end\": \"2026-11-20\", \"sys_created_on\": \"2025-08-27 15:47:16\"}, {\"installed_product_id\": 51, \"account_id\": 10, \"product_id\": 34, \"location_id\": 821, \"serial_number\": \"P34-988784-1421\", \"status\": \"in_use\", \"warranty_end\": \"2029-05-08\", \"sys_created_on\": \"2025-08-27 15:42:25\"}, {\"installed_product_id\": 53, \"account_id\": 10, \"product_id\": 125, \"location_id\": 822, \"serial_number\": \"P125-744816-2101\", \"status\": \"in_use\", \"warranty_end\": \"2029-04-08\", \"sys_created_on\": \"2025-08-27 15:39:36\"}, {\"installed_product_id\": 55, \"account_id\": 11, \"product_id\": 49, \"location_id\": 824, \"serial_number\": \"P49-684048-9514\", \"status\": \"in_use\", \"warranty_end\": \"2029-07-07\", \"sys_created_on\": \"2025-08-27 15:36:16\"}, {\"installed_product_id\": 56, \"account_id\": 11, \"product_id\": 135, \"location_id\": null, \"serial_number\": \"P135-840843-1149\", \"status\": \"in_use\", \"warranty_end\": \"2027-06-18\", \"sys_created_on\": \"2025-08-27 15:48:52\"}, {\"installed_product_id\": 57, \"account_id\": 11, \"product_id\": 141, \"location_id\": 823, \"serial_number\": \"P141-514637-8725\", \"status\": \"in_use\", \"warranty_end\": \"2029-05-08\", \"sys_created_on\": \"2025-08-27 15:38:07\"}, {\"installed_product_id\": 58, \"account_id\": 11, \"product_id\": 155, \"location_id\": 823, \"serial_number\": \"P155-945096-5924\", \"status\": \"in_use\", \"warranty_end\": \"2027-10-16\", \"sys_created_on\": \"2025-08-27 15:41:42\"}, {\"installed_product_id\": 59, \"account_id\": 11, \"product_id\": 186, \"location_id\": 823, \"serial_number\": \"P186-934023-7962\", \"status\": \"in_use\", \"warranty_end\": \"2028-05-13\", \"sys_created_on\": \"2025-08-27 15:40:49\"}, {\"installed_product_id\": 60, \"account_id\": 12, \"product_id\": 27, \"location_id\": 825, \"serial_number\": \"P27-814469-2542\", \"status\": \"in_use\", \"warranty_end\": \"2026-09-21\", \"sys_created_on\": \"2025-08-27 15:32:29\"}, {\"installed_product_id\": 62, \"account_id\": 12, \"product_id\": 191, \"location_id\": 826, \"serial_number\": \"P191-196746-8533\", \"status\": \"in_use\", \"warranty_end\": \"2027-08-17\", \"sys_created_on\": \"2025-08-27 15:30:35\"}, {\"installed_product_id\": 63, \"account_id\": 13, \"product_id\": 109, \"location_id\": 828, \"serial_number\": \"P109-425518-1338\", \"status\": \"in_use\", \"warranty_end\": \"2029-08-06\", \"sys_created_on\": \"2025-08-27 15:45:14\"}, {\"installed_product_id\": 64, \"account_id\": 13, \"product_id\": 128, \"location_id\": 828, \"serial_number\": \"P128-950311-9549\", \"status\": \"in_use\", \"warranty_end\": \"2026-10-21\", \"sys_created_on\": \"2025-08-27 15:43:28\"}, {\"installed_product_id\": 65, \"account_id\": 13, \"product_id\": 184, \"location_id\": 828, \"serial_number\": \"P184-695914-6231\", \"status\": \"in_use\", \"warranty_end\": \"2029-07-07\", \"sys_created_on\": \"2025-08-27 15:39:17\"}, {\"installed_product_id\": 67, \"account_id\": 14, \"product_id\": 4, \"location_id\": 829, \"serial_number\": \"P4-656785-3511\", \"status\": \"in_use\", \"warranty_end\": \"2027-03-20\", \"sys_created_on\": \"2025-08-27 15:31:20\"}, {\"installed_product_id\": 68, \"account_id\": 14, \"product_id\": 42, \"location_id\": 829, \"serial_number\": \"P42-193255-7332\", \"status\": \"in_use\", \"warranty_end\": \"2029-03-09\", \"sys_created_on\": \"2025-08-27 15:31:03\"}, {\"installed_product_id\": 69, \"account_id\": 14, \"product_id\": 165, \"location_id\": 830, \"serial_number\": \"P165-275890-2752\", \"status\": \"in_use\", \"warranty_end\": \"2028-10-10\", \"sys_created_on\": \"2025-08-27 15:43:04\"}, {\"installed_product_id\": 70, \"account_id\": 14, \"product_id\": 210, \"location_id\": 829, \"serial_number\": \"P210-570581-7400\", \"status\": \"in_use\", \"warranty_end\": \"2026-09-21\", \"sys_created_on\": \"2025-08-27 15:48:31\"}, {\"installed_product_id\": 71, \"account_id\": 15, \"product_id\": 39, \"location_id\": 831, \"serial_number\": \"P39-285639-8029\", \"status\": \"in_use\", \"warranty_end\": \"2029-02-07\", \"sys_created_on\": \"2025-08-27 15:44:58\"}, {\"installed_product_id\": 72, \"account_id\": 15, \"product_id\": 4, \"location_id\": 831, \"serial_number\": \"P4-584194-3553\", \"status\": \"in_use\", \"warranty_end\": \"2026-11-20\", \"sys_created_on\": \"2025-08-27 15:31:55\"}, {\"installed_product_id\": 73, \"account_id\": 15, \"product_id\": 94, \"location_id\": 832, \"serial_number\": \"P94-842844-8956\", \"status\": \"in_use\", \"warranty_end\": \"2027-09-16\", \"sys_created_on\": \"2025-08-27 15:42:38\"}, {\"installed_product_id\": 74, \"account_id\": 15, \"product_id\": 179, \"location_id\": 831, \"serial_number\": \"P179-753232-8036\", \"status\": \"in_use\", \"warranty_end\": \"2026-10-21\", \"sys_created_on\": \"2025-08-27 15:44:58\"}, {\"installed_product_id\": 75, \"account_id\": 15, \"product_id\": 174, \"location_id\": null, \"serial_number\": \"P174-384451-7623\", \"status\": \"in_use\", \"warranty_end\": \"2029-05-08\", \"sys_created_on\": \"2025-08-27 15:33:54\"}, {\"installed_product_id\": 77, \"account_id\": 15, \"product_id\": 198, \"location_id\": 831, \"serial_number\": \"P198-184879-7050\", \"status\": \"in_use\", \"warranty_end\": \"2027-07-18\", \"sys_created_on\": \"2025-08-27 15:44:12\"}, {\"installed_product_id\": 78, \"account_id\": 15, \"product_id\": 238, \"location_id\": null, \"serial_number\": \"P238-598446-9605\", \"status\": \"in_use\", \"warranty_end\": \"2027-01-19\", \"sys_created_on\": \"2025-08-27 15:46:33\"}, {\"installed_product_id\": 80, \"account_id\": 16, \"product_id\": 82, \"location_id\": 833, \"serial_number\": \"P82-839768-9963\", \"status\": \"in_use\", \"warranty_end\": \"2026-12-20\", \"sys_created_on\": \"2025-08-27 15:30:43\"}, {\"installed_product_id\": 82, \"account_id\": 16, \"product_id\": 98, \"location_id\": 834, \"serial_number\": \"P98-163129-5324\", \"status\": \"in_use\", \"warranty_end\": \"2027-05-19\", \"sys_created_on\": \"2025-08-27 15:41:52\"}, {\"installed_product_id\": 85, \"account_id\": 16, \"product_id\": 158, \"location_id\": 833, \"serial_number\": \"P158-705428-4628\", \"status\": \"in_use\", \"warranty_end\": \"2029-03-09\", \"sys_created_on\": \"2025-08-27 15:49:51\"}, {\"installed_product_id\": 86, \"account_id\": 16, \"product_id\": 197, \"location_id\": 834, \"serial_number\": \"P197-405962-3525\", \"status\": \"in_use\", \"warranty_end\": \"2027-01-19\", \"sys_created_on\": \"2025-08-27 15:41:59\"}, {\"installed_product_id\": 87, \"account_id\": 17, \"product_id\": 38, \"location_id\": 836, \"serial_number\": \"P38-121210-4928\", \"status\": \"in_use\", \"warranty_end\": \"2028-05-13\", \"sys_created_on\": \"2025-08-27 15:35:50\"}, {\"installed_product_id\": 90, \"account_id\": 17, \"product_id\": 236, \"location_id\": 836, \"serial_number\": \"P236-459519-7322\", \"status\": \"in_use\", \"warranty_end\": \"2029-01-08\", \"sys_created_on\": \"2025-08-27 15:45:19\"}, {\"installed_product_id\": 91, \"account_id\": 17, \"product_id\": 233, \"location_id\": 836, \"serial_number\": \"P233-756044-9487\", \"status\": \"in_use\", \"warranty_end\": \"2029-02-07\", \"sys_created_on\": \"2025-08-27 15:40:08\"}, {\"installed_product_id\": 92, \"account_id\": 18, \"product_id\": 75, \"location_id\": 838, \"serial_number\": \"P75-885463-1804\", \"status\": \"in_use\", \"warranty_end\": \"2028-01-14\", \"sys_created_on\": \"2025-08-27 15:38:28\"}, {\"installed_product_id\": 95, \"account_id\": 18, \"product_id\": 132, \"location_id\": 837, \"serial_number\": \"P132-601377-7843\", \"status\": \"in_use\", \"warranty_end\": \"2029-05-08\", \"sys_created_on\": \"2025-08-27 15:35:51\"}, {\"installed_product_id\": 96, \"account_id\": 18, \"product_id\": 187, \"location_id\": 838, \"serial_number\": \"P187-712817-8474\", \"status\": \"in_use\", \"warranty_end\": \"2028-09-10\", \"sys_created_on\": \"2025-08-27 15:31:18\"}, {\"installed_product_id\": 97, \"account_id\": 19, \"product_id\": 84, \"location_id\": 840, \"serial_number\": \"P84-787909-1762\", \"status\": \"in_use\", \"warranty_end\": \"2026-10-21\", \"sys_created_on\": \"2025-08-27 15:37:24\"}, {\"installed_product_id\": 98, \"account_id\": 19, \"product_id\": 97, \"location_id\": 840, \"serial_number\": \"P97-245230-8224\", \"status\": \"in_use\", \"warranty_end\": \"2028-05-13\", \"sys_created_on\": \"2025-08-27 15:40:30\"}, {\"installed_product_id\": 100, \"account_id\": 19, \"product_id\": 123, \"location_id\": null, \"serial_number\": \"P123-556959-6775\", \"status\": \"in_use\", \"warranty_end\": \"2027-09-16\", \"sys_created_on\": \"2025-08-27 15:35:43\"}, {\"installed_product_id\": 101, \"account_id\": 19, \"product_id\": 128, \"location_id\": 840, \"serial_number\": \"P128-373139-2573\", \"status\": \"in_use\", \"warranty_end\": \"2027-06-18\", \"sys_created_on\": \"2025-08-27 15:48:50\"}, {\"installed_product_id\": 103, \"account_id\": 20, \"product_id\": 50, \"location_id\": 842, \"serial_number\": \"P50-192291-9390\", \"status\": \"in_use\", \"warranty_end\": \"2029-02-07\", \"sys_created_on\": \"2025-08-27 15:47:54\"}, {\"installed_product_id\": 104, \"account_id\": 20, \"product_id\": 66, \"location_id\": 842, \"serial_number\": \"P66-179613-9913\", \"status\": \"in_use\", \"warranty_end\": \"2026-08-22\", \"sys_created_on\": \"2025-08-27 15:40:39\"}, {\"installed_product_id\": 105, \"account_id\": 20, \"product_id\": 90, \"location_id\": 841, \"serial_number\": \"P90-163452-8527\", \"status\": \"in_use\", \"warranty_end\": \"2029-04-08\", \"sys_created_on\": \"2025-08-27 15:40:52\"}, {\"installed_product_id\": 107, \"account_id\": 20, \"product_id\": 155, \"location_id\": 841, \"serial_number\": \"P155-252766-5866\", \"status\": \"in_use\", \"warranty_end\": \"2028-10-10\", \"sys_created_on\": \"2025-08-27 15:44:30\"}, {\"installed_product_id\": 111, \"account_id\": 21, \"product_id\": 98, \"location_id\": null, \"serial_number\": \"P98-665615-8280\", \"status\": \"in_use\", \"warranty_end\": \"2027-12-15\", \"sys_created_on\": \"2025-08-27 15:41:21\"}, {\"installed_product_id\": 113, \"account_id\": 21, \"product_id\": 140, \"location_id\": 843, \"serial_number\": \"P140-709063-5330\", \"status\": \"in_use\", \"warranty_end\": \"2029-04-08\", \"sys_created_on\": \"2025-08-27 15:49:49\"}, {\"installed_product_id\": 115, \"account_id\": 21, \"product_id\": 222, \"location_id\": 844, \"serial_number\": \"P222-100122-3844\", \"status\": \"in_use\", \"warranty_end\": \"2029-04-08\", \"sys_created_on\": \"2025-08-27 15:33:11\"}, {\"installed_product_id\": 116, \"account_id\": 21, \"product_id\": 210, \"location_id\": 843, \"serial_number\": \"P210-473256-4442\", \"status\": \"in_use\", \"warranty_end\": \"2029-07-07\", \"sys_created_on\": \"2025-08-27 15:43:21\"}, {\"installed_product_id\": 118, \"account_id\": 22, \"product_id\": 176, \"location_id\": 845, \"serial_number\": \"P176-979668-7677\", \"status\": \"in_use\", \"warranty_end\": \"2029-06-07\", \"sys_created_on\": \"2025-08-27 15:37:00\"}, {\"installed_product_id\": 119, \"account_id\": 22, \"product_id\": 128, \"location_id\": 845, \"serial_number\": \"P128-507719-6716\", \"status\": \"in_use\", \"warranty_end\": \"2027-08-17\", \"sys_created_on\": \"2025-08-27 15:48:48\"}, {\"installed_product_id\": 121, \"account_id\": 22, \"product_id\": 230, \"location_id\": 845, \"serial_number\": \"P230-818493-4462\", \"status\": \"in_use\", \"warranty_end\": \"2027-05-19\", \"sys_created_on\": \"2025-08-27 15:46:34\"}, {\"installed_product_id\": 123, \"account_id\": 23, \"product_id\": 89, \"location_id\": 847, \"serial_number\": \"P89-183262-8153\", \"status\": \"in_use\", \"warranty_end\": \"2027-01-19\", \"sys_created_on\": \"2025-08-27 15:48:33\"}, {\"installed_product_id\": 124, \"account_id\": 23, \"product_id\": 29, \"location_id\": 847, \"serial_number\": \"P29-731776-9057\", \"status\": \"in_use\", \"warranty_end\": \"2028-02-13\", \"sys_created_on\": \"2025-08-27 15:47:15\"}, {\"installed_product_id\": 125, \"account_id\": 23, \"product_id\": 138, \"location_id\": null, \"serial_number\": \"P138-858431-8300\", \"status\": \"in_use\", \"warranty_end\": \"2026-09-21\", \"sys_created_on\": \"2025-08-27 15:47:22\"}, {\"installed_product_id\": 126, \"account_id\": 23, \"product_id\": 217, \"location_id\": 847, \"serial_number\": \"P217-623577-9292\", \"status\": \"in_use\", \"warranty_end\": \"2026-11-20\", \"sys_created_on\": \"2025-08-27 15:39:41\"}, {\"installed_product_id\": 129, \"account_id\": 24, \"product_id\": 69, \"location_id\": 849, \"serial_number\": \"P69-332899-1354\", \"status\": \"in_use\", \"warranty_end\": \"2029-08-06\", \"sys_created_on\": \"2025-08-27 15:30:35\"}, {\"installed_product_id\": 130, \"account_id\": 24, \"product_id\": 177, \"location_id\": 849, \"serial_number\": \"P177-997023-4071\", \"status\": \"in_use\", \"warranty_end\": \"2029-07-07\", \"sys_created_on\": \"2025-08-27 15:37:09\"}, {\"installed_product_id\": 132, \"account_id\": 24, \"product_id\": 189, \"location_id\": 849, \"serial_number\": \"P189-302976-3867\", \"status\": \"in_use\", \"warranty_end\": \"2028-04-13\", \"sys_created_on\": \"2025-08-27 15:34:55\"}, {\"installed_product_id\": 134, \"account_id\": 25, \"product_id\": 32, \"location_id\": 852, \"serial_number\": \"P32-695579-6726\", \"status\": \"in_use\", \"warranty_end\": \"2027-12-15\", \"sys_created_on\": \"2025-08-27 15:44:49\"}, {\"installed_product_id\": 135, \"account_id\": 25, \"product_id\": 152, \"location_id\": 851, \"serial_number\": \"P152-331130-6809\", \"status\": \"in_use\", \"warranty_end\": \"2029-08-06\", \"sys_created_on\": \"2025-08-27 15:38:40\"}, {\"installed_product_id\": 136, \"account_id\": 25, \"product_id\": 205, \"location_id\": 852, \"serial_number\": \"P205-117574-8029\", \"status\": \"in_use\", \"warranty_end\": \"2027-05-19\", \"sys_created_on\": \"2025-08-27 15:48:11\"}, {\"installed_product_id\": 137, \"account_id\": 26, \"product_id\": 115, \"location_id\": 854, \"serial_number\": \"P115-455285-4982\", \"status\": \"in_use\", \"warranty_end\": \"2029-02-07\", \"sys_created_on\": \"2025-08-27 15:45:51\"}, {\"installed_product_id\": 138, \"account_id\": 26, \"product_id\": 134, \"location_id\": 853, \"serial_number\": \"P134-562973-8708\", \"status\": \"in_use\", \"warranty_end\": \"2029-02-07\", \"sys_created_on\": \"2025-08-27 15:37:39\"}, {\"installed_product_id\": 139, \"account_id\": 26, \"product_id\": 179, \"location_id\": 854, \"serial_number\": \"P179-174684-5822\", \"status\": \"in_use\", \"warranty_end\": \"2027-11-15\", \"sys_created_on\": \"2025-08-27 15:36:43\"}, {\"installed_product_id\": 144, \"account_id\": 27, \"product_id\": 154, \"location_id\": 856, \"serial_number\": \"P154-428244-6865\", \"status\": \"in_use\", \"warranty_end\": \"2027-08-17\", \"sys_created_on\": \"2025-08-27 15:37:16\"}, {\"installed_product_id\": 147, \"account_id\": 27, \"product_id\": 200, \"location_id\": 855, \"serial_number\": \"P200-939925-5336\", \"status\": \"in_use\", \"warranty_end\": \"2028-06-12\", \"sys_created_on\": \"2025-08-27 15:35:40\"}, {\"installed_product_id\": 149, \"account_id\": 28, \"product_id\": 109, \"location_id\": 858, \"serial_number\": \"P109-928018-7397\", \"status\": \"in_use\", \"warranty_end\": \"2027-06-18\", \"sys_created_on\": \"2025-08-27 15:42:35\"}, {\"installed_product_id\": 153, \"account_id\": 28, \"product_id\": 208, \"location_id\": 857, \"serial_number\": \"P208-638115-6753\", \"status\": \"in_use\", \"warranty_end\": \"2029-05-08\", \"sys_created_on\": \"2025-08-27 15:43:58\"}, {\"installed_product_id\": 155, \"account_id\": 29, \"product_id\": 55, \"location_id\": 859, \"serial_number\": \"P55-356402-9363\", \"status\": \"in_use\", \"warranty_end\": \"2028-03-14\", \"sys_created_on\": \"2025-08-27 15:49:38\"}, {\"installed_product_id\": 157, \"account_id\": 29, \"product_id\": 173, \"location_id\": 860, \"serial_number\": \"P173-370452-7128\", \"status\": \"in_use\", \"warranty_end\": \"2026-12-20\", \"sys_created_on\": \"2025-08-27 15:47:32\"}, {\"installed_product_id\": 158, \"account_id\": 29, \"product_id\": 172, \"location_id\": 859, \"serial_number\": \"P172-805899-7520\", \"status\": \"in_use\", \"warranty_end\": \"2027-09-16\", \"sys_created_on\": \"2025-08-27 15:41:30\"}, {\"installed_product_id\": 159, \"account_id\": 29, \"product_id\": 212, \"location_id\": 860, \"serial_number\": \"P212-695686-2957\", \"status\": \"in_use\", \"warranty_end\": \"2027-05-19\", \"sys_created_on\": \"2025-08-27 15:37:20\"}, {\"installed_product_id\": 161, \"account_id\": 29, \"product_id\": 231, \"location_id\": 860, \"serial_number\": \"P231-695049-6584\", \"status\": \"in_use\", \"warranty_end\": \"2029-02-07\", \"sys_created_on\": \"2025-08-27 15:47:22\"}, {\"installed_product_id\": 162, \"account_id\": 30, \"product_id\": 17, \"location_id\": 862, \"serial_number\": \"P17-443382-4665\", \"status\": \"in_use\", \"warranty_end\": \"2028-07-12\", \"sys_created_on\": \"2025-08-27 15:31:56\"}, {\"installed_product_id\": 164, \"account_id\": 30, \"product_id\": 151, \"location_id\": 862, \"serial_number\": \"P151-258380-8889\", \"status\": \"in_use\", \"warranty_end\": \"2027-05-19\", \"sys_created_on\": \"2025-08-27 15:46:47\"}, {\"installed_product_id\": 165, \"account_id\": 30, \"product_id\": 206, \"location_id\": 862, \"serial_number\": \"P206-434789-8472\", \"status\": \"in_use\", \"warranty_end\": \"2028-05-13\", \"sys_created_on\": \"2025-08-27 15:30:46\"}, {\"installed_product_id\": 166, \"account_id\": 30, \"product_id\": 197, \"location_id\": 862, \"serial_number\": \"P197-799024-7931\", \"status\": \"in_use\", \"warranty_end\": \"2029-04-08\", \"sys_created_on\": \"2025-08-27 15:41:49\"}, {\"installed_product_id\": 167, \"account_id\": 31, \"product_id\": 42, \"location_id\": null, \"serial_number\": \"P42-566758-3658\", \"status\": \"in_use\", \"warranty_end\": \"2029-06-07\", \"sys_created_on\": \"2025-08-27 15:29:52\"}, {\"installed_product_id\": 168, \"account_id\": 31, \"product_id\": 144, \"location_id\": 864, \"serial_number\": \"P144-565598-9078\", \"status\": \"in_use\", \"warranty_end\": \"2028-09-10\", \"sys_created_on\": \"2025-08-27 15:44:22\"}, {\"installed_product_id\": 169, \"account_id\": 31, \"product_id\": 198, \"location_id\": null, \"serial_number\": \"P198-227864-1155\", \"status\": \"in_use\", \"warranty_end\": \"2027-03-20\", \"sys_created_on\": \"2025-08-27 15:48:26\"}, {\"installed_product_id\": 171, \"account_id\": 31, \"product_id\": 236, \"location_id\": 864, \"serial_number\": \"P236-963508-6367\", \"status\": \"in_use\", \"warranty_end\": \"2027-12-15\", \"sys_created_on\": \"2025-08-27 15:37:45\"}, {\"installed_product_id\": 176, \"account_id\": 32, \"product_id\": 187, \"location_id\": 865, \"serial_number\": \"P187-363621-7832\", \"status\": \"in_use\", \"warranty_end\": \"2027-09-16\", \"sys_created_on\": \"2025-08-27 15:36:45\"}, {\"installed_product_id\": 177, \"account_id\": 32, \"product_id\": 216, \"location_id\": 866, \"serial_number\": \"P216-574228-3903\", \"status\": \"in_use\", \"warranty_end\": \"2028-01-14\", \"sys_created_on\": \"2025-08-27 15:50:29\"}, {\"installed_product_id\": 178, \"account_id\": 32, \"product_id\": 240, \"location_id\": 865, \"serial_number\": \"P240-159285-8705\", \"status\": \"in_use\", \"warranty_end\": \"2027-03-20\", \"sys_created_on\": \"2025-08-27 15:43:06\"}, {\"installed_product_id\": 179, \"account_id\": 33, \"product_id\": 6, \"location_id\": 868, \"serial_number\": \"P6-927474-7255\", \"status\": \"in_use\", \"warranty_end\": \"2029-07-07\", \"sys_created_on\": \"2025-08-27 15:41:52\"}, {\"installed_product_id\": 180, \"account_id\": 33, \"product_id\": 117, \"location_id\": 867, \"serial_number\": \"P117-173848-4726\", \"status\": \"in_use\", \"warranty_end\": \"2027-05-19\", \"sys_created_on\": \"2025-08-27 15:38:46\"}, {\"installed_product_id\": 182, \"account_id\": 33, \"product_id\": 140, \"location_id\": 867, \"serial_number\": \"P140-411674-6934\", \"status\": \"in_use\", \"warranty_end\": \"2027-09-16\", \"sys_created_on\": \"2025-08-27 15:40:47\"}, {\"installed_product_id\": 184, \"account_id\": 34, \"product_id\": 35, \"location_id\": 870, \"serial_number\": \"P35-964976-1005\", \"status\": \"in_use\", \"warranty_end\": \"2028-11-09\", \"sys_created_on\": \"2025-08-27 15:49:26\"}, {\"installed_product_id\": 188, \"account_id\": 34, \"product_id\": 191, \"location_id\": 869, \"serial_number\": \"P191-430190-4473\", \"status\": \"in_use\", \"warranty_end\": \"2026-10-21\", \"sys_created_on\": \"2025-08-27 15:36:21\"}, {\"installed_product_id\": 189, \"account_id\": 35, \"product_id\": 60, \"location_id\": 872, \"serial_number\": \"P60-674995-2238\", \"status\": \"in_use\", \"warranty_end\": \"2026-11-20\", \"sys_created_on\": \"2025-08-27 15:42:36\"}, {\"installed_product_id\": 190, \"account_id\": 35, \"product_id\": 173, \"location_id\": 872, \"serial_number\": \"P173-794556-5500\", \"status\": \"in_use\", \"warranty_end\": \"2028-04-13\", \"sys_created_on\": \"2025-08-27 15:47:17\"}, {\"installed_product_id\": 191, \"account_id\": 35, \"product_id\": 121, \"location_id\": 871, \"serial_number\": \"P121-172786-1232\", \"status\": \"in_use\", \"warranty_end\": \"2027-07-18\", \"sys_created_on\": \"2025-08-27 15:48:21\"}, {\"installed_product_id\": 195, \"account_id\": 36, \"product_id\": 96, \"location_id\": 874, \"serial_number\": \"P96-961259-2192\", \"status\": \"in_use\", \"warranty_end\": \"2029-02-07\", \"sys_created_on\": \"2025-08-27 15:37:32\"}, {\"installed_product_id\": 197, \"account_id\": 36, \"product_id\": 185, \"location_id\": 873, \"serial_number\": \"P185-715061-3381\", \"status\": \"in_use\", \"warranty_end\": \"2028-04-13\", \"sys_created_on\": \"2025-08-27 15:31:28\"}, {\"installed_product_id\": 200, \"account_id\": 37, \"product_id\": 93, \"location_id\": 876, \"serial_number\": \"P93-573165-3768\", \"status\": \"in_use\", \"warranty_end\": \"2028-04-13\", \"sys_created_on\": \"2025-08-27 15:43:19\"}, {\"installed_product_id\": 202, \"account_id\": 37, \"product_id\": 132, \"location_id\": 875, \"serial_number\": \"P132-908814-8378\", \"status\": \"in_use\", \"warranty_end\": \"2028-09-10\", \"sys_created_on\": \"2025-08-27 15:48:00\"}, {\"installed_product_id\": 207, \"account_id\": 38, \"product_id\": 30, \"location_id\": 878, \"serial_number\": \"P30-902640-2170\", \"status\": \"in_use\", \"warranty_end\": \"2028-04-13\", \"sys_created_on\": \"2025-08-27 15:35:36\"}, {\"installed_product_id\": 208, \"account_id\": 38, \"product_id\": 163, \"location_id\": 878, \"serial_number\": \"P163-607622-4332\", \"status\": \"in_use\", \"warranty_end\": \"2029-08-06\", \"sys_created_on\": \"2025-08-27 15:38:51\"}, {\"installed_product_id\": 209, \"account_id\": 38, \"product_id\": 169, \"location_id\": 878, \"serial_number\": \"P169-437166-7121\", \"status\": \"in_use\", \"warranty_end\": \"2029-03-09\", \"sys_created_on\": \"2025-08-27 15:42:20\"}, {\"installed_product_id\": 210, \"account_id\": 38, \"product_id\": 156, \"location_id\": 878, \"serial_number\": \"P156-858606-3109\", \"status\": \"in_use\", \"warranty_end\": \"2029-04-08\", \"sys_created_on\": \"2025-08-27 15:31:39\"}, {\"installed_product_id\": 211, \"account_id\": 38, \"product_id\": 234, \"location_id\": 878, \"serial_number\": \"P234-940428-1389\", \"status\": \"in_use\", \"warranty_end\": \"2027-01-19\", \"sys_created_on\": \"2025-08-27 15:46:27\"}, {\"installed_product_id\": 212, \"account_id\": 38, \"product_id\": 207, \"location_id\": 878, \"serial_number\": \"P207-173342-8310\", \"status\": \"in_use\", \"warranty_end\": \"2026-09-21\", \"sys_created_on\": \"2025-08-27 15:50:34\"}, {\"installed_product_id\": 213, \"account_id\": 38, \"product_id\": 199, \"location_id\": 878, \"serial_number\": \"P199-981277-6931\", \"status\": \"in_use\", \"warranty_end\": \"2029-05-08\", \"sys_created_on\": \"2025-08-27 15:44:56\"}, {\"installed_product_id\": 215, \"account_id\": 39, \"product_id\": 107, \"location_id\": 879, \"serial_number\": \"P107-706301-7023\", \"status\": \"in_use\", \"warranty_end\": \"2027-02-18\", \"sys_created_on\": \"2025-08-27 15:39:50\"}, {\"installed_product_id\": 216, \"account_id\": 39, \"product_id\": 175, \"location_id\": 879, \"serial_number\": \"P175-680474-9015\", \"status\": \"in_use\", \"warranty_end\": \"2026-09-21\", \"sys_created_on\": \"2025-08-27 15:34:23\"}, {\"installed_product_id\": 218, \"account_id\": 39, \"product_id\": 122, \"location_id\": 879, \"serial_number\": \"P122-591180-1916\", \"status\": \"in_use\", \"warranty_end\": \"2029-07-07\", \"sys_created_on\": \"2025-08-27 15:38:52\"}, {\"installed_product_id\": 219, \"account_id\": 39, \"product_id\": 203, \"location_id\": 879, \"serial_number\": \"P203-487102-2077\", \"status\": \"in_use\", \"warranty_end\": \"2028-01-14\", \"sys_created_on\": \"2025-08-27 15:37:54\"}, {\"installed_product_id\": 221, \"account_id\": 40, \"product_id\": 74, \"location_id\": null, \"serial_number\": \"P74-959447-8419\", \"status\": \"in_use\", \"warranty_end\": \"2029-02-07\", \"sys_created_on\": \"2025-08-27 15:32:02\"}, {\"installed_product_id\": 224, \"account_id\": 40, \"product_id\": 227, \"location_id\": 881, \"serial_number\": \"P227-878016-3382\", \"status\": \"in_use\", \"warranty_end\": \"2026-08-22\", \"sys_created_on\": \"2025-08-27 15:42:39\"}, {\"installed_product_id\": 226, \"account_id\": 41, \"product_id\": 146, \"location_id\": 883, \"serial_number\": \"P146-461841-4508\", \"status\": \"in_use\", \"warranty_end\": \"2027-09-16\", \"sys_created_on\": \"2025-08-27 15:45:11\"}, {\"installed_product_id\": 227, \"account_id\": 41, \"product_id\": 177, \"location_id\": 884, \"serial_number\": \"P177-606111-3235\", \"status\": \"in_use\", \"warranty_end\": \"2028-09-10\", \"sys_created_on\": \"2025-08-27 15:34:10\"}, {\"installed_product_id\": 228, \"account_id\": 41, \"product_id\": 205, \"location_id\": 883, \"serial_number\": \"P205-887289-5678\", \"status\": \"in_use\", \"warranty_end\": \"2027-04-19\", \"sys_created_on\": \"2025-08-27 15:32:36\"}, {\"installed_product_id\": 230, \"account_id\": 41, \"product_id\": 192, \"location_id\": 883, \"serial_number\": \"P192-840349-5610\", \"status\": \"in_use\", \"warranty_end\": \"2027-06-18\", \"sys_created_on\": \"2025-08-27 15:44:45\"}, {\"installed_product_id\": 234, \"account_id\": 42, \"product_id\": 182, \"location_id\": 885, \"serial_number\": \"P182-618040-7477\", \"status\": \"in_use\", \"warranty_end\": \"2027-03-20\", \"sys_created_on\": \"2025-08-27 15:50:10\"}, {\"installed_product_id\": 235, \"account_id\": 43, \"product_id\": 30, \"location_id\": 888, \"serial_number\": \"P30-514883-4395\", \"status\": \"in_use\", \"warranty_end\": \"2027-07-18\", \"sys_created_on\": \"2025-08-27 15:45:28\"}, {\"installed_product_id\": 236, \"account_id\": 43, \"product_id\": 151, \"location_id\": 888, \"serial_number\": \"P151-565818-5135\", \"status\": \"in_use\", \"warranty_end\": \"2028-06-12\", \"sys_created_on\": \"2025-08-27 15:37:48\"}, {\"installed_product_id\": 238, \"account_id\": 43, \"product_id\": 237, \"location_id\": null, \"serial_number\": \"P237-415136-1110\", \"status\": \"in_use\", \"warranty_end\": \"2027-09-16\", \"sys_created_on\": \"2025-08-27 15:33:54\"}, {\"installed_product_id\": 239, \"account_id\": 43, \"product_id\": 182, \"location_id\": 887, \"serial_number\": \"P182-337890-9361\", \"status\": \"in_use\", \"warranty_end\": \"2027-05-19\", \"sys_created_on\": \"2025-08-27 15:39:56\"}, {\"installed_product_id\": 241, \"account_id\": 44, \"product_id\": 42, \"location_id\": 890, \"serial_number\": \"P42-459503-6711\", \"status\": \"in_use\", \"warranty_end\": \"2027-02-18\", \"sys_created_on\": \"2025-08-27 15:45:25\"}, {\"installed_product_id\": 243, \"account_id\": 44, \"product_id\": 140, \"location_id\": 890, \"serial_number\": \"P140-690917-4065\", \"status\": \"in_use\", \"warranty_end\": \"2028-03-14\", \"sys_created_on\": \"2025-08-27 15:41:50\"}, {\"installed_product_id\": 246, \"account_id\": 44, \"product_id\": 238, \"location_id\": 889, \"serial_number\": \"P238-376163-1617\", \"status\": \"in_use\", \"warranty_end\": \"2029-03-09\", \"sys_created_on\": \"2025-08-27 15:48:08\"}, {\"installed_product_id\": 247, \"account_id\": 44, \"product_id\": 184, \"location_id\": 889, \"serial_number\": \"P184-884377-3444\", \"status\": \"in_use\", \"warranty_end\": \"2027-03-20\", \"sys_created_on\": \"2025-08-27 15:40:24\"}, {\"installed_product_id\": 248, \"account_id\": 45, \"product_id\": 66, \"location_id\": 892, \"serial_number\": \"P66-565126-9189\", \"status\": \"in_use\", \"warranty_end\": \"2027-04-19\", \"sys_created_on\": \"2025-08-27 15:35:52\"}, {\"installed_product_id\": 249, \"account_id\": 45, \"product_id\": 119, \"location_id\": 892, \"serial_number\": \"P119-122887-7019\", \"status\": \"in_use\", \"warranty_end\": \"2028-04-13\", \"sys_created_on\": \"2025-08-27 15:48:41\"}, {\"installed_product_id\": 254, \"account_id\": 46, \"product_id\": 75, \"location_id\": 893, \"serial_number\": \"P75-808447-8685\", \"status\": \"in_use\", \"warranty_end\": \"2028-09-10\", \"sys_created_on\": \"2025-08-27 15:43:58\"}, {\"installed_product_id\": 256, \"account_id\": 46, \"product_id\": 44, \"location_id\": 894, \"serial_number\": \"P44-461251-2546\", \"status\": \"in_use\", \"warranty_end\": \"2026-12-20\", \"sys_created_on\": \"2025-08-27 15:38:14\"}, {\"installed_product_id\": 257, \"account_id\": 46, \"product_id\": 154, \"location_id\": 894, \"serial_number\": \"P154-836377-4821\", \"status\": \"in_use\", \"warranty_end\": \"2026-08-22\", \"sys_created_on\": \"2025-08-27 15:36:55\"}, {\"installed_product_id\": 258, \"account_id\": 46, \"product_id\": 134, \"location_id\": 893, \"serial_number\": \"P134-458994-1913\", \"status\": \"in_use\", \"warranty_end\": \"2029-07-07\", \"sys_created_on\": \"2025-08-27 15:34:29\"}, {\"installed_product_id\": 260, \"account_id\": 47, \"product_id\": 81, \"location_id\": 895, \"serial_number\": \"P81-392555-4472\", \"status\": \"in_use\", \"warranty_end\": \"2027-05-19\", \"sys_created_on\": \"2025-08-27 15:37:04\"}, {\"installed_product_id\": 263, \"account_id\": 47, \"product_id\": 163, \"location_id\": 895, \"serial_number\": \"P163-863825-6063\", \"status\": \"in_use\", \"warranty_end\": \"2027-03-20\", \"sys_created_on\": \"2025-08-27 15:30:40\"}, {\"installed_product_id\": 264, \"account_id\": 47, \"product_id\": 203, \"location_id\": 895, \"serial_number\": \"P203-339851-5084\", \"status\": \"in_use\", \"warranty_end\": \"2029-02-07\", \"sys_created_on\": \"2025-08-27 15:31:57\"}, {\"installed_product_id\": 267, \"account_id\": 48, \"product_id\": 74, \"location_id\": 897, \"serial_number\": \"P74-817105-4553\", \"status\": \"in_use\", \"warranty_end\": \"2027-12-15\", \"sys_created_on\": \"2025-08-27 15:36:02\"}, {\"installed_product_id\": 270, \"account_id\": 48, \"product_id\": 202, \"location_id\": 897, \"serial_number\": \"P202-515747-9282\", \"status\": \"in_use\", \"warranty_end\": \"2028-02-13\", \"sys_created_on\": \"2025-08-27 15:29:46\"}, {\"installed_product_id\": 271, \"account_id\": 49, \"product_id\": 38, \"location_id\": 900, \"serial_number\": \"P38-447481-7503\", \"status\": \"in_use\", \"warranty_end\": \"2027-02-18\", \"sys_created_on\": \"2025-08-27 15:37:18\"}, {\"installed_product_id\": 277, \"account_id\": 49, \"product_id\": 205, \"location_id\": 899, \"serial_number\": \"P205-451267-9659\", \"status\": \"in_use\", \"warranty_end\": \"2027-03-20\", \"sys_created_on\": \"2025-08-27 15:36:06\"}, {\"installed_product_id\": 278, \"account_id\": 49, \"product_id\": 181, \"location_id\": 900, \"serial_number\": \"P181-551744-8549\", \"status\": \"in_use\", \"warranty_end\": \"2027-01-19\", \"sys_created_on\": \"2025-08-27 15:33:56\"}, {\"installed_product_id\": 280, \"account_id\": 50, \"product_id\": 117, \"location_id\": 902, \"serial_number\": \"P117-532056-2264\", \"status\": \"in_use\", \"warranty_end\": \"2027-07-18\", \"sys_created_on\": \"2025-08-27 15:46:57\"}, {\"installed_product_id\": 282, \"account_id\": 50, \"product_id\": 135, \"location_id\": 901, \"serial_number\": \"P135-999214-8281\", \"status\": \"in_use\", \"warranty_end\": \"2027-02-18\", \"sys_created_on\": \"2025-08-27 15:34:17\"}, {\"installed_product_id\": 284, \"account_id\": 51, \"product_id\": 82, \"location_id\": 903, \"serial_number\": \"P82-331699-5102\", \"status\": \"in_use\", \"warranty_end\": \"2027-01-19\", \"sys_created_on\": \"2025-08-27 15:36:37\"}, {\"installed_product_id\": 286, \"account_id\": 51, \"product_id\": 1, \"location_id\": 904, \"serial_number\": \"P1-163337-5030\", \"status\": \"in_use\", \"warranty_end\": \"2027-11-15\", \"sys_created_on\": \"2025-08-27 15:39:25\"}, {\"installed_product_id\": 287, \"account_id\": 51, \"product_id\": 129, \"location_id\": 903, \"serial_number\": \"P129-647015-1581\", \"status\": \"in_use\", \"warranty_end\": \"2026-12-20\", \"sys_created_on\": \"2025-08-27 15:30:38\"}, {\"installed_product_id\": 288, \"account_id\": 51, \"product_id\": 138, \"location_id\": 904, \"serial_number\": \"P138-605840-8359\", \"status\": \"in_use\", \"warranty_end\": \"2029-06-07\", \"sys_created_on\": \"2025-08-27 15:47:30\"}, {\"installed_product_id\": 289, \"account_id\": 51, \"product_id\": 167, \"location_id\": 904, \"serial_number\": \"P167-734001-7055\", \"status\": \"in_use\", \"warranty_end\": \"2029-06-07\", \"sys_created_on\": \"2025-08-27 15:35:37\"}, {\"installed_product_id\": 291, \"account_id\": 51, \"product_id\": 228, \"location_id\": 903, \"serial_number\": \"P228-401578-7956\", \"status\": \"in_use\", \"warranty_end\": \"2026-10-21\", \"sys_created_on\": \"2025-08-27 15:48:37\"}, {\"installed_product_id\": 292, \"account_id\": 52, \"product_id\": 85, \"location_id\": 905, \"serial_number\": \"P85-837522-2635\", \"status\": \"in_use\", \"warranty_end\": \"2029-02-07\", \"sys_created_on\": \"2025-08-27 15:43:36\"}, {\"installed_product_id\": 293, \"account_id\": 52, \"product_id\": 52, \"location_id\": null, \"serial_number\": \"P52-847905-7831\", \"status\": \"in_use\", \"warranty_end\": \"2026-12-20\", \"sys_created_on\": \"2025-08-27 15:40:20\"}, {\"installed_product_id\": 295, \"account_id\": 52, \"product_id\": 133, \"location_id\": 906, \"serial_number\": \"P133-465917-9300\", \"status\": \"in_use\", \"warranty_end\": \"2028-08-11\", \"sys_created_on\": \"2025-08-27 15:40:10\"}, {\"installed_product_id\": 297, \"account_id\": 52, \"product_id\": 137, \"location_id\": 905, \"serial_number\": \"P137-168384-1802\", \"status\": \"in_use\", \"warranty_end\": \"2028-02-13\", \"sys_created_on\": \"2025-08-27 15:32:22\"}, {\"installed_product_id\": 298, \"account_id\": 52, \"product_id\": 198, \"location_id\": 906, \"serial_number\": \"P198-433969-1490\", \"status\": \"in_use\", \"warranty_end\": \"2026-12-20\", \"sys_created_on\": \"2025-08-27 15:36:17\"}, {\"installed_product_id\": 299, \"account_id\": 52, \"product_id\": 202, \"location_id\": 905, \"serial_number\": \"P202-353173-6578\", \"status\": \"in_use\", \"warranty_end\": \"2027-09-16\", \"sys_created_on\": \"2025-08-27 15:46:11\"}, {\"installed_product_id\": 300, \"account_id\": 52, \"product_id\": 223, \"location_id\": 905, \"serial_number\": \"P223-131588-1587\", \"status\": \"in_use\", \"warranty_end\": \"2028-05-13\", \"sys_created_on\": \"2025-08-27 15:39:53\"}]",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "type": "ai_message",
+          "content": "",
+          "usage_metadata": {
+            "input_tokens": 19314,
+            "output_tokens": 1358,
+            "total_tokens": 20672,
+            "input_token_details": {
+              "audio": 0,
+              "cache_read": 4480
+            },
+            "output_token_details": {
+              "audio": 0,
+              "reasoning": 1088
+            }
+          },
+          "response_metadata": {
+            "token_usage": {
+              "completion_tokens": 1358,
+              "prompt_tokens": 19314,
+              "total_tokens": 20672,
+              "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 1088,
+                "rejected_prediction_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 4480
+              },
+              "latency_checkpoint": {
+                "engine_tbt_ms": 8,
+                "engine_ttft_ms": 811,
+                "engine_ttlt_ms": 12722,
+                "pre_inference_ms": 234,
+                "service_tbt_ms": 8,
+                "service_ttft_ms": 1377,
+                "service_ttlt_ms": 13284,
+                "total_duration_ms": 13060,
+                "user_visible_ttft_ms": 1143
+              }
+            },
+            "model_provider": "openai",
+            "model_name": "Azure/gpt-5-2025-08-07",
+            "system_fingerprint": null,
+            "id": "chatcmpl-Dqz3xCo7qDHfghmkcdxrx02v3B9FG",
+            "service_tier": "default",
+            "finish_reason": "tool_calls",
+            "logprobs": null
+          },
+          "tool_calls": [
+            {
+              "name": "search_cases",
+              "args": {
+                "installed_product_id": 42,
+                "state": "new"
+              }
+            },
+            {
+              "name": "search_cases",
+              "args": {
+                "installed_product_id": 42,
+                "state": "in_progress"
+              }
+            },
+            {
+              "name": "search_cases",
+              "args": {
+                "installed_product_id": 42,
+                "state": "pending"
+              }
+            },
+            {
+              "name": "search_cases",
+              "args": {
+                "installed_product_id": 113,
+                "state": "new"
+              }
+            },
+            {
+              "name": "search_cases",
+              "args": {
+                "installed_product_id": 113,
+                "state": "in_progress"
+              }
+            },
+            {
+              "name": "search_cases",
+              "args": {
+                "installed_product_id": 113,
+                "state": "pending"
+              }
+            },
+            {
+              "name": "search_cases",
+              "args": {
+                "installed_product_id": 182,
+                "state": "new"
+              }
+            },
+            {
+              "name": "search_cases",
+              "args": {
+                "installed_product_id": 182,
+                "state": "in_progress"
+              }
+            },
+            {
+              "name": "search_cases",
+              "args": {
+                "installed_product_id": 182,
+                "state": "pending"
+              }
+            },
+            {
+              "name": "search_cases",
+              "args": {
+                "installed_product_id": 243,
+                "state": "new"
+              }
+            },
+            {
+              "name": "search_cases",
+              "args": {
+                "installed_product_id": 243,
+                "state": "in_progress"
+              }
+            },
+            {
+              "name": "search_cases",
+              "args": {
+                "installed_product_id": 243,
+                "state": "pending"
+              }
+            }
+          ]
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "search_cases",
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "[{\"case_id\": 181, \"number\": \"CS-0000181\", \"account_id\": 8, \"contact_id\": 10, \"product_id\": 140, \"installed_product_id\": 42, \"channel\": \"phone\", \"priority\": \"high\", \"state\": \"new\", \"short_description\": \"Product: Palo Alto Networks PA-3220 Variant 8, Issue: is not working as expected.\", \"escalation\": 0, \"escalation_reason\": null, \"reopen_count\": 0, \"sys_created_on\": \"2025-08-27 15:42:15\", \"sys_updated_on\": \"2025-12-03 20:29:08\", \"closed_on\": null, \"assignment_group_id\": null, \"assigned_to\": null}]",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "search_cases",
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "[{\"case_id\": 184, \"number\": \"CS-0000184\", \"account_id\": 8, \"contact_id\": 10, \"product_id\": 140, \"installed_product_id\": 42, \"channel\": \"alert\", \"priority\": \"moderate\", \"state\": \"in_progress\", \"short_description\": \"Product: Palo Alto Networks PA-3220 Variant 8, Issue: is not working as expected.\", \"escalation\": 0, \"escalation_reason\": null, \"reopen_count\": 0, \"sys_created_on\": \"2025-08-27 15:31:25\", \"sys_updated_on\": \"2025-09-06 11:56:57\", \"closed_on\": null, \"assignment_group_id\": 52, \"assigned_to\": null}, {\"case_id\": 200, \"number\": \"CS-0000200\", \"account_id\": 8, \"contact_id\": 10, \"product_id\": 140, \"installed_product_id\": 42, \"channel\": \"web\", \"priority\": \"moderate\", \"state\": \"in_progress\", \"short_description\": \"Product: Palo Alto Networks PA-3220 Variant 8, Issue: is not working as expected.\", \"escalation\": 0, \"escalation_reason\": null, \"reopen_count\": 0, \"sys_created_on\": \"2025-08-27 15:30:20\", \"sys_updated_on\": \"2025-09-07 12:47:31\", \"closed_on\": null, \"assignment_group_id\": null, \"assigned_to\": null}]",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "search_cases",
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "[]",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "search_cases",
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "[]",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "search_cases",
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "[{\"case_id\": 458, \"number\": \"CS-0000458\", \"account_id\": 21, \"contact_id\": 36, \"product_id\": 140, \"installed_product_id\": 113, \"channel\": \"chat\", \"priority\": \"high\", \"state\": \"in_progress\", \"short_description\": \"Product: Palo Alto Networks PA-3220 Variant 8, Issue: is not working as expected.\", \"escalation\": 0, \"escalation_reason\": null, \"reopen_count\": 0, \"sys_created_on\": \"2025-08-27 15:34:47\", \"sys_updated_on\": \"2026-03-30 23:29:42\", \"closed_on\": null, \"assignment_group_id\": null, \"assigned_to\": null}, {\"case_id\": 459, \"number\": \"CS-0000459\", \"account_id\": 21, \"contact_id\": 36, \"product_id\": 140, \"installed_product_id\": 113, \"channel\": \"social\", \"priority\": \"moderate\", \"state\": \"in_progress\", \"short_description\": \"Product: Palo Alto Networks PA-3220 Variant 8, Issue: is not working as expected.\", \"escalation\": 0, \"escalation_reason\": null, \"reopen_count\": 0, \"sys_created_on\": \"2025-08-27 15:45:20\", \"sys_updated_on\": \"2025-12-08 18:08:03\", \"closed_on\": null, \"assignment_group_id\": 10, \"assigned_to\": 662}]",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "search_cases",
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "[]",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "search_cases",
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "[{\"case_id\": 747, \"number\": \"CS-0000747\", \"account_id\": 33, \"contact_id\": 71, \"product_id\": 140, \"installed_product_id\": 182, \"channel\": \"web\", \"priority\": \"critical\", \"state\": \"new\", \"short_description\": \"Product: Palo Alto Networks PA-3220 Variant 8, Issue: is not working as expected.\", \"escalation\": 0, \"escalation_reason\": null, \"reopen_count\": 2, \"sys_created_on\": \"2025-08-27 15:48:26\", \"sys_updated_on\": \"2026-05-26 11:26:34\", \"closed_on\": null, \"assignment_group_id\": null, \"assigned_to\": null}]",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "search_cases",
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "[{\"case_id\": 768, \"number\": \"CS-0000768\", \"account_id\": 33, \"contact_id\": 70, \"product_id\": 140, \"installed_product_id\": 182, \"channel\": \"web\", \"priority\": \"moderate\", \"state\": \"in_progress\", \"short_description\": \"Product: Palo Alto Networks PA-3220 Variant 8, Issue: is not working as expected.\", \"escalation\": 0, \"escalation_reason\": null, \"reopen_count\": 0, \"sys_created_on\": \"2025-08-27 15:47:26\", \"sys_updated_on\": \"2026-06-18 08:30:35\", \"closed_on\": null, \"assignment_group_id\": null, \"assigned_to\": 540}, {\"case_id\": 769, \"number\": \"CS-0000769\", \"account_id\": 33, \"contact_id\": 70, \"product_id\": 140, \"installed_product_id\": 182, \"channel\": \"email\", \"priority\": \"low\", \"state\": \"in_progress\", \"short_description\": \"Product: Palo Alto Networks PA-3220 Variant 8, Issue: is not working as expected.\", \"escalation\": 0, \"escalation_reason\": null, \"reopen_count\": 0, \"sys_created_on\": \"2025-08-27 15:44:22\", \"sys_updated_on\": \"2026-05-11 06:36:38\", \"closed_on\": null, \"assignment_group_id\": 49, \"assigned_to\": null}]",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "search_cases",
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "[]",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "search_cases",
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "[]",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "search_cases",
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "[{\"case_id\": 1007, \"number\": \"CS-0001007\", \"account_id\": 44, \"contact_id\": 102, \"product_id\": 140, \"installed_product_id\": 243, \"channel\": \"chat\", \"priority\": \"high\", \"state\": \"in_progress\", \"short_description\": \"Product: Palo Alto Networks PA-3220 Variant 8, Issue: is not working as expected.\", \"escalation\": 0, \"escalation_reason\": null, \"reopen_count\": 0, \"sys_created_on\": \"2025-08-27 15:37:48\", \"sys_updated_on\": \"2026-03-20 19:26:21\", \"closed_on\": null, \"assignment_group_id\": null, \"assigned_to\": null}]",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "search_cases",
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "[]",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "type": "ai_message",
+          "content": "",
+          "usage_metadata": {
+            "input_tokens": 21657,
+            "output_tokens": 2139,
+            "total_tokens": 23796,
+            "input_token_details": {
+              "audio": 0,
+              "cache_read": 0
+            },
+            "output_token_details": {
+              "audio": 0,
+              "reasoning": 2112
+            }
+          },
+          "response_metadata": {
+            "token_usage": {
+              "completion_tokens": 2139,
+              "prompt_tokens": 21657,
+              "total_tokens": 23796,
+              "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 2112,
+                "rejected_prediction_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 0
+              },
+              "latency_checkpoint": {
+                "engine_tbt_ms": 12,
+                "engine_ttft_ms": 802,
+                "engine_ttlt_ms": 27411,
+                "pre_inference_ms": 375,
+                "service_tbt_ms": 12,
+                "service_ttft_ms": 1381,
+                "service_ttlt_ms": 27989,
+                "total_duration_ms": 27627,
+                "user_visible_ttft_ms": 1005
+              }
+            },
+            "model_provider": "openai",
+            "model_name": "Azure/gpt-5-2025-08-07",
+            "system_fingerprint": null,
+            "id": "chatcmpl-Dqz4BiRkH2ZSrWcHFN717u7o8QfJa",
+            "service_tier": "default",
+            "finish_reason": "tool_calls",
+            "logprobs": null
+          },
+          "tool_calls": [
+            {
+              "name": "find_product_by_id",
+              "args": {
+                "product_id": 140
+              }
+            }
+          ]
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "find_product_by_id",
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"product_id\": 140, \"name\": \"Palo Alto Networks PA-3220 Variant 8\", \"category\": \"hardware\", \"lifecycle_state\": \"active\"}",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "type": "ai_message",
+          "content": "",
+          "usage_metadata": {
+            "input_tokens": 21767,
+            "output_tokens": 2149,
+            "total_tokens": 23916,
+            "input_token_details": {
+              "audio": 0,
+              "cache_read": 0
+            },
+            "output_token_details": {
+              "audio": 0,
+              "reasoning": 2048
+            }
+          },
+          "response_metadata": {
+            "token_usage": {
+              "completion_tokens": 2149,
+              "prompt_tokens": 21767,
+              "total_tokens": 23916,
+              "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 2048,
+                "rejected_prediction_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 0
+              },
+              "latency_checkpoint": {
+                "engine_tbt_ms": 10,
+                "engine_ttft_ms": 1119,
+                "engine_ttlt_ms": 23650,
+                "pre_inference_ms": 250,
+                "service_tbt_ms": 10,
+                "service_ttft_ms": 1437,
+                "service_ttlt_ms": 23965,
+                "total_duration_ms": 23730,
+                "user_visible_ttft_ms": 1187
+              }
+            },
+            "model_provider": "openai",
+            "model_name": "Azure/gpt-5-2025-08-07",
+            "system_fingerprint": null,
+            "id": "chatcmpl-Dqz4eJYMTvMoDFNAApiLpC8vN2DMF",
+            "service_tier": "default",
+            "finish_reason": "tool_calls",
+            "logprobs": null
+          },
+          "tool_calls": [
+            {
+              "name": "find_entitlements",
+              "args": {
+                "account_id": 33,
+                "active": true,
+                "product_id": 140
+              }
+            },
+            {
+              "name": "find_contracts",
+              "args": {
+                "account_id": 33,
+                "contract_type": "warranty",
+                "status": "active"
+              }
+            },
+            {
+              "name": "find_contacts",
+              "args": {
+                "account_id": 33,
+                "active": true,
+                "is_primary": true
+              }
+            }
+          ]
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "find_entitlements",
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "[{\"entitlement_id\": 295, \"account_id\": 33, \"product_id\": 140, \"contract_id\": 82, \"support_level\": \"standard\", \"coverage_hours\": \"h8x5\", \"max_cases_per_month\": 0, \"active\": 1, \"sys_created_on\": \"2025-08-27 15:47:56\"}, {\"entitlement_id\": 298, \"account_id\": 33, \"product_id\": 140, \"contract_id\": 83, \"support_level\": \"standard\", \"coverage_hours\": \"h8x5\", \"max_cases_per_month\": 10, \"active\": 1, \"sys_created_on\": \"2025-08-27 15:40:36\"}]",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "find_contracts",
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "[{\"contract_id\": 82, \"account_id\": 33, \"contract_type\": \"warranty\", \"status\": \"active\", \"contract_price\": 1134, \"start_date\": \"2025-08-29\", \"end_date\": \"2027-03-19\", \"sys_created_on\": \"2025-08-27 15:35:32\"}]",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "find_contacts",
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "[{\"contact_id\": 70, \"account_id\": 33, \"portal_user_id\": 19, \"active\": 1, \"is_primary\": 1, \"sys_created_on\": \"2025-08-27 15:47:05\"}]",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "type": "ai_message",
+          "content": "",
+          "usage_metadata": {
+            "input_tokens": 22296,
+            "output_tokens": 3161,
+            "total_tokens": 25457,
+            "input_token_details": {
+              "audio": 0,
+              "cache_read": 0
+            },
+            "output_token_details": {
+              "audio": 0,
+              "reasoning": 3136
+            }
+          },
+          "response_metadata": {
+            "token_usage": {
+              "completion_tokens": 3161,
+              "prompt_tokens": 22296,
+              "total_tokens": 25457,
+              "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 3136,
+                "rejected_prediction_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 0
+              },
+              "latency_checkpoint": {
+                "engine_tbt_ms": 13,
+                "engine_ttft_ms": 849,
+                "engine_ttlt_ms": 41481,
+                "pre_inference_ms": 368,
+                "service_tbt_ms": 13,
+                "service_ttft_ms": 1409,
+                "service_ttlt_ms": 42041,
+                "total_duration_ms": 41690,
+                "user_visible_ttft_ms": 1041
+              }
+            },
+            "model_provider": "openai",
+            "model_name": "Azure/gpt-5-2025-08-07",
+            "system_fingerprint": null,
+            "id": "chatcmpl-Dqz533KXecm5gmD5jVRWKCb66i6kE",
+            "service_tier": "default",
+            "finish_reason": "tool_calls",
+            "logprobs": null
+          },
+          "tool_calls": [
+            {
+              "name": "list_users",
+              "args": {
+                "user_id": 19
+              }
+            }
+          ]
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "list_users",
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "[{\"user_id\": 19, \"first_name\": \"Angela\", \"last_name\": \"Brooks\", \"email\": \"angela.brooks@phillips-jones.com\", \"phone\": \"+12065074879\", \"role\": \"customer\", \"location_id\": 19, \"active\": 1, \"sys_created_on\": \"2025-08-27 15:36:58\"}]",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "type": "ai_message",
+          "content": "Here\u2019s what I found and what I can proceed with:\n\nMatched installed products with serial starting \u201cP140-\u201d (status = in_use):\n- Installed product 42 (account 8, location 817): warranty_end 2026-12-20; open cases: 3 (1 high, 2 moderate)\n- Installed product 113 (account 21, location 843): warranty_end 2029-04-08; open cases: 2 (1 high, 1 moderate)\n- Installed product 243 (account 44, location 890): warranty_end 2028-03-14; open cases: 1 (1 high)\n- Installed product 182 (account 33, location 867): warranty_end 2027-09-16; open cases: 3 (1 critical, 1 moderate, 1 low)\n\nMost contextually relevant unit\n- Installed product 182 (account 33) is the most relevant because it has an active CRITICAL case (CS-0000747) and the highest business impact. It also has multiple open cases (CS-0000747 critical, CS-0000768 moderate, CS-0000769 low).\n- Warranty/entitlement check: Product 140 is active. Account 33 has active entitlement(s) for product 140 tied to an active warranty contract (contract 82, warranty, status active, through 2027-03-19). The installed product\u2019s warranty_end is 2027-09-16. Both are currently valid.\n\nNext actions required to process the warranty replacement\n- Create replacement installed product for account 33 at location 867 with the same product (product_id 140).\n- Retire the old installed product (id 182).\n- Update all open cases tied to the old unit (CS-0000747, CS-0000768, CS-0000769) to reference the new installed product.\n- Send update notifications to the account\u2019s primary contact (Angela Brooks, angela.brooks@phillips-jones.com) for the affected cases.\n\nWhy I\u2019m pausing\n- I cannot register the replacement unit without a valid, unique serial_number for the new device. The register operation requires this field, and creating a placeholder serial would violate data integrity.\n\nAs soon as a replacement serial is allocated, I will:\n1) Register the new installed product (account_id 33, location_id 867, product_id 140, status = in_use).\n2) Update cases 747, 768, and 769 to point to the new installed product.\n3) Set the old installed product (id 182) to status = retired.\n4) Send update notifications to Angela Brooks for each affected case.\n\nI\u2019m ready to proceed immediately once the replacement serial is available.",
+          "usage_metadata": {
+            "input_tokens": 22454,
+            "output_tokens": 5320,
+            "total_tokens": 27774,
+            "input_token_details": {
+              "audio": 0,
+              "cache_read": 21504
+            },
+            "output_token_details": {
+              "audio": 0,
+              "reasoning": 4736
+            }
+          },
+          "response_metadata": {
+            "token_usage": {
+              "completion_tokens": 5320,
+              "prompt_tokens": 22454,
+              "total_tokens": 27774,
+              "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 4736,
+                "rejected_prediction_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 21504
+              },
+              "latency_checkpoint": {
+                "engine_tbt_ms": 12,
+                "engine_ttft_ms": 374,
+                "engine_ttlt_ms": 66303,
+                "pre_inference_ms": 327,
+                "service_tbt_ms": 12,
+                "service_ttft_ms": 894,
+                "service_ttlt_ms": 66817,
+                "total_duration_ms": 66503,
+                "user_visible_ttft_ms": 567
+              }
+            },
+            "model_provider": "openai",
+            "model_name": "Azure/gpt-5-2025-08-07",
+            "system_fingerprint": null,
+            "id": "chatcmpl-Dqz5kMVILtTLwYiHRU5OXfSJg9jX4",
+            "service_tier": "default",
+            "finish_reason": "stop",
+            "logprobs": null
+          },
+          "tool_calls": []
+        }
+      ],
+      "tools_used": [
+        "retrieve_installed_products",
+        "search_cases",
+        "find_product_by_id",
+        "find_entitlements",
+        "find_contracts",
+        "find_contacts",
+        "list_users"
+      ],
+      "tool_results": [
+        {
+          "tool_name": "retrieve_installed_products",
+          "arguments": {
+            "status": "in_use"
+          },
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "[{\"installed_product_id\": 2, \"account_id\": 1, \"product_id\": 130, \"location_id\": 804, \"serial_number\": \"P130-588531-9296\", \"status\": \"in_use\", \"warranty_end\": \"2028-01-14\", \"sys_created_on\": \"2025-08-27 15:37:49\"}, {\"installed_product_id\": 3, \"account_id\": 1, \"product_id\": 128, \"location_id\": 804, \"serial_number\": \"P128-889629-8734\", \"status\": \"in_use\", \"warranty_end\": \"2028-04-13\", \"sys_created_on\": \"2025-08-27 15:32:21\"}, {\"installed_product_id\": 5, \"account_id\": 1, \"product_id\": 221, \"location_id\": 804, \"serial_number\": \"P221-749826-2677\", \"status\": \"in_use\", \"warranty_end\": \"2028-04-13\", \"sys_created_on\": \"2025-08-27 15:43:19\"}, {\"installed_product_id\": 8, \"account_id\": 2, \"product_id\": 128, \"location_id\": 806, \"serial_number\": \"P128-546390-6915\", \"status\": \"in_use\", \"warranty_end\": \"2028-12-09\", \"sys_created_on\": \"2025-08-27 15:44:35\"}, {\"installed_product_id\": 9, \"account_id\": 2, \"product_id\": 151, \"location_id\": null, \"serial_number\": \"P151-676682-2881\", \"status\": \"in_use\", \"warranty_end\": \"2028-02-13\", \"sys_created_on\": \"2025-08-27 15:39:29\"}, {\"installed_product_id\": 13, \"account_id\": 2, \"product_id\": 202, \"location_id\": 805, \"serial_number\": \"P202-892596-5243\", \"status\": \"in_use\", \"warranty_end\": \"2027-11-15\", \"sys_created_on\": \"2025-08-27 15:44:59\"}, {\"installed_product_id\": 14, \"account_id\": 3, \"product_id\": 48, \"location_id\": 807, \"serial_number\": \"P48-657716-2595\", \"status\": \"in_use\", \"warranty_end\": \"2027-08-17\", \"sys_created_on\": \"2025-08-27 15:43:47\"}, {\"installed_product_id\": 15, \"account_id\": 3, \"product_id\": 25, \"location_id\": 808, \"serial_number\": \"P25-390837-3986\", \"status\": \"in_use\", \"warranty_end\": \"2029-07-07\", \"sys_created_on\": \"2025-08-27 15:36:08\"}, {\"installed_product_id\": 16, \"account_id\": 3, \"product_id\": 97, \"location_id\": 807, \"serial_number\": \"P97-684894-6335\", \"status\": \"in_use\", \"warranty_end\": \"2027-01-19\", \"sys_created_on\": \"2025-08-27 15:31:15\"}, {\"installed_product_id\": 18, \"account_id\": 3, \"product_id\": 170, \"location_id\": 808, \"serial_number\": \"P170-333687-4462\", \"status\": \"in_use\", \"warranty_end\": \"2028-03-14\", \"sys_created_on\": \"2025-08-27 15:49:55\"}, {\"installed_product_id\": 19, \"account_id\": 3, \"product_id\": 190, \"location_id\": 807, \"serial_number\": \"P190-434404-9269\", \"status\": \"in_use\", \"warranty_end\": \"2027-02-18\", \"sys_created_on\": \"2025-08-27 15:39:00\"}, {\"installed_product_id\": 20, \"account_id\": 4, \"product_id\": 47, \"location_id\": 809, \"serial_number\": \"P47-622334-4396\", \"status\": \"in_use\", \"warranty_end\": \"2028-03-14\", \"sys_created_on\": \"2025-08-27 15:44:10\"}, {\"installed_product_id\": 24, \"account_id\": 5, \"product_id\": 30, \"location_id\": 811, \"serial_number\": \"P30-865162-9237\", \"status\": \"in_use\", \"warranty_end\": \"2027-03-20\", \"sys_created_on\": \"2025-08-27 15:37:23\"}, {\"installed_product_id\": 27, \"account_id\": 5, \"product_id\": 121, \"location_id\": 812, \"serial_number\": \"P121-383276-1940\", \"status\": \"in_use\", \"warranty_end\": \"2028-04-13\", \"sys_created_on\": \"2025-08-27 15:47:03\"}, {\"installed_product_id\": 28, \"account_id\": 5, \"product_id\": 195, \"location_id\": 812, \"serial_number\": \"P195-652950-8735\", \"status\": \"in_use\", \"warranty_end\": \"2028-02-13\", \"sys_created_on\": \"2025-08-27 15:47:13\"}, {\"installed_product_id\": 29, \"account_id\": 5, \"product_id\": 209, \"location_id\": 812, \"serial_number\": \"P209-464646-2052\", \"status\": \"in_use\", \"warranty_end\": \"2027-05-19\", \"sys_created_on\": \"2025-08-27 15:43:02\"}, {\"installed_product_id\": 32, \"account_id\": 6, \"product_id\": 160, \"location_id\": 814, \"serial_number\": \"P160-368769-7687\", \"status\": \"in_use\", \"warranty_end\": \"2028-04-13\", \"sys_created_on\": \"2025-08-27 15:36:12\"}, {\"installed_product_id\": 33, \"account_id\": 6, \"product_id\": 170, \"location_id\": 814, \"serial_number\": \"P170-375934-2290\", \"status\": \"in_use\", \"warranty_end\": \"2026-08-22\", \"sys_created_on\": \"2025-08-27 15:32:07\"}, {\"installed_product_id\": 35, \"account_id\": 6, \"product_id\": 214, \"location_id\": 814, \"serial_number\": \"P214-210493-2006\", \"status\": \"in_use\", \"warranty_end\": \"2029-04-08\", \"sys_created_on\": \"2025-08-27 15:41:44\"}, {\"installed_product_id\": 37, \"account_id\": 7, \"product_id\": 106, \"location_id\": 815, \"serial_number\": \"P106-863386-4980\", \"status\": \"in_use\", \"warranty_end\": \"2026-09-21\", \"sys_created_on\": \"2025-08-27 15:48:52\"}, {\"installed_product_id\": 40, \"account_id\": 8, \"product_id\": 25, \"location_id\": 817, \"serial_number\": \"P25-458046-6504\", \"status\": \"in_use\", \"warranty_end\": \"2027-06-18\", \"sys_created_on\": \"2025-08-27 15:48:23\"}, {\"installed_product_id\": 42, \"account_id\": 8, \"product_id\": 140, \"location_id\": 817, \"serial_number\": \"P140-898548-8853\", \"status\": \"in_use\", \"warranty_end\": \"2026-12-20\", \"sys_created_on\": \"2025-08-27 15:35:51\"}, {\"installed_product_id\": 43, \"account_id\": 8, \"product_id\": 196, \"location_id\": 817, \"serial_number\": \"P196-381085-6268\", \"status\": \"in_use\", \"warranty_end\": \"2026-11-20\", \"sys_created_on\": \"2025-08-27 15:42:08\"}, {\"installed_product_id\": 46, \"account_id\": 9, \"product_id\": 71, \"location_id\": null, \"serial_number\": \"P71-778910-6696\", \"status\": \"in_use\", \"warranty_end\": \"2026-12-20\", \"sys_created_on\": \"2025-08-27 15:48:43\"}, {\"installed_product_id\": 47, \"account_id\": 9, \"product_id\": 136, \"location_id\": 819, \"serial_number\": \"P136-342430-2858\", \"status\": \"in_use\", \"warranty_end\": \"2028-02-13\", \"sys_created_on\": \"2025-08-27 15:30:28\"}, {\"installed_product_id\": 48, \"account_id\": 9, \"product_id\": 155, \"location_id\": 819, \"serial_number\": \"P155-183640-1621\", \"status\": \"in_use\", \"warranty_end\": \"2028-03-14\", \"sys_created_on\": \"2025-08-27 15:32:42\"}, {\"installed_product_id\": 50, \"account_id\": 9, \"product_id\": 184, \"location_id\": 819, \"serial_number\": \"P184-566964-6762\", \"status\": \"in_use\", \"warranty_end\": \"2026-11-20\", \"sys_created_on\": \"2025-08-27 15:47:16\"}, {\"installed_product_id\": 51, \"account_id\": 10, \"product_id\": 34, \"location_id\": 821, \"serial_number\": \"P34-988784-1421\", \"status\": \"in_use\", \"warranty_end\": \"2029-05-08\", \"sys_created_on\": \"2025-08-27 15:42:25\"}, {\"installed_product_id\": 53, \"account_id\": 10, \"product_id\": 125, \"location_id\": 822, \"serial_number\": \"P125-744816-2101\", \"status\": \"in_use\", \"warranty_end\": \"2029-04-08\", \"sys_created_on\": \"2025-08-27 15:39:36\"}, {\"installed_product_id\": 55, \"account_id\": 11, \"product_id\": 49, \"location_id\": 824, \"serial_number\": \"P49-684048-9514\", \"status\": \"in_use\", \"warranty_end\": \"2029-07-07\", \"sys_created_on\": \"2025-08-27 15:36:16\"}, {\"installed_product_id\": 56, \"account_id\": 11, \"product_id\": 135, \"location_id\": null, \"serial_number\": \"P135-840843-1149\", \"status\": \"in_use\", \"warranty_end\": \"2027-06-18\", \"sys_created_on\": \"2025-08-27 15:48:52\"}, {\"installed_product_id\": 57, \"account_id\": 11, \"product_id\": 141, \"location_id\": 823, \"serial_number\": \"P141-514637-8725\", \"status\": \"in_use\", \"warranty_end\": \"2029-05-08\", \"sys_created_on\": \"2025-08-27 15:38:07\"}, {\"installed_product_id\": 58, \"account_id\": 11, \"product_id\": 155, \"location_id\": 823, \"serial_number\": \"P155-945096-5924\", \"status\": \"in_use\", \"warranty_end\": \"2027-10-16\", \"sys_created_on\": \"2025-08-27 15:41:42\"}, {\"installed_product_id\": 59, \"account_id\": 11, \"product_id\": 186, \"location_id\": 823, \"serial_number\": \"P186-934023-7962\", \"status\": \"in_use\", \"warranty_end\": \"2028-05-13\", \"sys_created_on\": \"2025-08-27 15:40:49\"}, {\"installed_product_id\": 60, \"account_id\": 12, \"product_id\": 27, \"location_id\": 825, \"serial_number\": \"P27-814469-2542\", \"status\": \"in_use\", \"warranty_end\": \"2026-09-21\", \"sys_created_on\": \"2025-08-27 15:32:29\"}, {\"installed_product_id\": 62, \"account_id\": 12, \"product_id\": 191, \"location_id\": 826, \"serial_number\": \"P191-196746-8533\", \"status\": \"in_use\", \"warranty_end\": \"2027-08-17\", \"sys_created_on\": \"2025-08-27 15:30:35\"}, {\"installed_product_id\": 63, \"account_id\": 13, \"product_id\": 109, \"location_id\": 828, \"serial_number\": \"P109-425518-1338\", \"status\": \"in_use\", \"warranty_end\": \"2029-08-06\", \"sys_created_on\": \"2025-08-27 15:45:14\"}, {\"installed_product_id\": 64, \"account_id\": 13, \"product_id\": 128, \"location_id\": 828, \"serial_number\": \"P128-950311-9549\", \"status\": \"in_use\", \"warranty_end\": \"2026-10-21\", \"sys_created_on\": \"2025-08-27 15:43:28\"}, {\"installed_product_id\": 65, \"account_id\": 13, \"product_id\": 184, \"location_id\": 828, \"serial_number\": \"P184-695914-6231\", \"status\": \"in_use\", \"warranty_end\": \"2029-07-07\", \"sys_created_on\": \"2025-08-27 15:39:17\"}, {\"installed_product_id\": 67, \"account_id\": 14, \"product_id\": 4, \"location_id\": 829, \"serial_number\": \"P4-656785-3511\", \"status\": \"in_use\", \"warranty_end\": \"2027-03-20\", \"sys_created_on\": \"2025-08-27 15:31:20\"}, {\"installed_product_id\": 68, \"account_id\": 14, \"product_id\": 42, \"location_id\": 829, \"serial_number\": \"P42-193255-7332\", \"status\": \"in_use\", \"warranty_end\": \"2029-03-09\", \"sys_created_on\": \"2025-08-27 15:31:03\"}, {\"installed_product_id\": 69, \"account_id\": 14, \"product_id\": 165, \"location_id\": 830, \"serial_number\": \"P165-275890-2752\", \"status\": \"in_use\", \"warranty_end\": \"2028-10-10\", \"sys_created_on\": \"2025-08-27 15:43:04\"}, {\"installed_product_id\": 70, \"account_id\": 14, \"product_id\": 210, \"location_id\": 829, \"serial_number\": \"P210-570581-7400\", \"status\": \"in_use\", \"warranty_end\": \"2026-09-21\", \"sys_created_on\": \"2025-08-27 15:48:31\"}, {\"installed_product_id\": 71, \"account_id\": 15, \"product_id\": 39, \"location_id\": 831, \"serial_number\": \"P39-285639-8029\", \"status\": \"in_use\", \"warranty_end\": \"2029-02-07\", \"sys_created_on\": \"2025-08-27 15:44:58\"}, {\"installed_product_id\": 72, \"account_id\": 15, \"product_id\": 4, \"location_id\": 831, \"serial_number\": \"P4-584194-3553\", \"status\": \"in_use\", \"warranty_end\": \"2026-11-20\", \"sys_created_on\": \"2025-08-27 15:31:55\"}, {\"installed_product_id\": 73, \"account_id\": 15, \"product_id\": 94, \"location_id\": 832, \"serial_number\": \"P94-842844-8956\", \"status\": \"in_use\", \"warranty_end\": \"2027-09-16\", \"sys_created_on\": \"2025-08-27 15:42:38\"}, {\"installed_product_id\": 74, \"account_id\": 15, \"product_id\": 179, \"location_id\": 831, \"serial_number\": \"P179-753232-8036\", \"status\": \"in_use\", \"warranty_end\": \"2026-10-21\", \"sys_created_on\": \"2025-08-27 15:44:58\"}, {\"installed_product_id\": 75, \"account_id\": 15, \"product_id\": 174, \"location_id\": null, \"serial_number\": \"P174-384451-7623\", \"status\": \"in_use\", \"warranty_end\": \"2029-05-08\", \"sys_created_on\": \"2025-08-27 15:33:54\"}, {\"installed_product_id\": 77, \"account_id\": 15, \"product_id\": 198, \"location_id\": 831, \"serial_number\": \"P198-184879-7050\", \"status\": \"in_use\", \"warranty_end\": \"2027-07-18\", \"sys_created_on\": \"2025-08-27 15:44:12\"}, {\"installed_product_id\": 78, \"account_id\": 15, \"product_id\": 238, \"location_id\": null, \"serial_number\": \"P238-598446-9605\", \"status\": \"in_use\", \"warranty_end\": \"2027-01-19\", \"sys_created_on\": \"2025-08-27 15:46:33\"}, {\"installed_product_id\": 80, \"account_id\": 16, \"product_id\": 82, \"location_id\": 833, \"serial_number\": \"P82-839768-9963\", \"status\": \"in_use\", \"warranty_end\": \"2026-12-20\", \"sys_created_on\": \"2025-08-27 15:30:43\"}, {\"installed_product_id\": 82, \"account_id\": 16, \"product_id\": 98, \"location_id\": 834, \"serial_number\": \"P98-163129-5324\", \"status\": \"in_use\", \"warranty_end\": \"2027-05-19\", \"sys_created_on\": \"2025-08-27 15:41:52\"}, {\"installed_product_id\": 85, \"account_id\": 16, \"product_id\": 158, \"location_id\": 833, \"serial_number\": \"P158-705428-4628\", \"status\": \"in_use\", \"warranty_end\": \"2029-03-09\", \"sys_created_on\": \"2025-08-27 15:49:51\"}, {\"installed_product_id\": 86, \"account_id\": 16, \"product_id\": 197, \"location_id\": 834, \"serial_number\": \"P197-405962-3525\", \"status\": \"in_use\", \"warranty_end\": \"2027-01-19\", \"sys_created_on\": \"2025-08-27 15:41:59\"}, {\"installed_product_id\": 87, \"account_id\": 17, \"product_id\": 38, \"location_id\": 836, \"serial_number\": \"P38-121210-4928\", \"status\": \"in_use\", \"warranty_end\": \"2028-05-13\", \"sys_created_on\": \"2025-08-27 15:35:50\"}, {\"installed_product_id\": 90, \"account_id\": 17, \"product_id\": 236, \"location_id\": 836, \"serial_number\": \"P236-459519-7322\", \"status\": \"in_use\", \"warranty_end\": \"2029-01-08\", \"sys_created_on\": \"2025-08-27 15:45:19\"}, {\"installed_product_id\": 91, \"account_id\": 17, \"product_id\": 233, \"location_id\": 836, \"serial_number\": \"P233-756044-9487\", \"status\": \"in_use\", \"warranty_end\": \"2029-02-07\", \"sys_created_on\": \"2025-08-27 15:40:08\"}, {\"installed_product_id\": 92, \"account_id\": 18, \"product_id\": 75, \"location_id\": 838, \"serial_number\": \"P75-885463-1804\", \"status\": \"in_use\", \"warranty_end\": \"2028-01-14\", \"sys_created_on\": \"2025-08-27 15:38:28\"}, {\"installed_product_id\": 95, \"account_id\": 18, \"product_id\": 132, \"location_id\": 837, \"serial_number\": \"P132-601377-7843\", \"status\": \"in_use\", \"warranty_end\": \"2029-05-08\", \"sys_created_on\": \"2025-08-27 15:35:51\"}, {\"installed_product_id\": 96, \"account_id\": 18, \"product_id\": 187, \"location_id\": 838, \"serial_number\": \"P187-712817-8474\", \"status\": \"in_use\", \"warranty_end\": \"2028-09-10\", \"sys_created_on\": \"2025-08-27 15:31:18\"}, {\"installed_product_id\": 97, \"account_id\": 19, \"product_id\": 84, \"location_id\": 840, \"serial_number\": \"P84-787909-1762\", \"status\": \"in_use\", \"warranty_end\": \"2026-10-21\", \"sys_created_on\": \"2025-08-27 15:37:24\"}, {\"installed_product_id\": 98, \"account_id\": 19, \"product_id\": 97, \"location_id\": 840, \"serial_number\": \"P97-245230-8224\", \"status\": \"in_use\", \"warranty_end\": \"2028-05-13\", \"sys_created_on\": \"2025-08-27 15:40:30\"}, {\"installed_product_id\": 100, \"account_id\": 19, \"product_id\": 123, \"location_id\": null, \"serial_number\": \"P123-556959-6775\", \"status\": \"in_use\", \"warranty_end\": \"2027-09-16\", \"sys_created_on\": \"2025-08-27 15:35:43\"}, {\"installed_product_id\": 101, \"account_id\": 19, \"product_id\": 128, \"location_id\": 840, \"serial_number\": \"P128-373139-2573\", \"status\": \"in_use\", \"warranty_end\": \"2027-06-18\", \"sys_created_on\": \"2025-08-27 15:48:50\"}, {\"installed_product_id\": 103, \"account_id\": 20, \"product_id\": 50, \"location_id\": 842, \"serial_number\": \"P50-192291-9390\", \"status\": \"in_use\", \"warranty_end\": \"2029-02-07\", \"sys_created_on\": \"2025-08-27 15:47:54\"}, {\"installed_product_id\": 104, \"account_id\": 20, \"product_id\": 66, \"location_id\": 842, \"serial_number\": \"P66-179613-9913\", \"status\": \"in_use\", \"warranty_end\": \"2026-08-22\", \"sys_created_on\": \"2025-08-27 15:40:39\"}, {\"installed_product_id\": 105, \"account_id\": 20, \"product_id\": 90, \"location_id\": 841, \"serial_number\": \"P90-163452-8527\", \"status\": \"in_use\", \"warranty_end\": \"2029-04-08\", \"sys_created_on\": \"2025-08-27 15:40:52\"}, {\"installed_product_id\": 107, \"account_id\": 20, \"product_id\": 155, \"location_id\": 841, \"serial_number\": \"P155-252766-5866\", \"status\": \"in_use\", \"warranty_end\": \"2028-10-10\", \"sys_created_on\": \"2025-08-27 15:44:30\"}, {\"installed_product_id\": 111, \"account_id\": 21, \"product_id\": 98, \"location_id\": null, \"serial_number\": \"P98-665615-8280\", \"status\": \"in_use\", \"warranty_end\": \"2027-12-15\", \"sys_created_on\": \"2025-08-27 15:41:21\"}, {\"installed_product_id\": 113, \"account_id\": 21, \"product_id\": 140, \"location_id\": 843, \"serial_number\": \"P140-709063-5330\", \"status\": \"in_use\", \"warranty_end\": \"2029-04-08\", \"sys_created_on\": \"2025-08-27 15:49:49\"}, {\"installed_product_id\": 115, \"account_id\": 21, \"product_id\": 222, \"location_id\": 844, \"serial_number\": \"P222-100122-3844\", \"status\": \"in_use\", \"warranty_end\": \"2029-04-08\", \"sys_created_on\": \"2025-08-27 15:33:11\"}, {\"installed_product_id\": 116, \"account_id\": 21, \"product_id\": 210, \"location_id\": 843, \"serial_number\": \"P210-473256-4442\", \"status\": \"in_use\", \"warranty_end\": \"2029-07-07\", \"sys_created_on\": \"2025-08-27 15:43:21\"}, {\"installed_product_id\": 118, \"account_id\": 22, \"product_id\": 176, \"location_id\": 845, \"serial_number\": \"P176-979668-7677\", \"status\": \"in_use\", \"warranty_end\": \"2029-06-07\", \"sys_created_on\": \"2025-08-27 15:37:00\"}, {\"installed_product_id\": 119, \"account_id\": 22, \"product_id\": 128, \"location_id\": 845, \"serial_number\": \"P128-507719-6716\", \"status\": \"in_use\", \"warranty_end\": \"2027-08-17\", \"sys_created_on\": \"2025-08-27 15:48:48\"}, {\"installed_product_id\": 121, \"account_id\": 22, \"product_id\": 230, \"location_id\": 845, \"serial_number\": \"P230-818493-4462\", \"status\": \"in_use\", \"warranty_end\": \"2027-05-19\", \"sys_created_on\": \"2025-08-27 15:46:34\"}, {\"installed_product_id\": 123, \"account_id\": 23, \"product_id\": 89, \"location_id\": 847, \"serial_number\": \"P89-183262-8153\", \"status\": \"in_use\", \"warranty_end\": \"2027-01-19\", \"sys_created_on\": \"2025-08-27 15:48:33\"}, {\"installed_product_id\": 124, \"account_id\": 23, \"product_id\": 29, \"location_id\": 847, \"serial_number\": \"P29-731776-9057\", \"status\": \"in_use\", \"warranty_end\": \"2028-02-13\", \"sys_created_on\": \"2025-08-27 15:47:15\"}, {\"installed_product_id\": 125, \"account_id\": 23, \"product_id\": 138, \"location_id\": null, \"serial_number\": \"P138-858431-8300\", \"status\": \"in_use\", \"warranty_end\": \"2026-09-21\", \"sys_created_on\": \"2025-08-27 15:47:22\"}, {\"installed_product_id\": 126, \"account_id\": 23, \"product_id\": 217, \"location_id\": 847, \"serial_number\": \"P217-623577-9292\", \"status\": \"in_use\", \"warranty_end\": \"2026-11-20\", \"sys_created_on\": \"2025-08-27 15:39:41\"}, {\"installed_product_id\": 129, \"account_id\": 24, \"product_id\": 69, \"location_id\": 849, \"serial_number\": \"P69-332899-1354\", \"status\": \"in_use\", \"warranty_end\": \"2029-08-06\", \"sys_created_on\": \"2025-08-27 15:30:35\"}, {\"installed_product_id\": 130, \"account_id\": 24, \"product_id\": 177, \"location_id\": 849, \"serial_number\": \"P177-997023-4071\", \"status\": \"in_use\", \"warranty_end\": \"2029-07-07\", \"sys_created_on\": \"2025-08-27 15:37:09\"}, {\"installed_product_id\": 132, \"account_id\": 24, \"product_id\": 189, \"location_id\": 849, \"serial_number\": \"P189-302976-3867\", \"status\": \"in_use\", \"warranty_end\": \"2028-04-13\", \"sys_created_on\": \"2025-08-27 15:34:55\"}, {\"installed_product_id\": 134, \"account_id\": 25, \"product_id\": 32, \"location_id\": 852, \"serial_number\": \"P32-695579-6726\", \"status\": \"in_use\", \"warranty_end\": \"2027-12-15\", \"sys_created_on\": \"2025-08-27 15:44:49\"}, {\"installed_product_id\": 135, \"account_id\": 25, \"product_id\": 152, \"location_id\": 851, \"serial_number\": \"P152-331130-6809\", \"status\": \"in_use\", \"warranty_end\": \"2029-08-06\", \"sys_created_on\": \"2025-08-27 15:38:40\"}, {\"installed_product_id\": 136, \"account_id\": 25, \"product_id\": 205, \"location_id\": 852, \"serial_number\": \"P205-117574-8029\", \"status\": \"in_use\", \"warranty_end\": \"2027-05-19\", \"sys_created_on\": \"2025-08-27 15:48:11\"}, {\"installed_product_id\": 137, \"account_id\": 26, \"product_id\": 115, \"location_id\": 854, \"serial_number\": \"P115-455285-4982\", \"status\": \"in_use\", \"warranty_end\": \"2029-02-07\", \"sys_created_on\": \"2025-08-27 15:45:51\"}, {\"installed_product_id\": 138, \"account_id\": 26, \"product_id\": 134, \"location_id\": 853, \"serial_number\": \"P134-562973-8708\", \"status\": \"in_use\", \"warranty_end\": \"2029-02-07\", \"sys_created_on\": \"2025-08-27 15:37:39\"}, {\"installed_product_id\": 139, \"account_id\": 26, \"product_id\": 179, \"location_id\": 854, \"serial_number\": \"P179-174684-5822\", \"status\": \"in_use\", \"warranty_end\": \"2027-11-15\", \"sys_created_on\": \"2025-08-27 15:36:43\"}, {\"installed_product_id\": 144, \"account_id\": 27, \"product_id\": 154, \"location_id\": 856, \"serial_number\": \"P154-428244-6865\", \"status\": \"in_use\", \"warranty_end\": \"2027-08-17\", \"sys_created_on\": \"2025-08-27 15:37:16\"}, {\"installed_product_id\": 147, \"account_id\": 27, \"product_id\": 200, \"location_id\": 855, \"serial_number\": \"P200-939925-5336\", \"status\": \"in_use\", \"warranty_end\": \"2028-06-12\", \"sys_created_on\": \"2025-08-27 15:35:40\"}, {\"installed_product_id\": 149, \"account_id\": 28, \"product_id\": 109, \"location_id\": 858, \"serial_number\": \"P109-928018-7397\", \"status\": \"in_use\", \"warranty_end\": \"2027-06-18\", \"sys_created_on\": \"2025-08-27 15:42:35\"}, {\"installed_product_id\": 153, \"account_id\": 28, \"product_id\": 208, \"location_id\": 857, \"serial_number\": \"P208-638115-6753\", \"status\": \"in_use\", \"warranty_end\": \"2029-05-08\", \"sys_created_on\": \"2025-08-27 15:43:58\"}, {\"installed_product_id\": 155, \"account_id\": 29, \"product_id\": 55, \"location_id\": 859, \"serial_number\": \"P55-356402-9363\", \"status\": \"in_use\", \"warranty_end\": \"2028-03-14\", \"sys_created_on\": \"2025-08-27 15:49:38\"}, {\"installed_product_id\": 157, \"account_id\": 29, \"product_id\": 173, \"location_id\": 860, \"serial_number\": \"P173-370452-7128\", \"status\": \"in_use\", \"warranty_end\": \"2026-12-20\", \"sys_created_on\": \"2025-08-27 15:47:32\"}, {\"installed_product_id\": 158, \"account_id\": 29, \"product_id\": 172, \"location_id\": 859, \"serial_number\": \"P172-805899-7520\", \"status\": \"in_use\", \"warranty_end\": \"2027-09-16\", \"sys_created_on\": \"2025-08-27 15:41:30\"}, {\"installed_product_id\": 159, \"account_id\": 29, \"product_id\": 212, \"location_id\": 860, \"serial_number\": \"P212-695686-2957\", \"status\": \"in_use\", \"warranty_end\": \"2027-05-19\", \"sys_created_on\": \"2025-08-27 15:37:20\"}, {\"installed_product_id\": 161, \"account_id\": 29, \"product_id\": 231, \"location_id\": 860, \"serial_number\": \"P231-695049-6584\", \"status\": \"in_use\", \"warranty_end\": \"2029-02-07\", \"sys_created_on\": \"2025-08-27 15:47:22\"}, {\"installed_product_id\": 162, \"account_id\": 30, \"product_id\": 17, \"location_id\": 862, \"serial_number\": \"P17-443382-4665\", \"status\": \"in_use\", \"warranty_end\": \"2028-07-12\", \"sys_created_on\": \"2025-08-27 15:31:56\"}, {\"installed_product_id\": 164, \"account_id\": 30, \"product_id\": 151, \"location_id\": 862, \"serial_number\": \"P151-258380-8889\", \"status\": \"in_use\", \"warranty_end\": \"2027-05-19\", \"sys_created_on\": \"2025-08-27 15:46:47\"}, {\"installed_product_id\": 165, \"account_id\": 30, \"product_id\": 206, \"location_id\": 862, \"serial_number\": \"P206-434789-8472\", \"status\": \"in_use\", \"warranty_end\": \"2028-05-13\", \"sys_created_on\": \"2025-08-27 15:30:46\"}, {\"installed_product_id\": 166, \"account_id\": 30, \"product_id\": 197, \"location_id\": 862, \"serial_number\": \"P197-799024-7931\", \"status\": \"in_use\", \"warranty_end\": \"2029-04-08\", \"sys_created_on\": \"2025-08-27 15:41:49\"}, {\"installed_product_id\": 167, \"account_id\": 31, \"product_id\": 42, \"location_id\": null, \"serial_number\": \"P42-566758-3658\", \"status\": \"in_use\", \"warranty_end\": \"2029-06-07\", \"sys_created_on\": \"2025-08-27 15:29:52\"}, {\"installed_product_id\": 168, \"account_id\": 31, \"product_id\": 144, \"location_id\": 864, \"serial_number\": \"P144-565598-9078\", \"status\": \"in_use\", \"warranty_end\": \"2028-09-10\", \"sys_created_on\": \"2025-08-27 15:44:22\"}, {\"installed_product_id\": 169, \"account_id\": 31, \"product_id\": 198, \"location_id\": null, \"serial_number\": \"P198-227864-1155\", \"status\": \"in_use\", \"warranty_end\": \"2027-03-20\", \"sys_created_on\": \"2025-08-27 15:48:26\"}, {\"installed_product_id\": 171, \"account_id\": 31, \"product_id\": 236, \"location_id\": 864, \"serial_number\": \"P236-963508-6367\", \"status\": \"in_use\", \"warranty_end\": \"2027-12-15\", \"sys_created_on\": \"2025-08-27 15:37:45\"}, {\"installed_product_id\": 176, \"account_id\": 32, \"product_id\": 187, \"location_id\": 865, \"serial_number\": \"P187-363621-7832\", \"status\": \"in_use\", \"warranty_end\": \"2027-09-16\", \"sys_created_on\": \"2025-08-27 15:36:45\"}, {\"installed_product_id\": 177, \"account_id\": 32, \"product_id\": 216, \"location_id\": 866, \"serial_number\": \"P216-574228-3903\", \"status\": \"in_use\", \"warranty_end\": \"2028-01-14\", \"sys_created_on\": \"2025-08-27 15:50:29\"}, {\"installed_product_id\": 178, \"account_id\": 32, \"product_id\": 240, \"location_id\": 865, \"serial_number\": \"P240-159285-8705\", \"status\": \"in_use\", \"warranty_end\": \"2027-03-20\", \"sys_created_on\": \"2025-08-27 15:43:06\"}, {\"installed_product_id\": 179, \"account_id\": 33, \"product_id\": 6, \"location_id\": 868, \"serial_number\": \"P6-927474-7255\", \"status\": \"in_use\", \"warranty_end\": \"2029-07-07\", \"sys_created_on\": \"2025-08-27 15:41:52\"}, {\"installed_product_id\": 180, \"account_id\": 33, \"product_id\": 117, \"location_id\": 867, \"serial_number\": \"P117-173848-4726\", \"status\": \"in_use\", \"warranty_end\": \"2027-05-19\", \"sys_created_on\": \"2025-08-27 15:38:46\"}, {\"installed_product_id\": 182, \"account_id\": 33, \"product_id\": 140, \"location_id\": 867, \"serial_number\": \"P140-411674-6934\", \"status\": \"in_use\", \"warranty_end\": \"2027-09-16\", \"sys_created_on\": \"2025-08-27 15:40:47\"}, {\"installed_product_id\": 184, \"account_id\": 34, \"product_id\": 35, \"location_id\": 870, \"serial_number\": \"P35-964976-1005\", \"status\": \"in_use\", \"warranty_end\": \"2028-11-09\", \"sys_created_on\": \"2025-08-27 15:49:26\"}, {\"installed_product_id\": 188, \"account_id\": 34, \"product_id\": 191, \"location_id\": 869, \"serial_number\": \"P191-430190-4473\", \"status\": \"in_use\", \"warranty_end\": \"2026-10-21\", \"sys_created_on\": \"2025-08-27 15:36:21\"}, {\"installed_product_id\": 189, \"account_id\": 35, \"product_id\": 60, \"location_id\": 872, \"serial_number\": \"P60-674995-2238\", \"status\": \"in_use\", \"warranty_end\": \"2026-11-20\", \"sys_created_on\": \"2025-08-27 15:42:36\"}, {\"installed_product_id\": 190, \"account_id\": 35, \"product_id\": 173, \"location_id\": 872, \"serial_number\": \"P173-794556-5500\", \"status\": \"in_use\", \"warranty_end\": \"2028-04-13\", \"sys_created_on\": \"2025-08-27 15:47:17\"}, {\"installed_product_id\": 191, \"account_id\": 35, \"product_id\": 121, \"location_id\": 871, \"serial_number\": \"P121-172786-1232\", \"status\": \"in_use\", \"warranty_end\": \"2027-07-18\", \"sys_created_on\": \"2025-08-27 15:48:21\"}, {\"installed_product_id\": 195, \"account_id\": 36, \"product_id\": 96, \"location_id\": 874, \"serial_number\": \"P96-961259-2192\", \"status\": \"in_use\", \"warranty_end\": \"2029-02-07\", \"sys_created_on\": \"2025-08-27 15:37:32\"}, {\"installed_product_id\": 197, \"account_id\": 36, \"product_id\": 185, \"location_id\": 873, \"serial_number\": \"P185-715061-3381\", \"status\": \"in_use\", \"warranty_end\": \"2028-04-13\", \"sys_created_on\": \"2025-08-27 15:31:28\"}, {\"installed_product_id\": 200, \"account_id\": 37, \"product_id\": 93, \"location_id\": 876, \"serial_number\": \"P93-573165-3768\", \"status\": \"in_use\", \"warranty_end\": \"2028-04-13\", \"sys_created_on\": \"2025-08-27 15:43:19\"}, {\"installed_product_id\": 202, \"account_id\": 37, \"product_id\": 132, \"location_id\": 875, \"serial_number\": \"P132-908814-8378\", \"status\": \"in_use\", \"warranty_end\": \"2028-09-10\", \"sys_created_on\": \"2025-08-27 15:48:00\"}, {\"installed_product_id\": 207, \"account_id\": 38, \"product_id\": 30, \"location_id\": 878, \"serial_number\": \"P30-902640-2170\", \"status\": \"in_use\", \"warranty_end\": \"2028-04-13\", \"sys_created_on\": \"2025-08-27 15:35:36\"}, {\"installed_product_id\": 208, \"account_id\": 38, \"product_id\": 163, \"location_id\": 878, \"serial_number\": \"P163-607622-4332\", \"status\": \"in_use\", \"warranty_end\": \"2029-08-06\", \"sys_created_on\": \"2025-08-27 15:38:51\"}, {\"installed_product_id\": 209, \"account_id\": 38, \"product_id\": 169, \"location_id\": 878, \"serial_number\": \"P169-437166-7121\", \"status\": \"in_use\", \"warranty_end\": \"2029-03-09\", \"sys_created_on\": \"2025-08-27 15:42:20\"}, {\"installed_product_id\": 210, \"account_id\": 38, \"product_id\": 156, \"location_id\": 878, \"serial_number\": \"P156-858606-3109\", \"status\": \"in_use\", \"warranty_end\": \"2029-04-08\", \"sys_created_on\": \"2025-08-27 15:31:39\"}, {\"installed_product_id\": 211, \"account_id\": 38, \"product_id\": 234, \"location_id\": 878, \"serial_number\": \"P234-940428-1389\", \"status\": \"in_use\", \"warranty_end\": \"2027-01-19\", \"sys_created_on\": \"2025-08-27 15:46:27\"}, {\"installed_product_id\": 212, \"account_id\": 38, \"product_id\": 207, \"location_id\": 878, \"serial_number\": \"P207-173342-8310\", \"status\": \"in_use\", \"warranty_end\": \"2026-09-21\", \"sys_created_on\": \"2025-08-27 15:50:34\"}, {\"installed_product_id\": 213, \"account_id\": 38, \"product_id\": 199, \"location_id\": 878, \"serial_number\": \"P199-981277-6931\", \"status\": \"in_use\", \"warranty_end\": \"2029-05-08\", \"sys_created_on\": \"2025-08-27 15:44:56\"}, {\"installed_product_id\": 215, \"account_id\": 39, \"product_id\": 107, \"location_id\": 879, \"serial_number\": \"P107-706301-7023\", \"status\": \"in_use\", \"warranty_end\": \"2027-02-18\", \"sys_created_on\": \"2025-08-27 15:39:50\"}, {\"installed_product_id\": 216, \"account_id\": 39, \"product_id\": 175, \"location_id\": 879, \"serial_number\": \"P175-680474-9015\", \"status\": \"in_use\", \"warranty_end\": \"2026-09-21\", \"sys_created_on\": \"2025-08-27 15:34:23\"}, {\"installed_product_id\": 218, \"account_id\": 39, \"product_id\": 122, \"location_id\": 879, \"serial_number\": \"P122-591180-1916\", \"status\": \"in_use\", \"warranty_end\": \"2029-07-07\", \"sys_created_on\": \"2025-08-27 15:38:52\"}, {\"installed_product_id\": 219, \"account_id\": 39, \"product_id\": 203, \"location_id\": 879, \"serial_number\": \"P203-487102-2077\", \"status\": \"in_use\", \"warranty_end\": \"2028-01-14\", \"sys_created_on\": \"2025-08-27 15:37:54\"}, {\"installed_product_id\": 221, \"account_id\": 40, \"product_id\": 74, \"location_id\": null, \"serial_number\": \"P74-959447-8419\", \"status\": \"in_use\", \"warranty_end\": \"2029-02-07\", \"sys_created_on\": \"2025-08-27 15:32:02\"}, {\"installed_product_id\": 224, \"account_id\": 40, \"product_id\": 227, \"location_id\": 881, \"serial_number\": \"P227-878016-3382\", \"status\": \"in_use\", \"warranty_end\": \"2026-08-22\", \"sys_created_on\": \"2025-08-27 15:42:39\"}, {\"installed_product_id\": 226, \"account_id\": 41, \"product_id\": 146, \"location_id\": 883, \"serial_number\": \"P146-461841-4508\", \"status\": \"in_use\", \"warranty_end\": \"2027-09-16\", \"sys_created_on\": \"2025-08-27 15:45:11\"}, {\"installed_product_id\": 227, \"account_id\": 41, \"product_id\": 177, \"location_id\": 884, \"serial_number\": \"P177-606111-3235\", \"status\": \"in_use\", \"warranty_end\": \"2028-09-10\", \"sys_created_on\": \"2025-08-27 15:34:10\"}, {\"installed_product_id\": 228, \"account_id\": 41, \"product_id\": 205, \"location_id\": 883, \"serial_number\": \"P205-887289-5678\", \"status\": \"in_use\", \"warranty_end\": \"2027-04-19\", \"sys_created_on\": \"2025-08-27 15:32:36\"}, {\"installed_product_id\": 230, \"account_id\": 41, \"product_id\": 192, \"location_id\": 883, \"serial_number\": \"P192-840349-5610\", \"status\": \"in_use\", \"warranty_end\": \"2027-06-18\", \"sys_created_on\": \"2025-08-27 15:44:45\"}, {\"installed_product_id\": 234, \"account_id\": 42, \"product_id\": 182, \"location_id\": 885, \"serial_number\": \"P182-618040-7477\", \"status\": \"in_use\", \"warranty_end\": \"2027-03-20\", \"sys_created_on\": \"2025-08-27 15:50:10\"}, {\"installed_product_id\": 235, \"account_id\": 43, \"product_id\": 30, \"location_id\": 888, \"serial_number\": \"P30-514883-4395\", \"status\": \"in_use\", \"warranty_end\": \"2027-07-18\", \"sys_created_on\": \"2025-08-27 15:45:28\"}, {\"installed_product_id\": 236, \"account_id\": 43, \"product_id\": 151, \"location_id\": 888, \"serial_number\": \"P151-565818-5135\", \"status\": \"in_use\", \"warranty_end\": \"2028-06-12\", \"sys_created_on\": \"2025-08-27 15:37:48\"}, {\"installed_product_id\": 238, \"account_id\": 43, \"product_id\": 237, \"location_id\": null, \"serial_number\": \"P237-415136-1110\", \"status\": \"in_use\", \"warranty_end\": \"2027-09-16\", \"sys_created_on\": \"2025-08-27 15:33:54\"}, {\"installed_product_id\": 239, \"account_id\": 43, \"product_id\": 182, \"location_id\": 887, \"serial_number\": \"P182-337890-9361\", \"status\": \"in_use\", \"warranty_end\": \"2027-05-19\", \"sys_created_on\": \"2025-08-27 15:39:56\"}, {\"installed_product_id\": 241, \"account_id\": 44, \"product_id\": 42, \"location_id\": 890, \"serial_number\": \"P42-459503-6711\", \"status\": \"in_use\", \"warranty_end\": \"2027-02-18\", \"sys_created_on\": \"2025-08-27 15:45:25\"}, {\"installed_product_id\": 243, \"account_id\": 44, \"product_id\": 140, \"location_id\": 890, \"serial_number\": \"P140-690917-4065\", \"status\": \"in_use\", \"warranty_end\": \"2028-03-14\", \"sys_created_on\": \"2025-08-27 15:41:50\"}, {\"installed_product_id\": 246, \"account_id\": 44, \"product_id\": 238, \"location_id\": 889, \"serial_number\": \"P238-376163-1617\", \"status\": \"in_use\", \"warranty_end\": \"2029-03-09\", \"sys_created_on\": \"2025-08-27 15:48:08\"}, {\"installed_product_id\": 247, \"account_id\": 44, \"product_id\": 184, \"location_id\": 889, \"serial_number\": \"P184-884377-3444\", \"status\": \"in_use\", \"warranty_end\": \"2027-03-20\", \"sys_created_on\": \"2025-08-27 15:40:24\"}, {\"installed_product_id\": 248, \"account_id\": 45, \"product_id\": 66, \"location_id\": 892, \"serial_number\": \"P66-565126-9189\", \"status\": \"in_use\", \"warranty_end\": \"2027-04-19\", \"sys_created_on\": \"2025-08-27 15:35:52\"}, {\"installed_product_id\": 249, \"account_id\": 45, \"product_id\": 119, \"location_id\": 892, \"serial_number\": \"P119-122887-7019\", \"status\": \"in_use\", \"warranty_end\": \"2028-04-13\", \"sys_created_on\": \"2025-08-27 15:48:41\"}, {\"installed_product_id\": 254, \"account_id\": 46, \"product_id\": 75, \"location_id\": 893, \"serial_number\": \"P75-808447-8685\", \"status\": \"in_use\", \"warranty_end\": \"2028-09-10\", \"sys_created_on\": \"2025-08-27 15:43:58\"}, {\"installed_product_id\": 256, \"account_id\": 46, \"product_id\": 44, \"location_id\": 894, \"serial_number\": \"P44-461251-2546\", \"status\": \"in_use\", \"warranty_end\": \"2026-12-20\", \"sys_created_on\": \"2025-08-27 15:38:14\"}, {\"installed_product_id\": 257, \"account_id\": 46, \"product_id\": 154, \"location_id\": 894, \"serial_number\": \"P154-836377-4821\", \"status\": \"in_use\", \"warranty_end\": \"2026-08-22\", \"sys_created_on\": \"2025-08-27 15:36:55\"}, {\"installed_product_id\": 258, \"account_id\": 46, \"product_id\": 134, \"location_id\": 893, \"serial_number\": \"P134-458994-1913\", \"status\": \"in_use\", \"warranty_end\": \"2029-07-07\", \"sys_created_on\": \"2025-08-27 15:34:29\"}, {\"installed_product_id\": 260, \"account_id\": 47, \"product_id\": 81, \"location_id\": 895, \"serial_number\": \"P81-392555-4472\", \"status\": \"in_use\", \"warranty_end\": \"2027-05-19\", \"sys_created_on\": \"2025-08-27 15:37:04\"}, {\"installed_product_id\": 263, \"account_id\": 47, \"product_id\": 163, \"location_id\": 895, \"serial_number\": \"P163-863825-6063\", \"status\": \"in_use\", \"warranty_end\": \"2027-03-20\", \"sys_created_on\": \"2025-08-27 15:30:40\"}, {\"installed_product_id\": 264, \"account_id\": 47, \"product_id\": 203, \"location_id\": 895, \"serial_number\": \"P203-339851-5084\", \"status\": \"in_use\", \"warranty_end\": \"2029-02-07\", \"sys_created_on\": \"2025-08-27 15:31:57\"}, {\"installed_product_id\": 267, \"account_id\": 48, \"product_id\": 74, \"location_id\": 897, \"serial_number\": \"P74-817105-4553\", \"status\": \"in_use\", \"warranty_end\": \"2027-12-15\", \"sys_created_on\": \"2025-08-27 15:36:02\"}, {\"installed_product_id\": 270, \"account_id\": 48, \"product_id\": 202, \"location_id\": 897, \"serial_number\": \"P202-515747-9282\", \"status\": \"in_use\", \"warranty_end\": \"2028-02-13\", \"sys_created_on\": \"2025-08-27 15:29:46\"}, {\"installed_product_id\": 271, \"account_id\": 49, \"product_id\": 38, \"location_id\": 900, \"serial_number\": \"P38-447481-7503\", \"status\": \"in_use\", \"warranty_end\": \"2027-02-18\", \"sys_created_on\": \"2025-08-27 15:37:18\"}, {\"installed_product_id\": 277, \"account_id\": 49, \"product_id\": 205, \"location_id\": 899, \"serial_number\": \"P205-451267-9659\", \"status\": \"in_use\", \"warranty_end\": \"2027-03-20\", \"sys_created_on\": \"2025-08-27 15:36:06\"}, {\"installed_product_id\": 278, \"account_id\": 49, \"product_id\": 181, \"location_id\": 900, \"serial_number\": \"P181-551744-8549\", \"status\": \"in_use\", \"warranty_end\": \"2027-01-19\", \"sys_created_on\": \"2025-08-27 15:33:56\"}, {\"installed_product_id\": 280, \"account_id\": 50, \"product_id\": 117, \"location_id\": 902, \"serial_number\": \"P117-532056-2264\", \"status\": \"in_use\", \"warranty_end\": \"2027-07-18\", \"sys_created_on\": \"2025-08-27 15:46:57\"}, {\"installed_product_id\": 282, \"account_id\": 50, \"product_id\": 135, \"location_id\": 901, \"serial_number\": \"P135-999214-8281\", \"status\": \"in_use\", \"warranty_end\": \"2027-02-18\", \"sys_created_on\": \"2025-08-27 15:34:17\"}, {\"installed_product_id\": 284, \"account_id\": 51, \"product_id\": 82, \"location_id\": 903, \"serial_number\": \"P82-331699-5102\", \"status\": \"in_use\", \"warranty_end\": \"2027-01-19\", \"sys_created_on\": \"2025-08-27 15:36:37\"}, {\"installed_product_id\": 286, \"account_id\": 51, \"product_id\": 1, \"location_id\": 904, \"serial_number\": \"P1-163337-5030\", \"status\": \"in_use\", \"warranty_end\": \"2027-11-15\", \"sys_created_on\": \"2025-08-27 15:39:25\"}, {\"installed_product_id\": 287, \"account_id\": 51, \"product_id\": 129, \"location_id\": 903, \"serial_number\": \"P129-647015-1581\", \"status\": \"in_use\", \"warranty_end\": \"2026-12-20\", \"sys_created_on\": \"2025-08-27 15:30:38\"}, {\"installed_product_id\": 288, \"account_id\": 51, \"product_id\": 138, \"location_id\": 904, \"serial_number\": \"P138-605840-8359\", \"status\": \"in_use\", \"warranty_end\": \"2029-06-07\", \"sys_created_on\": \"2025-08-27 15:47:30\"}, {\"installed_product_id\": 289, \"account_id\": 51, \"product_id\": 167, \"location_id\": 904, \"serial_number\": \"P167-734001-7055\", \"status\": \"in_use\", \"warranty_end\": \"2029-06-07\", \"sys_created_on\": \"2025-08-27 15:35:37\"}, {\"installed_product_id\": 291, \"account_id\": 51, \"product_id\": 228, \"location_id\": 903, \"serial_number\": \"P228-401578-7956\", \"status\": \"in_use\", \"warranty_end\": \"2026-10-21\", \"sys_created_on\": \"2025-08-27 15:48:37\"}, {\"installed_product_id\": 292, \"account_id\": 52, \"product_id\": 85, \"location_id\": 905, \"serial_number\": \"P85-837522-2635\", \"status\": \"in_use\", \"warranty_end\": \"2029-02-07\", \"sys_created_on\": \"2025-08-27 15:43:36\"}, {\"installed_product_id\": 293, \"account_id\": 52, \"product_id\": 52, \"location_id\": null, \"serial_number\": \"P52-847905-7831\", \"status\": \"in_use\", \"warranty_end\": \"2026-12-20\", \"sys_created_on\": \"2025-08-27 15:40:20\"}, {\"installed_product_id\": 295, \"account_id\": 52, \"product_id\": 133, \"location_id\": 906, \"serial_number\": \"P133-465917-9300\", \"status\": \"in_use\", \"warranty_end\": \"2028-08-11\", \"sys_created_on\": \"2025-08-27 15:40:10\"}, {\"installed_product_id\": 297, \"account_id\": 52, \"product_id\": 137, \"location_id\": 905, \"serial_number\": \"P137-168384-1802\", \"status\": \"in_use\", \"warranty_end\": \"2028-02-13\", \"sys_created_on\": \"2025-08-27 15:32:22\"}, {\"installed_product_id\": 298, \"account_id\": 52, \"product_id\": 198, \"location_id\": 906, \"serial_number\": \"P198-433969-1490\", \"status\": \"in_use\", \"warranty_end\": \"2026-12-20\", \"sys_created_on\": \"2025-08-27 15:36:17\"}, {\"installed_product_id\": 299, \"account_id\": 52, \"product_id\": 202, \"location_id\": 905, \"serial_number\": \"P202-353173-6578\", \"status\": \"in_use\", \"warranty_end\": \"2027-09-16\", \"sys_created_on\": \"2025-08-27 15:46:11\"}, {\"installed_product_id\": 300, \"account_id\": 52, \"product_id\": 223, \"location_id\": 905, \"serial_number\": \"P223-131588-1587\", \"status\": \"in_use\", \"warranty_end\": \"2028-05-13\", \"sys_created_on\": \"2025-08-27 15:39:53\"}]",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "tool_name": "search_cases",
+          "arguments": {
+            "installed_product_id": 42,
+            "state": "new"
+          },
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "[{\"case_id\": 181, \"number\": \"CS-0000181\", \"account_id\": 8, \"contact_id\": 10, \"product_id\": 140, \"installed_product_id\": 42, \"channel\": \"phone\", \"priority\": \"high\", \"state\": \"new\", \"short_description\": \"Product: Palo Alto Networks PA-3220 Variant 8, Issue: is not working as expected.\", \"escalation\": 0, \"escalation_reason\": null, \"reopen_count\": 0, \"sys_created_on\": \"2025-08-27 15:42:15\", \"sys_updated_on\": \"2025-12-03 20:29:08\", \"closed_on\": null, \"assignment_group_id\": null, \"assigned_to\": null}]",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "tool_name": "search_cases",
+          "arguments": {
+            "installed_product_id": 42,
+            "state": "in_progress"
+          },
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "[{\"case_id\": 184, \"number\": \"CS-0000184\", \"account_id\": 8, \"contact_id\": 10, \"product_id\": 140, \"installed_product_id\": 42, \"channel\": \"alert\", \"priority\": \"moderate\", \"state\": \"in_progress\", \"short_description\": \"Product: Palo Alto Networks PA-3220 Variant 8, Issue: is not working as expected.\", \"escalation\": 0, \"escalation_reason\": null, \"reopen_count\": 0, \"sys_created_on\": \"2025-08-27 15:31:25\", \"sys_updated_on\": \"2025-09-06 11:56:57\", \"closed_on\": null, \"assignment_group_id\": 52, \"assigned_to\": null}, {\"case_id\": 200, \"number\": \"CS-0000200\", \"account_id\": 8, \"contact_id\": 10, \"product_id\": 140, \"installed_product_id\": 42, \"channel\": \"web\", \"priority\": \"moderate\", \"state\": \"in_progress\", \"short_description\": \"Product: Palo Alto Networks PA-3220 Variant 8, Issue: is not working as expected.\", \"escalation\": 0, \"escalation_reason\": null, \"reopen_count\": 0, \"sys_created_on\": \"2025-08-27 15:30:20\", \"sys_updated_on\": \"2025-09-07 12:47:31\", \"closed_on\": null, \"assignment_group_id\": null, \"assigned_to\": null}]",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "tool_name": "search_cases",
+          "arguments": {
+            "installed_product_id": 42,
+            "state": "pending"
+          },
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "[]",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "tool_name": "search_cases",
+          "arguments": {
+            "installed_product_id": 113,
+            "state": "new"
+          },
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "[]",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "tool_name": "search_cases",
+          "arguments": {
+            "installed_product_id": 113,
+            "state": "in_progress"
+          },
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "[{\"case_id\": 458, \"number\": \"CS-0000458\", \"account_id\": 21, \"contact_id\": 36, \"product_id\": 140, \"installed_product_id\": 113, \"channel\": \"chat\", \"priority\": \"high\", \"state\": \"in_progress\", \"short_description\": \"Product: Palo Alto Networks PA-3220 Variant 8, Issue: is not working as expected.\", \"escalation\": 0, \"escalation_reason\": null, \"reopen_count\": 0, \"sys_created_on\": \"2025-08-27 15:34:47\", \"sys_updated_on\": \"2026-03-30 23:29:42\", \"closed_on\": null, \"assignment_group_id\": null, \"assigned_to\": null}, {\"case_id\": 459, \"number\": \"CS-0000459\", \"account_id\": 21, \"contact_id\": 36, \"product_id\": 140, \"installed_product_id\": 113, \"channel\": \"social\", \"priority\": \"moderate\", \"state\": \"in_progress\", \"short_description\": \"Product: Palo Alto Networks PA-3220 Variant 8, Issue: is not working as expected.\", \"escalation\": 0, \"escalation_reason\": null, \"reopen_count\": 0, \"sys_created_on\": \"2025-08-27 15:45:20\", \"sys_updated_on\": \"2025-12-08 18:08:03\", \"closed_on\": null, \"assignment_group_id\": 10, \"assigned_to\": 662}]",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "tool_name": "search_cases",
+          "arguments": {
+            "installed_product_id": 113,
+            "state": "pending"
+          },
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "[]",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "tool_name": "search_cases",
+          "arguments": {
+            "installed_product_id": 182,
+            "state": "new"
+          },
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "[{\"case_id\": 747, \"number\": \"CS-0000747\", \"account_id\": 33, \"contact_id\": 71, \"product_id\": 140, \"installed_product_id\": 182, \"channel\": \"web\", \"priority\": \"critical\", \"state\": \"new\", \"short_description\": \"Product: Palo Alto Networks PA-3220 Variant 8, Issue: is not working as expected.\", \"escalation\": 0, \"escalation_reason\": null, \"reopen_count\": 2, \"sys_created_on\": \"2025-08-27 15:48:26\", \"sys_updated_on\": \"2026-05-26 11:26:34\", \"closed_on\": null, \"assignment_group_id\": null, \"assigned_to\": null}]",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "tool_name": "search_cases",
+          "arguments": {
+            "installed_product_id": 182,
+            "state": "in_progress"
+          },
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "[{\"case_id\": 768, \"number\": \"CS-0000768\", \"account_id\": 33, \"contact_id\": 70, \"product_id\": 140, \"installed_product_id\": 182, \"channel\": \"web\", \"priority\": \"moderate\", \"state\": \"in_progress\", \"short_description\": \"Product: Palo Alto Networks PA-3220 Variant 8, Issue: is not working as expected.\", \"escalation\": 0, \"escalation_reason\": null, \"reopen_count\": 0, \"sys_created_on\": \"2025-08-27 15:47:26\", \"sys_updated_on\": \"2026-06-18 08:30:35\", \"closed_on\": null, \"assignment_group_id\": null, \"assigned_to\": 540}, {\"case_id\": 769, \"number\": \"CS-0000769\", \"account_id\": 33, \"contact_id\": 70, \"product_id\": 140, \"installed_product_id\": 182, \"channel\": \"email\", \"priority\": \"low\", \"state\": \"in_progress\", \"short_description\": \"Product: Palo Alto Networks PA-3220 Variant 8, Issue: is not working as expected.\", \"escalation\": 0, \"escalation_reason\": null, \"reopen_count\": 0, \"sys_created_on\": \"2025-08-27 15:44:22\", \"sys_updated_on\": \"2026-05-11 06:36:38\", \"closed_on\": null, \"assignment_group_id\": 49, \"assigned_to\": null}]",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "tool_name": "search_cases",
+          "arguments": {
+            "installed_product_id": 182,
+            "state": "pending"
+          },
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "[]",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "tool_name": "search_cases",
+          "arguments": {
+            "installed_product_id": 243,
+            "state": "new"
+          },
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "[]",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "tool_name": "search_cases",
+          "arguments": {
+            "installed_product_id": 243,
+            "state": "in_progress"
+          },
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "[{\"case_id\": 1007, \"number\": \"CS-0001007\", \"account_id\": 44, \"contact_id\": 102, \"product_id\": 140, \"installed_product_id\": 243, \"channel\": \"chat\", \"priority\": \"high\", \"state\": \"in_progress\", \"short_description\": \"Product: Palo Alto Networks PA-3220 Variant 8, Issue: is not working as expected.\", \"escalation\": 0, \"escalation_reason\": null, \"reopen_count\": 0, \"sys_created_on\": \"2025-08-27 15:37:48\", \"sys_updated_on\": \"2026-03-20 19:26:21\", \"closed_on\": null, \"assignment_group_id\": null, \"assigned_to\": null}]",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "tool_name": "search_cases",
+          "arguments": {
+            "installed_product_id": 243,
+            "state": "pending"
+          },
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "[]",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "tool_name": "find_product_by_id",
+          "arguments": {
+            "product_id": 140
+          },
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"product_id\": 140, \"name\": \"Palo Alto Networks PA-3220 Variant 8\", \"category\": \"hardware\", \"lifecycle_state\": \"active\"}",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "tool_name": "find_entitlements",
+          "arguments": {
+            "account_id": 33,
+            "active": true,
+            "product_id": 140
+          },
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "[{\"entitlement_id\": 295, \"account_id\": 33, \"product_id\": 140, \"contract_id\": 82, \"support_level\": \"standard\", \"coverage_hours\": \"h8x5\", \"max_cases_per_month\": 0, \"active\": 1, \"sys_created_on\": \"2025-08-27 15:47:56\"}, {\"entitlement_id\": 298, \"account_id\": 33, \"product_id\": 140, \"contract_id\": 83, \"support_level\": \"standard\", \"coverage_hours\": \"h8x5\", \"max_cases_per_month\": 10, \"active\": 1, \"sys_created_on\": \"2025-08-27 15:40:36\"}]",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "tool_name": "find_contracts",
+          "arguments": {
+            "account_id": 33,
+            "contract_type": "warranty",
+            "status": "active"
+          },
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "[{\"contract_id\": 82, \"account_id\": 33, \"contract_type\": \"warranty\", \"status\": \"active\", \"contract_price\": 1134, \"start_date\": \"2025-08-29\", \"end_date\": \"2027-03-19\", \"sys_created_on\": \"2025-08-27 15:35:32\"}]",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "tool_name": "find_contacts",
+          "arguments": {
+            "account_id": 33,
+            "active": true,
+            "is_primary": true
+          },
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "[{\"contact_id\": 70, \"account_id\": 33, \"portal_user_id\": 19, \"active\": 1, \"is_primary\": 1, \"sys_created_on\": \"2025-08-27 15:47:05\"}]",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "tool_name": "list_users",
+          "arguments": {
+            "user_id": 19
+          },
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "[{\"user_id\": 19, \"first_name\": \"Angela\", \"last_name\": \"Brooks\", \"email\": \"angela.brooks@phillips-jones.com\", \"phone\": \"+12065074879\", \"role\": \"customer\", \"location_id\": 19, \"active\": 1, \"sys_created_on\": \"2025-08-27 15:36:58\"}]",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        }
+      ],
+      "verification_results": {
+        "Verify Installed Product Retired": {
+          "passed": false,
+          "expected": 1,
+          "actual": 0,
+          "comparison_type": "equals",
+          "query": "SELECT COUNT(*) AS ip_retired_cnt\nFROM installed_product ip\nWHERE ip.installed_product_id = 182\n  AND ip.status = 'retired';",
+          "details": "Comparison equals: 0 vs 1"
+        },
+        "Update Installed Product ID of Case": {
+          "passed": false,
+          "expected": 1,
+          "actual": 0,
+          "comparison_type": "equals",
+          "query": "SELECT COUNT(*) AS case_769_ip_301_cnt\nFROM customer_case cc\nWHERE cc.case_id = 769\n  AND cc.installed_product_id = 301;",
+          "details": "Comparison equals: 0 vs 1"
+        },
+        "Verify Notification Sent": {
+          "passed": false,
+          "expected": 1,
+          "actual": 0,
+          "comparison_type": "equals",
+          "query": "SELECT COUNT(*) AS notif_769_cnt\nFROM notification n\nWHERE n.case_id = 769\n  AND n.email = 'angela.brooks@phillips-jones.com'\n  AND n.type  = 'update';",
+          "details": "Comparison equals: 0 vs 1"
+        }
+      },
+      "verification_summary": {
+        "total": 3,
+        "passed": 0,
+        "failed": 3,
+        "pass_rate": 0.0
+      },
+      "overall_success": false
+    }
+  ],
+  "statistics": {
+    "total_runs": 1,
+    "successful_runs": 0,
+    "overall_success_rate": 0.0,
+    "pass_at_1": 0.0,
+    "verifier_level_pass_rate": 0.0,
+    "total_verifiers_checked": 3,
+    "total_verifiers_passed": 0,
+    "individual_verifier_stats": {
+      "Verify Installed Product Retired": {
+        "passed": 0,
+        "total": 1,
+        "pass_rate": 0.0
+      },
+      "Update Installed Product ID of Case": {
+        "passed": 0,
+        "total": 1,
+        "pass_rate": 0.0
+      },
+      "Verify Notification Sent": {
+        "passed": 0,
+        "total": 1,
+        "pass_rate": 0.0
+      }
+    },
+    "mean_execution_time_ms": 205428.0,
+    "tool_usage": {
+      "retrieve_installed_products": 1,
+      "search_cases": 1,
+      "find_product_by_id": 1,
+      "find_entitlements": 1,
+      "find_contracts": 1,
+      "find_contacts": 1,
+      "list_users": 1
+    }
+  }
+}

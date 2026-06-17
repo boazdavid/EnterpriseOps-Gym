@@ -1,0 +1,585 @@
+{
+  "benchmark_config": {
+    "model": "vllm/Azure/gpt-5-2025-08-07",
+    "number_of_runs": 1,
+    "user_prompt": "I have been given responsibility for this case so I\u2019ve now debugged escalated case CS-0000009 using Juniper EX4300 guidelines but issue is not resolved yet. Please link the appropriate guidelines article.",
+    "gym_servers": [
+      {
+        "name": "sn-csm-server",
+        "url": "http://localhost:8001",
+        "seed_database_file": "Domain Wise DBs and Task-DB Mappings/csm/dbs/db_1762254390925_u5icw4thh.sql",
+        "uses_cloning": true
+      }
+    ],
+    "total_gyms": 1,
+    "total_tools_available": 7
+  },
+  "runs": [
+    {
+      "run_number": 1,
+      "started_at": "2026-06-15T11:16:59.416083+00:00",
+      "execution_time_ms": 78124,
+      "model_response": "Done. I linked the published internal article \u201cIssue Resolution related to Juniper EX4300 Variant 31, step-by-step guide\u201d (KB-0000243) to case CS-0000009 as applied. Reference: case_kb_id 528.\n\nHighlights from the linked guidelines to assist your next steps:\n- Gather support info/core files\n- Review VC/PoE/LLDP logs for instability\n- Consider rolling back Junos if regression suspected\n- Disable unstable features temporarily\n- Upgrade to a stable GA release after validation\n- Workarounds: remove flapping VC member, limit PoE as needed\n- Coordinate with JTAC as required and ensure config backups\n\nWould you like me to:\n- Move the case from pending to in_progress so work can continue and SLAs resume if applicable, or\n- Add your latest troubleshooting notes to the case, or\n- Validate the entitlement and confirm the applicable SLAs for this product/account?",
+      "conversation_flow": [
+        {
+          "type": "system_message",
+          "content": "CSM Agent Policy\n\nYou are a Customer Service Management assistant. Your goal is to assist users in the Customer Service Management lifecycle by helping them register cases, validate entitlements, manage customer assets, raise escalations, attach relevant knowledge, close cases, and in other related processes effectively.\n\nYou should always act based on confirmed user context, ing record relationships, and database integrity best practices. Avoid actions that assume data, do not provide enough context, or seem to be in violation of this policy.\n\nGeneral Instructions\n\nBy default, you should assume the roles and responsibilities of an admin to complete a particular request. If a user request violates policy, do not act on it. Perform one operation at a time. Do not provide knowledge or procedures not in the system. Do not ask for any information or confirmation from the user, if you cannot proceed ahead provide the reason for that before pausing.\n\nRoles & Responsibilities\n\nAdministrator\n\nHas full access across all tables. Can create, update, and deactivate: Users, user groups, and group memberships. Accounts, contacts, locations, and entitlements. Products, installed products, SLAs, contracts, and knowledge. Manages assignment rules, workflows, and escalations.\n\nAgent\n\nFrontline support representative handling customer cases. Read-only access to all records (accounts, contacts, products, contracts, entitlements). Can: Create and update customer cases, interactions, and case work notes. Associate knowledge articles with cases. View entitlements and SLAs linked to accounts and cases. Update case assignment, state, and resolution. Cannot modify user, group, or membership data.\n\nManager\n\nSupervises agents and case queues. Has agent privileges plus: Can reassign cases across groups and users. Can escalate cases and override case prioritization. Monitors SLA compliance, case trends, and escalations. Can approve exceptions (e.g., entitlement overrides or escalations). May contribute to knowledge management as reviewers.\n\nCustomer (Portal User)\n\nEnd user accessing the customer portal. Can: View and update their own profile. Create new cases and track the status of their submitted cases. Search and view knowledge articles (based on visibility: internal/external). Participate in community forums (if enabled). Initiate interactions (chat, email, web, etc.). Limited to their own account\u2019s data (cannot see other accounts/customers). Cannot access internal system data (users, groups, SLAs, contracts of other customers).\n\nCore Operations\n\nRegistering a Customer Case\n\nBegin by identifying the reporting contact and verifying association with an account. Collect necessary inputs: Issue description (short_description) Product or installed product involved Contact channel (channel) Priority (if not provided \u2192 default = moderate) Default state = new. Verify the product or installed product belongs to the customer\u2019s account.\n\nAssigning a Case\n\nA case may be assigned to: An assignment group (assignment_group_id), or A user (assigned_to) within that group. Agents must: Be active, and Be members of the assigned group. Assignment constraints: assigned_to must reference a user with role agent or manager and (if used) member of assignment_group_id.\n\nWorking on a Case\n\nAgents may: Update cause, resolution notes, or other internal fields. Change state (new \u2192 in_progress, in_progress \u2192 pending/resolved). Attach a missing product or installed product. Link relevant knowledge articles. Important: Cases cannot be closed directly. They must first be moved to resolved, then to closed. If a case is invalid, it may be canceled.\n\nCase Lifecycle Management\n\nValid state transitions: new \u2192 in_progress / pending / resolved in_progress \u2192 pending / resolved pending \u2192 in_progress / resolved resolved \u2192 closed / new canceled At each step: Validate acting user\u2019s relationship to the case. Capture timestamps (sys_updated_on, closed_on where applicable). Prevent premature closure without resolution.\n\nEntitlement Validation\n\nBefore applying entitlement: Check it is active and within contract validity. Product-specific entitlements must match the case product (unless entitlement is account-wide). max_cases_per_month = 0 means unlimited; otherwise enforce limits. If entitlement is invalid \u2192 inform the user.\n\nInstalled Product Management\n\nInstalled products must: Be active / in_use. Belong to the reporting account. Do not attach items in retired / repair status to new cases. Ensure installed product\u2019s product matches the case product.\n\nLinking Knowledge Articles\n\nWhen linking knowledge: Articles must be in state = published. Visibility rules apply: internal = agents only external = customers can view Link articles to cases via case_knowledge (usage = suggested, applied, resolution). Ownership is tracked via owner_id.\n\nEscalations\n\nEscalations may be raised when: SLA breach risk exists, or Customer explicitly requests escalation, or High business risk/impact. Steps: Record escalation = true on case. Capture escalation_reason. Ensure justification is logged in case notes. There is no separate escalation record. Escalation is tracked within the case.\n\nProduct Handling\n\nProducts must be: Present in product table, In lifecycle_state = active. Installed products must match the product and account context.\n\nSecurity\n\nUsers may only view or update cases they own, are assigned to, or are in the assigned group. Do not disclose personal data or case details outside these permissions.\n\nValidation, Error Handling & Logging\n\nAlways validate existence and integrity of: Users, accounts, contacts, products, entitlements, and cases. State transitions follow lifecycle rules. All actions must: Update sys_updated_on. Capture timestamps (e.g., closed_on for case closure).\n\nService Levels & Timelines\n\nCase handling Response and resolution timelines are determined by the entitlements (entitlement table) linked to the customer account and product. Applicable SLAs (sla_definition and case_sla tables) set the exact targets for response or resolution, and may vary by case priority, support level, and coverage hours. SLA pause behavior: Obey sla_definition.pause_on_pending; when case state is pending, pause applicable SLAs. If no entitlement or SLA is associated with the account/product, no service level commitments are in scope. Installed product repair / replacement Commitments depend on warranty contracts or support agreements (contract table). The applicable SLA target will be enforced only if defined under the customer\u2019s entitlement. In absence of a valid contract or entitlement, no guaranteed turnaround applies. Knowledge article publication / retirement Service levels for publishing or retiring knowledge are governed by internal operational policies and are not bound by customer-facing SLAs. Unless explicitly defined in entitlements or SLAs, no service level commitments are in scope. User & group management (administrative actions) Internal administrative tasks (user/group creation, role updates, membership changes) are not subject to customer-facing SLAs. Unless an internal SLA is defined, no service level commitments are in scope.\n\nPredefined Lists (Enumerations)\n\nOnly the following values are allowed for these fields:\n\nUsers & Groups user.role: admin, agent, manager, customer user_group.type: support, backoffice, field, vendor\n\nGeography location.city: new_york, london, mumbai, tokyo, sydney location.country: usa, uk, india, japan, australia\n\nAccounts & Contacts account.account_type: customer, partner, internal\n\nProducts & Installed Base product.category: software, hardware, service product.lifecycle_state: active, retired installed_product.status: in_use, in_stock, repair, retired\n\nContracts, Entitlements, SLAs contract.contract_type: support, warranty, subscription contract.status: active, suspended, expired entitlement.support_level: standard, premium, enterprise entitlement.coverage_hours: h8x5, h12x6, h24x7 sla_definition.metric: response, resolution sla_definition.applies_to_priority: critical, high, moderate, low\n\nCase Management customer_case.channel: web, email, phone, chat, social, alert, community customer_case.priority: critical, high, moderate, low customer_case.state: new, in_progress, pending, resolved, closed, canceled customer_case.escalation_reason: urgency, vip, impact, breach_risk, customer_request\n\nInteractions & Knowledge interaction.channel: web, email, phone, chat, social, alert, community knowledge.state: draft, published, retired knowledge.visibility: internal, external case_knowledge.used_as: suggested, applied, resolution Enforcement: reject any value outside the list with INVALID_ENUM_VALUE.\n\nKnowledge Related Policies: When a new case is created and is asked to be investigated, then a knowledge base search should be performed. For all cases the entitlement for the product should be verified and should be actively running. If no relevant knowledge is found and case is being closed, a new knowledge article should be created to capture the findings and resolution steps. If a knowledge article is created, it should be linked to the case for future reference. When new case moves to work in progress appropriate SLA should be aligned to it. Used as for knowledge base to case: When the knowledge is found through automated search it should be linked as suggested. If the knowledge is found to be useful to resolve the case or is being created after case resolution it should have used as type to resolution in linking. In other cases if knowledge is linked it should as applied. If knowledge article is found then it should be used to assist in the next set of actions. For example, it might details regarding product configuration, troubleshooting steps, or best practices or team that should work on it.\n\nFree form text policies: (For texts like short description of cases, title of knowledge, escalation reason and content/body of knowledge) Character limits: 30\u2013120 chars Case Short Description: It can be something like: \"Product: \" + Product name + \", Issue: is not working as expected.\" KB title: Issue Resolution related to , step-by-step guide KB content/body: This kind of issues are tackled by Assignment Group: , Assigned to: . Steps to resolve the issue: , Suggested Priority: . Escalation reason: The case could not be completed on time/exceeds the time limit or has priority beyond the defined list of priorities."
+        },
+        {
+          "type": "user_message",
+          "content": "I have been given responsibility for this case so I\u2019ve now debugged escalated case CS-0000009 using Juniper EX4300 guidelines but issue is not resolved yet. Please link the appropriate guidelines article."
+        },
+        {
+          "type": "ai_message",
+          "content": "",
+          "usage_metadata": {
+            "input_tokens": 3618,
+            "output_tokens": 1308,
+            "total_tokens": 4926,
+            "input_token_details": {
+              "audio": 0,
+              "cache_read": 0
+            },
+            "output_token_details": {
+              "audio": 0,
+              "reasoning": 1280
+            }
+          },
+          "response_metadata": {
+            "token_usage": {
+              "completion_tokens": 1308,
+              "prompt_tokens": 3618,
+              "total_tokens": 4926,
+              "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 1280,
+                "rejected_prediction_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 0
+              },
+              "latency_checkpoint": {
+                "engine_tbt_ms": 10,
+                "engine_ttft_ms": 276,
+                "engine_ttlt_ms": 13349,
+                "pre_inference_ms": 186,
+                "service_tbt_ms": 10,
+                "service_ttft_ms": 692,
+                "service_ttlt_ms": 13767,
+                "total_duration_ms": 13608,
+                "user_visible_ttft_ms": 507
+              }
+            },
+            "model_provider": "openai",
+            "model_name": "Azure/gpt-5-2025-08-07",
+            "system_fingerprint": null,
+            "id": "chatcmpl-DqzbLkUkgEBGdkmxyWyjX1eN5mNix",
+            "service_tier": "default",
+            "finish_reason": "tool_calls",
+            "logprobs": null
+          },
+          "tool_calls": [
+            {
+              "name": "search_cases",
+              "args": {
+                "number": "CS-0000009"
+              }
+            }
+          ]
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "search_cases",
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "[{\"case_id\": 9, \"number\": \"CS-0000009\", \"account_id\": 1, \"contact_id\": 123, \"product_id\": 163, \"installed_product_id\": null, \"channel\": \"email\", \"priority\": \"critical\", \"state\": \"pending\", \"short_description\": \"Product: Juniper EX4300 Variant 31, Issue: is not working as expected.\", \"escalation\": 1, \"escalation_reason\": \"urgency\", \"reopen_count\": 0, \"sys_created_on\": \"2025-08-27 15:35:20\", \"sys_updated_on\": \"2025-12-01 07:36:56\", \"closed_on\": null, \"assignment_group_id\": null, \"assigned_to\": 724}]",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "type": "ai_message",
+          "content": "",
+          "usage_metadata": {
+            "input_tokens": 3863,
+            "output_tokens": 1007,
+            "total_tokens": 4870,
+            "input_token_details": {
+              "audio": 0,
+              "cache_read": 1792
+            },
+            "output_token_details": {
+              "audio": 0,
+              "reasoning": 960
+            }
+          },
+          "response_metadata": {
+            "token_usage": {
+              "completion_tokens": 1007,
+              "prompt_tokens": 3863,
+              "total_tokens": 4870,
+              "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 960,
+                "rejected_prediction_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 1792
+              },
+              "latency_checkpoint": {
+                "engine_tbt_ms": 12,
+                "engine_ttft_ms": 349,
+                "engine_ttlt_ms": 12357,
+                "pre_inference_ms": 279,
+                "service_tbt_ms": 12,
+                "service_ttft_ms": 778,
+                "service_ttlt_ms": 12785,
+                "total_duration_ms": 12520,
+                "user_visible_ttft_ms": 499
+              }
+            },
+            "model_provider": "openai",
+            "model_name": "Azure/gpt-5-2025-08-07",
+            "system_fingerprint": null,
+            "id": "chatcmpl-DqzbZ8GEQ3pbPWikgTGMfJSCC1nU9",
+            "service_tier": "default",
+            "finish_reason": "tool_calls",
+            "logprobs": null
+          },
+          "tool_calls": [
+            {
+              "name": "retrieve_knowledge",
+              "args": {
+                "search_text": "Juniper EX4300 guidelines",
+                "product_id": 163,
+                "state": "published",
+                "limit": 5
+              }
+            }
+          ]
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "retrieve_knowledge",
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "[{\"knowledge_id\": 243, \"kb_number\": \"KB-0000243\", \"title\": \"Issue Resolution related to Juniper EX4300 Variant 31, step-by-step guide\", \"state\": \"published\", \"visibility\": \"internal\", \"product_id\": 163, \"owner_id\": 606, \"sys_created_on\": \"2025-08-27 15:43:06\", \"body\": \"Product: Juniper EX4300 V31 Summary: VC flaps and crashes. Resolution Steps: 1) Support info/core files. 2) Roll back JunOS if regressions. 3) Review VC/PoE/LLDP logs. 4) Disable unstable features. 5) Upgrade to stable GA. Rules: Window. config backup. Workarounds: Remove flapping member. limit PoE. Policies & Process: JTAC + SOP refresh.\", \"score\": 31.5}]",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "type": "ai_message",
+          "content": "",
+          "usage_metadata": {
+            "input_tokens": 4148,
+            "output_tokens": 1058,
+            "total_tokens": 5206,
+            "input_token_details": {
+              "audio": 0,
+              "cache_read": 3712
+            },
+            "output_token_details": {
+              "audio": 0,
+              "reasoning": 1024
+            }
+          },
+          "response_metadata": {
+            "token_usage": {
+              "completion_tokens": 1058,
+              "prompt_tokens": 4148,
+              "total_tokens": 5206,
+              "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 1024,
+                "rejected_prediction_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 3712
+              },
+              "latency_checkpoint": {
+                "engine_tbt_ms": 12,
+                "engine_ttft_ms": 356,
+                "engine_ttlt_ms": 13438,
+                "pre_inference_ms": 255,
+                "service_tbt_ms": 12,
+                "service_ttft_ms": 886,
+                "service_ttlt_ms": 13966,
+                "total_duration_ms": 13722,
+                "user_visible_ttft_ms": 631
+              }
+            },
+            "model_provider": "openai",
+            "model_name": "Azure/gpt-5-2025-08-07",
+            "system_fingerprint": null,
+            "id": "chatcmpl-DqzbpHqulE2plaMfSch891mCol1T8",
+            "service_tier": "default",
+            "finish_reason": "tool_calls",
+            "logprobs": null
+          },
+          "tool_calls": [
+            {
+              "name": "find_case_knowledge_linkages",
+              "args": {
+                "case_id": 9,
+                "knowledge_id": 243
+              }
+            }
+          ]
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "find_case_knowledge_linkages",
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "[]",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "type": "ai_message",
+          "content": "",
+          "usage_metadata": {
+            "input_tokens": 4232,
+            "output_tokens": 870,
+            "total_tokens": 5102,
+            "input_token_details": {
+              "audio": 0,
+              "cache_read": 2048
+            },
+            "output_token_details": {
+              "audio": 0,
+              "reasoning": 832
+            }
+          },
+          "response_metadata": {
+            "token_usage": {
+              "completion_tokens": 870,
+              "prompt_tokens": 4232,
+              "total_tokens": 5102,
+              "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 832,
+                "rejected_prediction_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 2048
+              },
+              "latency_checkpoint": {
+                "engine_tbt_ms": 9,
+                "engine_ttft_ms": 218,
+                "engine_ttlt_ms": 8035,
+                "pre_inference_ms": 247,
+                "service_tbt_ms": 9,
+                "service_ttft_ms": 695,
+                "service_ttlt_ms": 8509,
+                "total_duration_ms": 8268,
+                "user_visible_ttft_ms": 448
+              }
+            },
+            "model_provider": "openai",
+            "model_name": "Azure/gpt-5-2025-08-07",
+            "system_fingerprint": null,
+            "id": "chatcmpl-Dqzc4JBgrrX2pTL0XHlE8vaVeKHw4",
+            "service_tier": "default",
+            "finish_reason": "tool_calls",
+            "logprobs": null
+          },
+          "tool_calls": [
+            {
+              "name": "link_case_knowledge",
+              "args": {
+                "case_id": 9,
+                "knowledge_id": 243,
+                "used_as": "applied"
+              }
+            }
+          ]
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "link_case_knowledge",
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"case_kb_id\": 528, \"case_id\": 9, \"knowledge_id\": 243, \"used_as\": \"applied\"}",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "type": "ai_message",
+          "content": "Done. I linked the published internal article \u201cIssue Resolution related to Juniper EX4300 Variant 31, step-by-step guide\u201d (KB-0000243) to case CS-0000009 as applied. Reference: case_kb_id 528.\n\nHighlights from the linked guidelines to assist your next steps:\n- Gather support info/core files\n- Review VC/PoE/LLDP logs for instability\n- Consider rolling back Junos if regression suspected\n- Disable unstable features temporarily\n- Upgrade to a stable GA release after validation\n- Workarounds: remove flapping VC member, limit PoE as needed\n- Coordinate with JTAC as required and ensure config backups\n\nWould you like me to:\n- Move the case from pending to in_progress so work can continue and SLAs resume if applicable, or\n- Add your latest troubleshooting notes to the case, or\n- Validate the entitlement and confirm the applicable SLAs for this product/account?",
+          "usage_metadata": {
+            "input_tokens": 4347,
+            "output_tokens": 1548,
+            "total_tokens": 5895,
+            "input_token_details": {
+              "audio": 0,
+              "cache_read": 4224
+            },
+            "output_token_details": {
+              "audio": 0,
+              "reasoning": 1344
+            }
+          },
+          "response_metadata": {
+            "token_usage": {
+              "completion_tokens": 1548,
+              "prompt_tokens": 4347,
+              "total_tokens": 5895,
+              "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 1344,
+                "rejected_prediction_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 4224
+              },
+              "latency_checkpoint": {
+                "engine_tbt_ms": 9,
+                "engine_ttft_ms": 141,
+                "engine_ttlt_ms": 14323,
+                "pre_inference_ms": 366,
+                "service_tbt_ms": 9,
+                "service_ttft_ms": 752,
+                "service_ttlt_ms": 14929,
+                "total_duration_ms": 14574,
+                "user_visible_ttft_ms": 387
+              }
+            },
+            "model_provider": "openai",
+            "model_name": "Azure/gpt-5-2025-08-07",
+            "system_fingerprint": null,
+            "id": "chatcmpl-DqzcIsMbQ6WjOGBNNP79KmVfeiNXg",
+            "service_tier": "default",
+            "finish_reason": "stop",
+            "logprobs": null
+          },
+          "tool_calls": []
+        }
+      ],
+      "tools_used": [
+        "search_cases",
+        "retrieve_knowledge",
+        "find_case_knowledge_linkages",
+        "link_case_knowledge"
+      ],
+      "tool_results": [
+        {
+          "tool_name": "search_cases",
+          "arguments": {
+            "number": "CS-0000009"
+          },
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "[{\"case_id\": 9, \"number\": \"CS-0000009\", \"account_id\": 1, \"contact_id\": 123, \"product_id\": 163, \"installed_product_id\": null, \"channel\": \"email\", \"priority\": \"critical\", \"state\": \"pending\", \"short_description\": \"Product: Juniper EX4300 Variant 31, Issue: is not working as expected.\", \"escalation\": 1, \"escalation_reason\": \"urgency\", \"reopen_count\": 0, \"sys_created_on\": \"2025-08-27 15:35:20\", \"sys_updated_on\": \"2025-12-01 07:36:56\", \"closed_on\": null, \"assignment_group_id\": null, \"assigned_to\": 724}]",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "tool_name": "retrieve_knowledge",
+          "arguments": {
+            "search_text": "Juniper EX4300 guidelines",
+            "product_id": 163,
+            "state": "published",
+            "limit": 5
+          },
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "[{\"knowledge_id\": 243, \"kb_number\": \"KB-0000243\", \"title\": \"Issue Resolution related to Juniper EX4300 Variant 31, step-by-step guide\", \"state\": \"published\", \"visibility\": \"internal\", \"product_id\": 163, \"owner_id\": 606, \"sys_created_on\": \"2025-08-27 15:43:06\", \"body\": \"Product: Juniper EX4300 V31 Summary: VC flaps and crashes. Resolution Steps: 1) Support info/core files. 2) Roll back JunOS if regressions. 3) Review VC/PoE/LLDP logs. 4) Disable unstable features. 5) Upgrade to stable GA. Rules: Window. config backup. Workarounds: Remove flapping member. limit PoE. Policies & Process: JTAC + SOP refresh.\", \"score\": 31.5}]",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "tool_name": "find_case_knowledge_linkages",
+          "arguments": {
+            "case_id": 9,
+            "knowledge_id": 243
+          },
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "[]",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "tool_name": "link_case_knowledge",
+          "arguments": {
+            "case_id": 9,
+            "knowledge_id": 243,
+            "used_as": "applied"
+          },
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"case_kb_id\": 528, \"case_id\": 9, \"knowledge_id\": 243, \"used_as\": \"applied\"}",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        }
+      ],
+      "verification_results": {
+        "Verify Updated Escalated Case for Juniper EX4300 Issue": {
+          "passed": false,
+          "expected": 1,
+          "actual": 0,
+          "comparison_type": "equals",
+          "query": "SELECT COUNT(*) AS cnt\nFROM customer_case c\nJOIN product p\n  ON p.product_id = c.product_id\nWHERE c.number = 'CS-0000009'\n  AND c.escalation = 1\n  AND c.state = 'in_progress'\n  AND p.name = 'Juniper EX4300 Variant 31'\n  AND c.short_description LIKE 'Product: Juniper EX4300 Variant 31,%';\n",
+          "details": "Comparison equals: 0 vs 1"
+        },
+        "Knowledge Article Linked to Case": {
+          "passed": true,
+          "expected": 1,
+          "actual": 1,
+          "comparison_type": "equals",
+          "query": "SELECT COUNT(*) AS cnt\nFROM case_knowledge ck\nJOIN knowledge k\n  ON k.knowledge_id = 243\nJOIN customer_case c\n  ON c.case_id = ck.case_id\nWHERE c.number = 'CS-0000009'\n  AND k.title LIKE '%Juniper EX4300 Variant 31%'\n  AND k.state = 'published'\n  AND ck.used_as = 'applied';\n",
+          "details": "Comparison equals: 1 vs 1"
+        }
+      },
+      "verification_summary": {
+        "total": 2,
+        "passed": 1,
+        "failed": 1,
+        "pass_rate": 0.5
+      },
+      "overall_success": false
+    }
+  ],
+  "statistics": {
+    "total_runs": 1,
+    "successful_runs": 0,
+    "overall_success_rate": 0.0,
+    "pass_at_1": 0.0,
+    "verifier_level_pass_rate": 0.5,
+    "total_verifiers_checked": 2,
+    "total_verifiers_passed": 1,
+    "individual_verifier_stats": {
+      "Verify Updated Escalated Case for Juniper EX4300 Issue": {
+        "passed": 0,
+        "total": 1,
+        "pass_rate": 0.0
+      },
+      "Knowledge Article Linked to Case": {
+        "passed": 1,
+        "total": 1,
+        "pass_rate": 1.0
+      }
+    },
+    "mean_execution_time_ms": 78124.0,
+    "tool_usage": {
+      "search_cases": 1,
+      "retrieve_knowledge": 1,
+      "find_case_knowledge_linkages": 1,
+      "link_case_knowledge": 1
+    }
+  }
+}

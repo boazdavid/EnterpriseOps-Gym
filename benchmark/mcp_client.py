@@ -137,6 +137,14 @@ class MCPClient:
         self.session_id += 1
         return self.session_id
 
+    @staticmethod
+    def _parse_sse_response(text: str) -> Dict[str, Any]:
+        """Parse a Server-Sent Events response and return the JSON-RPC data."""
+        for line in text.splitlines():
+            if line.startswith("data: "):
+                return json.loads(line[6:])
+        raise ValueError(f"No data field found in SSE response: {text[:200]}")
+
     def _get_auth_headers(self) -> Dict[str, str]:
         """Get authentication headers for HTTP requests"""
         if not self.auth_config:
@@ -216,7 +224,11 @@ class MCPClient:
                     logger.info(f"Captured MCP session ID: {self.mcp_session_id}")
 
                 if response.status_code == 200:
-                    data = response.json()
+                    content_type = response.headers.get("content-type", "")
+                    if "text/event-stream" in content_type:
+                        data = self._parse_sse_response(response.text)
+                    else:
+                        data = response.json()
                     logger.debug(f"MCP response: {json.dumps(data, indent=2)}")
                     return {"success": True, "data": data}
                 else:

@@ -1,0 +1,1418 @@
+{
+  "benchmark_config": {
+    "model": "vllm/Azure/gpt-5-2025-08-07",
+    "number_of_runs": 1,
+    "user_prompt": "There's an SSL termination issue happening on one of Wayne Enterprises' Windows Server boxes, the 2022 Datacenter edition. They called it in, so open a high-priority case for it. Use their primary contact for this, ensuring the contact is active and reachable. Short description: 'SSL termination issue on Windows Server node'. After you've got that case filed, they need renewed coverage since theirs ran out. Set up a new support contract for them, active status, runs all of next year (Jan 1 to Dec 31), price it at 150,000 USD. Under that, add a premium entitlement with full-week availability, letting them open up to 50 cases monthly. Make sure it's for that same server product. Then, find the High-level response SLA, and attach it to this active case. Set everything to show work has started.",
+    "gym_servers": [
+      {
+        "name": "sn-csm-server",
+        "url": "http://localhost:8001",
+        "seed_database_file": "Domain Wise DBs and Task-DB Mappings/csm/dbs/db_1762254390925_u5icw4thh.sql",
+        "uses_cloning": true
+      }
+    ],
+    "total_gyms": 1,
+    "total_tools_available": 10
+  },
+  "runs": [
+    {
+      "run_number": 1,
+      "started_at": "2026-06-15T11:11:02.896293+00:00",
+      "execution_time_ms": 334791,
+      "model_response": "Here\u2019s what I\u2019ve done for Wayne Enterprises:\n\n1) Verified account and primary contact\n- Account found: Wayne Enterprises (account_id = 7)\n- Primary contact found: contact_id = 9, was inactive \u2192 updated to active = true so they\u2019re reachable\n- Set this contact on the case\n\n2) Verified product\n- Product found and active: Windows Server 2022 Datacenter (product_id = 1)\n\n3) Created a high-priority case (called in by phone)\n- Case created: CS-0001233 (case_id = 1233)\n- Account: 7 | Contact: 9 | Product: 1\n- Channel: phone\n- Priority: high\n- Short description: SSL termination issue on Windows Server node\n- Initial state: new \u2192 updated to in_progress to reflect work has started\n\n4) Set up renewed coverage for next year\n- Support contract created (active):\n  - contract_id = 154\n  - Type: support\n  - Price: 150000 (USD)\n  - Term: 2027-01-01 through 2027-12-31\n- Premium entitlement created under this contract for the same server product:\n  - entitlement_id = 432\n  - Account: 7 | Product: 1 | Contract: 154\n  - Support level: premium\n  - Coverage hours: h24x7\n  - Max cases/month: 50\n  - Active: true\n  - Note: Coverage applies for the contract term (next year).\n\n5) Aligned the response SLA to the active case\n- Attempted to find an SLA named \u201cHigh-level response SLA\u201d \u2192 not found by exact name.\n- Applied the closest active match for high-priority response:\n  - SLA definition: SLA Response - High (sla_def_id = 2, response metric, target = 30 mins, pause_on_pending = true)\n  - Linked to case_id 1233 with stage = in_progress\n\nCurrent status\n- Case CS-0001233 is in progress with a high-priority response SLA tracking started.\n- Next year\u2019s support contract and premium entitlement are set and active for 2027.\n\nIf you intended a different specifically-named SLA, I can switch it; otherwise, we\u2019ll continue with \u201cSLA Response - High.\u201d",
+      "conversation_flow": [
+        {
+          "type": "system_message",
+          "content": "# **CSM Assistant Policy**\n\nYou are a Customer Service Management assistant operating with Administrator privileges. Your goal is to assist users in the Customer Service Management lifecycle by helping them register cases, validate entitlements, manage customer assets, raise escalations, attach relevant knowledge, close cases, and in other related processes effectively.\n\nAs an Administrator, you have full access across all tables and can create, update, and deactivate all entities, including users, accounts, contacts, contracts, entitlements, products, and cases.\n\nYou should always act based on confirmed user context, existing record relationships, and database integrity best practices. Avoid actions that assume data, do not provide enough context, or seem to be in violation of this policy.\n\n---\n\n## **General Instructions**\n\n* If a user request violates policy, do not act on it.\n\n* Perform **one operation at a time**.\n\n* Do not provide knowledge or procedures not in the system.\n\n* Do not ask for any information or confirmation from the user, if you cannot proceed ahead provide the reason for that before pausing.\n\n---\n\n## **Roles & Responsibilities**\n\n### **Administrator**\n\n- Has **full access** across all tables.\n\n- Can create, update, and deactivate:\n\n- Users, user groups, and group memberships.\n\n- Accounts, contacts, locations, and entitlements.\n\n- Products, installed products, SLAs, contracts, and knowledge.\n\n- Manages **assignment rules, workflows, and escalations**.\n\n### **Agent**\n\n- Frontline support representative handling **customer cases**.\n\n- **Read-only access** to all records (accounts, contacts, products, contracts, entitlements).\n\n- Can:\n\n- Create and update **customer cases, interactions, and case work notes**.\n\n- Associate knowledge articles with cases.\n\n- View entitlements and SLAs linked to accounts and cases.\n\n- Update case assignment, state, and resolution.\n\n- Cannot modify **user, group, or membership data**.\n\n### **Manager**\n\n- Supervises **agents and case queues**.\n\n- Has agent privileges plus:\n\n- Can **reassign cases** across groups and users.\n\n- Can **escalate cases** and override case prioritization.\n\n- Monitors **SLA compliance, case trends, and escalations**.\n\n- Can approve exceptions (e.g., entitlement overrides or escalations).\n\n- May contribute to **knowledge management** as reviewers.\n\n### **Customer (Portal User)**\n\n- End user accessing the **customer portal**.\n\n- Can:\n\n- View and update their own profile.\n\n- Create new cases and track the status of their submitted cases.\n\n- Search and view **knowledge articles** (based on visibility: internal/external).\n\n- Participate in **community forums** (if enabled).\n\n- Initiate **interactions** (chat, email, web, etc.).\n\n- Limited to their own account\u2019s data (cannot see other accounts/customers).\n\n- Cannot access **internal system data** (users, groups, SLAs, contracts of other customers).\n\n---\n\n## **Core Operations**\n\n### **1. Registering a Customer Case**\n\n* Begin by identifying the reporting **contact** and verifying association with an **account**.\n\n* Collect necessary inputs:\n\n* Issue description (`short_description`)\n\n* Product or installed product involved\n\n* Contact channel (`channel`)\n\n* Priority (if not provided \u2192 default = **moderate**)\n\n* Default state = **new**.\n\n* Verify the product or installed product belongs to the customer\u2019s account.\n\n---\n\n### **2. Assigning a Case**\n\n* A case may be assigned to:\n\n* An **assignment group** (`assignment_group_id`), or\n\n* A **user** (`assigned_to`) within that group.\n\n* Agents must:\n\n* Be **active**, and\n\n* Be members of the assigned group.\n\n**Assignment constraints**: `assigned_to` must reference a `user` with role `agent` or `manager` and (if used) member of `assignment_group_id`.\n\n---\n\n### **3. Working on a Case**\n\nAgents may:\n\n* Update cause, resolution notes, or other internal fields.\n\n* Change state (`new \u2192 in_progress`, `in_progress \u2192 pending/resolved`).\n\n* Attach a missing product or installed product.\n\n* Link relevant knowledge articles.\n\n**Important:**\n\n* Cases cannot be closed directly. They must first be moved to **resolved**, then to **closed**.\n\n* If a case is invalid, it may be **canceled**.\n\n---\n\n### **4. Case Lifecycle Management**\n\nValid state transitions:\n\n* `new` \u2192 `in_progress` / `pending` / `resolved`\n\n* `in_progress` \u2192 `pending` / `resolved`\n\n* `pending` \u2192 `in_progress` / `resolved`\n\n* `resolved` \u2192 `closed`\n\n* `canceled`\n\nAt each step:\n\n* Validate acting user\u2019s relationship to the case.\n\n* Capture timestamps (`sys_updated_on`, `closed_on` where applicable).\n\n* Prevent premature closure without resolution.\n\n---\n\n### **5. Entitlement Validation**\n\nBefore applying entitlement:\n\n* Check it is **active** and within contract validity.\n\n* Product-specific entitlements must match the case product (unless entitlement is account-wide).\n\n* `max_cases_per_month = 0` means **unlimited**; otherwise enforce limits.\n\nIf entitlement is invalid \u2192 inform the user.\n\n---\n\n### **6. Installed Product Management**\n\n* Installed products must:\n\n* Be **active / in_use**.\n\n* Belong to the reporting account.\n\n* Do not attach items in **retired / repair** status to new cases.\n\n* Ensure installed product\u2019s product matches the case product.\n\n---\n\n### **7. Linking Knowledge Articles**\n\nWhen linking knowledge:\n\n* Articles must be in state = **published**.\n\n* Visibility rules apply:\n\n* `internal` = agents only\n\n* `external` = customers can view\n\n* Link articles to cases via `case_knowledge` (usage = suggested, applied, resolution).\n\n* Ownership is tracked via `owner_id`.\n\n---\n\n### **8. Escalations**\n\nEscalations may be raised when:\n\n* SLA breach risk exists, or\n\n* Customer explicitly requests escalation, or\n\n* High business risk/impact.\n\nSteps:\n\n* Record `escalation = true` on case.\n\n* Capture `escalation_reason`.\n\n* Ensure justification is logged in case notes.\n\nThere is **no separate escalation record**. Escalation is tracked within the case.\n\n---\n\n### **9. Product Handling**\n\n* Products must be:\n\n* Present in `product` table,\n\n* In lifecycle_state = **active**.\n\n* Installed products must match the product and account context.\n\n---\n\n### **10. Security**\n\n* Users may only view or update cases they own, are assigned to, or are in the assigned group.\n\n* Do not disclose personal data or case details outside these permissions.\n\n---\n\n### **11. Validation, Error Handling & Logging**\n\nAlways validate existence and integrity of:\n\n* Users, accounts, contacts, products, entitlements, and cases.\n\n* State transitions follow lifecycle rules.\n\nAll actions must:\n\n* Update `sys_updated_on`.\n\n* Capture timestamps (e.g., `closed_on` for case closure).\n\n---\n\n## **Service Levels & Timelines**\n\n- **Case handling**\n\n- Response and resolution timelines are determined by the **entitlements** (`entitlement` table) linked to the customer account and product.\n\n- Applicable **SLAs** (`sla_definition` and `case_sla` tables) set the exact targets for response or resolution, and may vary by case priority, support level, and coverage hours.\n\n- **SLA pause behavior**: Obey `sla_definition.pause_on_pending`; when case state is `pending`, pause applicable SLAs.\n\n- If no entitlement or SLA is associated with the account/product, **no service level commitments are in scope**.\n\n- **Installed product repair / replacement**\n\n- Commitments depend on **warranty contracts or support agreements** (`contract` table).\n\n- The applicable SLA target will be enforced only if defined under the customer\u2019s entitlement.\n\n- In absence of a valid contract or entitlement, **no guaranteed turnaround applies**.\n\n- **Knowledge article publication / retirement**\n\n- Service levels for publishing or retiring knowledge are governed by **internal operational policies** and are **not bound by customer-facing SLAs**.\n\n- Unless explicitly defined in entitlements or SLAs, **no service level commitments are in scope**.\n\n- **User & group management (administrative actions)**\n\n- Internal administrative tasks (user/group creation, role updates, membership changes) are not subject to customer-facing SLAs.\n\n- Unless an internal SLA is defined, **no service level commitments are in scope**.\n\n## **Predefined Lists (Enumerations)**\n\nOnly the following values are allowed for these fields:\n\n### Users & Groups\n\n- `user.role`: `admin`, `agent`, `manager`, `customer`\n\n- `user_group.type`: `support`, `backoffice`, `field`, `vendor`\n\n### Geography\n\n- `location.city`: `new_york`, `london`, `mumbai`, `tokyo`, `sydney`\n\n- `location.country`: `usa`, `uk`, `india`, `japan`, `australia`\n\n### Accounts & Contacts\n\n- `account.account_type`: `customer`, `partner`, `internal`\n\n### Products & Installed Base\n\n- `product.category`: `software`, `hardware`, `service`\n\n- `product.lifecycle_state`: `active`, `retired`\n\n- `installed_product.status`: `in_use`, `in_stock`, `repair`, `retired`\n\n### Contracts, Entitlements, SLAs\n\n- `contract.contract_type`: `support`, `warranty`, `subscription`\n\n- `contract.status`: `active`, `suspended`, `expired`\n\n- `entitlement.support_level`: `standard`, `premium`, `enterprise`\n\n- `entitlement.coverage_hours`: `h8x5`, `h12x6`, `h24x7`\n\n- `sla_definition.metric`: `response`, `resolution`\n\n- `sla_definition.applies_to_priority`: `critical`, `high`, `moderate`, `low`\n\n### Case Management\n\n- `customer_case.channel`: `web`, `email`, `phone`, `chat`, `social`, `alert`, `community`\n\n- `customer_case.priority`: `critical`, `high`, `moderate`, `low`\n\n- `customer_case.state`: `new`, `in_progress`, `pending`, `resolved`, `closed`, `canceled`\n\n- `customer_case.escalation_reason`: `urgency`, `vip`, `impact`, `breach_risk`, `customer_request`\n\n### Interactions & Knowledge\n\n- `interaction.channel`: `web`, `email`, `phone`, `chat`, `social`, `alert`, `community`\n\n- `knowledge.state`: `draft`, `published`, `retired`\n\n- `knowledge.visibility`: `internal`, `external`\n\n- `case_knowledge.used_as`: `suggested`, `applied`, `resolution`\n\n> **Enforcement**: reject any value outside the list with `INVALID_ENUM_VALUE`.\n\n**Knowledge Related Policies:**\n\n- When a new case is created and is asked to be investigated, then a knowledge base search should be performed.\n\n- For all cases the entitlement for the product should be verified and should be actively running.\n\n- If no relevant knowledge is found and case is being closed, a new knowledge article should be created to capture the findings and resolution steps.\n\n- If a knowledge article is created, it should be linked to the case for future reference.\n\n- When new case moves to work in progress appropriate SLA should be aligned to it.\n\nUsed as for knowledge base to case:\n\n- When the knowledge is found through automated search it should be linked as \"suggested\".\n\n- If the knowledge is found to be useful to resolve the case or is being created after case resolution it should have used as type to \"resolution\" in linking.\n\n- In other cases if knowledge is linked it should as \"applied\".\n\n- If knowledge article is found then it should be used to assist in the next set of actions.\n\n- For example, it might details regarding product configuration, troubleshooting steps, or best practices or team that should work on it.\n\n**Free form text policies:** (For texts like short description of cases, title of knowledge, escalation reason and content/body of knowledge)\n\n- Character limits: 30\u2013120 chars\n\n- Case Short Description: It can be something like: \"Product: \" + Product name + \", Issue: is not working as expected.\"\n\n- KB title: Issue Resolution related to , step-by-step guide\n\n- KB content/body: This kind of issues are tackled by Assignment Group: , Assigned to: . Steps to resolve the issue: , Suggested Priority: .\n\n- Escalation reason: The case could not be completed on time/exceeds the time limit or has priority beyond the defined list of priorities."
+        },
+        {
+          "type": "user_message",
+          "content": "There's an SSL termination issue happening on one of Wayne Enterprises' Windows Server boxes, the 2022 Datacenter edition. They called it in, so open a high-priority case for it. Use their primary contact for this, ensuring the contact is active and reachable. Short description: 'SSL termination issue on Windows Server node'. After you've got that case filed, they need renewed coverage since theirs ran out. Set up a new support contract for them, active status, runs all of next year (Jan 1 to Dec 31), price it at 150,000 USD. Under that, add a premium entitlement with full-week availability, letting them open up to 50 cases monthly. Make sure it's for that same server product. Then, find the High-level response SLA, and attach it to this active case. Set everything to show work has started."
+        },
+        {
+          "type": "ai_message",
+          "content": "",
+          "usage_metadata": {
+            "input_tokens": 4653,
+            "output_tokens": 2778,
+            "total_tokens": 7431,
+            "input_token_details": {
+              "audio": 0,
+              "cache_read": 2432
+            },
+            "output_token_details": {
+              "audio": 0,
+              "reasoning": 2752
+            }
+          },
+          "response_metadata": {
+            "token_usage": {
+              "completion_tokens": 2778,
+              "prompt_tokens": 4653,
+              "total_tokens": 7431,
+              "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 2752,
+                "rejected_prediction_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 2432
+              },
+              "latency_checkpoint": {
+                "engine_tbt_ms": 12,
+                "engine_ttft_ms": 339,
+                "engine_ttlt_ms": 32829,
+                "pre_inference_ms": 248,
+                "service_tbt_ms": 12,
+                "service_ttft_ms": 704,
+                "service_ttlt_ms": 33192,
+                "total_duration_ms": 32954,
+                "user_visible_ttft_ms": 456
+              }
+            },
+            "model_provider": "openai",
+            "model_name": "Azure/gpt-5-2025-08-07",
+            "system_fingerprint": null,
+            "id": "chatcmpl-DqzVaBLvQtnifWfFmkoay2VWKjBFp",
+            "service_tier": "default",
+            "finish_reason": "tool_calls",
+            "logprobs": null
+          },
+          "tool_calls": [
+            {
+              "name": "find_account",
+              "args": {
+                "name": "Wayne Enterprises"
+              }
+            }
+          ]
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "find_account",
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"account_id\": 7, \"name\": \"Wayne Enterprises\", \"account_type\": \"customer\", \"email_domain\": \"wayneenterprises.com\", \"active\": 1}",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "type": "ai_message",
+          "content": "",
+          "usage_metadata": {
+            "input_tokens": 4760,
+            "output_tokens": 2398,
+            "total_tokens": 7158,
+            "input_token_details": {
+              "audio": 0,
+              "cache_read": 4480
+            },
+            "output_token_details": {
+              "audio": 0,
+              "reasoning": 2368
+            }
+          },
+          "response_metadata": {
+            "token_usage": {
+              "completion_tokens": 2398,
+              "prompt_tokens": 4760,
+              "total_tokens": 7158,
+              "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 2368,
+                "rejected_prediction_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 4480
+              },
+              "latency_checkpoint": {
+                "engine_tbt_ms": 12,
+                "engine_ttft_ms": 340,
+                "engine_ttlt_ms": 28479,
+                "pre_inference_ms": 251,
+                "service_tbt_ms": 12,
+                "service_ttft_ms": 685,
+                "service_ttlt_ms": 28823,
+                "total_duration_ms": 28582,
+                "user_visible_ttft_ms": 434
+              }
+            },
+            "model_provider": "openai",
+            "model_name": "Azure/gpt-5-2025-08-07",
+            "system_fingerprint": null,
+            "id": "chatcmpl-DqzWA5YNG1ZQBB9cUTyDdzsTjRZoK",
+            "service_tier": "default",
+            "finish_reason": "tool_calls",
+            "logprobs": null
+          },
+          "tool_calls": [
+            {
+              "name": "find_contacts",
+              "args": {
+                "account_id": 7,
+                "is_primary": true
+              }
+            }
+          ]
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "find_contacts",
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "[{\"contact_id\": 9, \"account_id\": 7, \"portal_user_id\": 8, \"active\": 0, \"is_primary\": 1, \"sys_created_on\": \"2025-08-27 15:37:18\"}]",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "type": "ai_message",
+          "content": "",
+          "usage_metadata": {
+            "input_tokens": 4890,
+            "output_tokens": 3357,
+            "total_tokens": 8247,
+            "input_token_details": {
+              "audio": 0,
+              "cache_read": 4608
+            },
+            "output_token_details": {
+              "audio": 0,
+              "reasoning": 3328
+            }
+          },
+          "response_metadata": {
+            "token_usage": {
+              "completion_tokens": 3357,
+              "prompt_tokens": 4890,
+              "total_tokens": 8247,
+              "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 3328,
+                "rejected_prediction_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 4608
+              },
+              "latency_checkpoint": {
+                "engine_tbt_ms": 12,
+                "engine_ttft_ms": 350,
+                "engine_ttlt_ms": 39976,
+                "pre_inference_ms": 334,
+                "service_tbt_ms": 12,
+                "service_ttft_ms": 780,
+                "service_ttlt_ms": 40411,
+                "total_duration_ms": 40092,
+                "user_visible_ttft_ms": 446
+              }
+            },
+            "model_provider": "openai",
+            "model_name": "Azure/gpt-5-2025-08-07",
+            "system_fingerprint": null,
+            "id": "chatcmpl-DqzWfstxCCTYsK7JAutIcwQHb5rLR",
+            "service_tier": "default",
+            "finish_reason": "tool_calls",
+            "logprobs": null
+          },
+          "tool_calls": [
+            {
+              "name": "update_contact",
+              "args": {
+                "contact_id": 9,
+                "active": true
+              }
+            }
+          ]
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "update_contact",
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"contact_id\": 9, \"account_id\": 7, \"portal_user_id\": 8, \"active\": 1, \"is_primary\": 1, \"sys_created_on\": \"2025-08-27 15:37:18\", \"sys_updated_on\": \"2026-06-15 11:12:54\"}",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "type": "ai_message",
+          "content": "",
+          "usage_metadata": {
+            "input_tokens": 5036,
+            "output_tokens": 2910,
+            "total_tokens": 7946,
+            "input_token_details": {
+              "audio": 0,
+              "cache_read": 4736
+            },
+            "output_token_details": {
+              "audio": 0,
+              "reasoning": 2880
+            }
+          },
+          "response_metadata": {
+            "token_usage": {
+              "completion_tokens": 2910,
+              "prompt_tokens": 5036,
+              "total_tokens": 7946,
+              "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 2880,
+                "rejected_prediction_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 4736
+              },
+              "latency_checkpoint": {
+                "engine_tbt_ms": 11,
+                "engine_ttft_ms": 345,
+                "engine_ttlt_ms": 33652,
+                "pre_inference_ms": 205,
+                "service_tbt_ms": 11,
+                "service_ttft_ms": 729,
+                "service_ttlt_ms": 34033,
+                "total_duration_ms": 33840,
+                "user_visible_ttft_ms": 524
+              }
+            },
+            "model_provider": "openai",
+            "model_name": "Azure/gpt-5-2025-08-07",
+            "system_fingerprint": null,
+            "id": "chatcmpl-DqzXM13ApjO4rQsnXBomRoHEXWF19",
+            "service_tier": "default",
+            "finish_reason": "tool_calls",
+            "logprobs": null
+          },
+          "tool_calls": [
+            {
+              "name": "find_product",
+              "args": {
+                "name": "Windows Server 2022 Datacenter"
+              }
+            }
+          ]
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "find_product",
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"product_id\": 1, \"name\": \"Windows Server 2022 Datacenter\", \"category\": \"software\", \"lifecycle_state\": \"active\"}",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "type": "ai_message",
+          "content": "",
+          "usage_metadata": {
+            "input_tokens": 5143,
+            "output_tokens": 2171,
+            "total_tokens": 7314,
+            "input_token_details": {
+              "audio": 0,
+              "cache_read": 4864
+            },
+            "output_token_details": {
+              "audio": 0,
+              "reasoning": 2112
+            }
+          },
+          "response_metadata": {
+            "token_usage": {
+              "completion_tokens": 2171,
+              "prompt_tokens": 5143,
+              "total_tokens": 7314,
+              "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 2112,
+                "rejected_prediction_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 4864
+              },
+              "latency_checkpoint": {
+                "engine_tbt_ms": 11,
+                "engine_ttft_ms": 346,
+                "engine_ttlt_ms": 24512,
+                "pre_inference_ms": 326,
+                "service_tbt_ms": 11,
+                "service_ttft_ms": 763,
+                "service_ttlt_ms": 24927,
+                "total_duration_ms": 24615,
+                "user_visible_ttft_ms": 437
+              }
+            },
+            "model_provider": "openai",
+            "model_name": "Azure/gpt-5-2025-08-07",
+            "system_fingerprint": null,
+            "id": "chatcmpl-DqzXxNipysC4RbDM5JxZ4aFas6B9s",
+            "service_tier": "default",
+            "finish_reason": "tool_calls",
+            "logprobs": null
+          },
+          "tool_calls": [
+            {
+              "name": "create_new_case",
+              "args": {
+                "account_id": 7,
+                "contact_id": 9,
+                "product_id": 1,
+                "channel": "phone",
+                "priority": "high",
+                "state": "new",
+                "short_description": "SSL termination issue on Windows Server node"
+              }
+            }
+          ]
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "create_new_case",
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"case_id\": 1233, \"number\": \"CS-0001233\", \"account_id\": 7, \"contact_id\": 9, \"product_id\": 1, \"installed_product_id\": null, \"channel\": \"phone\", \"priority\": \"high\", \"state\": \"new\", \"short_description\": \"SSL termination issue on Windows Server node\", \"assignment_group_id\": null, \"assigned_to\": null, \"escalation\": 0, \"escalation_reason\": null, \"reopen_count\": 0, \"sys_created_on\": \"2026-06-15 11:14:00\", \"sys_updated_on\": \"2026-06-15 11:14:00\", \"closed_on\": null}",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "type": "ai_message",
+          "content": "",
+          "usage_metadata": {
+            "input_tokens": 5404,
+            "output_tokens": 3551,
+            "total_tokens": 8955,
+            "input_token_details": {
+              "audio": 0,
+              "cache_read": 4992
+            },
+            "output_token_details": {
+              "audio": 0,
+              "reasoning": 3520
+            }
+          },
+          "response_metadata": {
+            "token_usage": {
+              "completion_tokens": 3551,
+              "prompt_tokens": 5404,
+              "total_tokens": 8955,
+              "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 3520,
+                "rejected_prediction_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 4992
+              },
+              "latency_checkpoint": {
+                "engine_tbt_ms": 11,
+                "engine_ttft_ms": 347,
+                "engine_ttlt_ms": 41167,
+                "pre_inference_ms": 380,
+                "service_tbt_ms": 11,
+                "service_ttft_ms": 902,
+                "service_ttlt_ms": 41762,
+                "total_duration_ms": 41385,
+                "user_visible_ttft_ms": 522
+              }
+            },
+            "model_provider": "openai",
+            "model_name": "Azure/gpt-5-2025-08-07",
+            "system_fingerprint": null,
+            "id": "chatcmpl-DqzYRLmmo7e4cXvAthxwjH5xEagzS",
+            "service_tier": "default",
+            "finish_reason": "tool_calls",
+            "logprobs": null
+          },
+          "tool_calls": [
+            {
+              "name": "update_case",
+              "args": {
+                "case_id": 1233,
+                "state": "in_progress"
+              }
+            }
+          ]
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "update_case",
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"case_id\": 1233, \"number\": \"CS-0001233\", \"account_id\": 7, \"contact_id\": 9, \"product_id\": 1, \"installed_product_id\": null, \"channel\": \"phone\", \"priority\": \"high\", \"state\": \"in_progress\", \"short_description\": \"SSL termination issue on Windows Server node\", \"assignment_group_id\": null, \"assigned_to\": null, \"escalation\": 0, \"escalation_reason\": null, \"reopen_count\": 0, \"sys_created_on\": \"2026-06-15 11:14:00\", \"sys_updated_on\": \"2026-06-15 11:14:45\", \"closed_on\": null}",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "type": "ai_message",
+          "content": "",
+          "usage_metadata": {
+            "input_tokens": 5637,
+            "output_tokens": 1470,
+            "total_tokens": 7107,
+            "input_token_details": {
+              "audio": 0,
+              "cache_read": 5248
+            },
+            "output_token_details": {
+              "audio": 0,
+              "reasoning": 1408
+            }
+          },
+          "response_metadata": {
+            "token_usage": {
+              "completion_tokens": 1470,
+              "prompt_tokens": 5637,
+              "total_tokens": 7107,
+              "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 1408,
+                "rejected_prediction_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 5248
+              },
+              "latency_checkpoint": {
+                "engine_tbt_ms": 11,
+                "engine_ttft_ms": 343,
+                "engine_ttlt_ms": 17182,
+                "pre_inference_ms": 336,
+                "service_tbt_ms": 11,
+                "service_ttft_ms": 786,
+                "service_ttlt_ms": 17622,
+                "total_duration_ms": 17295,
+                "user_visible_ttft_ms": 450
+              }
+            },
+            "model_provider": "openai",
+            "model_name": "Azure/gpt-5-2025-08-07",
+            "system_fingerprint": null,
+            "id": "chatcmpl-DqzZ8QueH20K1IGEDpIeFpodi7Gyf",
+            "service_tier": "default",
+            "finish_reason": "tool_calls",
+            "logprobs": null
+          },
+          "tool_calls": [
+            {
+              "name": "enlist_new_contract",
+              "args": {
+                "account_id": 7,
+                "contract_type": "support",
+                "contract_price": 150000,
+                "status": "active",
+                "start_date": "2027-01-01",
+                "end_date": "2027-12-31"
+              }
+            }
+          ]
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "enlist_new_contract",
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"contract_id\": 154, \"account_id\": 7, \"contract_type\": \"support\", \"status\": \"active\", \"contract_price\": 150000, \"start_date\": \"2027-01-01\", \"end_date\": \"2027-12-31\", \"sys_created_on\": \"2026-06-15 11:15:04\", \"sys_updated_on\": \"2026-06-15 11:15:04\"}",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "type": "ai_message",
+          "content": "",
+          "usage_metadata": {
+            "input_tokens": 5842,
+            "output_tokens": 2173,
+            "total_tokens": 8015,
+            "input_token_details": {
+              "audio": 0,
+              "cache_read": 5504
+            },
+            "output_token_details": {
+              "audio": 0,
+              "reasoning": 2112
+            }
+          },
+          "response_metadata": {
+            "token_usage": {
+              "completion_tokens": 2173,
+              "prompt_tokens": 5842,
+              "total_tokens": 8015,
+              "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 2112,
+                "rejected_prediction_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 5504
+              },
+              "latency_checkpoint": {
+                "engine_tbt_ms": 12,
+                "engine_ttft_ms": 328,
+                "engine_ttlt_ms": 26076,
+                "pre_inference_ms": 305,
+                "service_tbt_ms": 12,
+                "service_ttft_ms": 724,
+                "service_ttlt_ms": 26473,
+                "total_duration_ms": 26183,
+                "user_visible_ttft_ms": 420
+              }
+            },
+            "model_provider": "openai",
+            "model_name": "Azure/gpt-5-2025-08-07",
+            "system_fingerprint": null,
+            "id": "chatcmpl-DqzZQOWKqyBDaEeY976djx88VQtfI",
+            "service_tier": "default",
+            "finish_reason": "tool_calls",
+            "logprobs": null
+          },
+          "tool_calls": [
+            {
+              "name": "add_new_entitlement",
+              "args": {
+                "account_id": 7,
+                "product_id": 1,
+                "contract_id": 154,
+                "support_level": "premium",
+                "coverage_hours": "h24x7",
+                "max_cases_per_month": 50,
+                "active": true
+              }
+            }
+          ]
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "add_new_entitlement",
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"entitlement_id\": 432, \"account_id\": 7, \"product_id\": 1, \"contract_id\": 154, \"support_level\": \"premium\", \"coverage_hours\": \"h24x7\", \"max_cases_per_month\": 50, \"active\": 1, \"sys_created_on\": \"2026-06-15 11:15:32\", \"sys_updated_on\": \"2026-06-15 11:15:32\"}",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "type": "ai_message",
+          "content": "",
+          "usage_metadata": {
+            "input_tokens": 6048,
+            "output_tokens": 32,
+            "total_tokens": 6080,
+            "input_token_details": {
+              "audio": 0,
+              "cache_read": 5760
+            },
+            "output_token_details": {
+              "audio": 0,
+              "reasoning": 0
+            }
+          },
+          "response_metadata": {
+            "token_usage": {
+              "completion_tokens": 32,
+              "prompt_tokens": 6048,
+              "total_tokens": 6080,
+              "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 0,
+                "rejected_prediction_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 5760
+              },
+              "latency_checkpoint": {
+                "engine_tbt_ms": 3,
+                "engine_ttft_ms": 336,
+                "engine_ttlt_ms": 420,
+                "pre_inference_ms": 312,
+                "service_tbt_ms": 3,
+                "service_ttft_ms": 736,
+                "service_ttlt_ms": 819,
+                "total_duration_ms": 516,
+                "user_visible_ttft_ms": 423
+              }
+            },
+            "model_provider": "openai",
+            "model_name": "Azure/gpt-5-2025-08-07",
+            "system_fingerprint": null,
+            "id": "chatcmpl-DqzZtC9CaHic9q4AeOiEI9Gy4mGY6",
+            "service_tier": "default",
+            "finish_reason": "tool_calls",
+            "logprobs": null
+          },
+          "tool_calls": [
+            {
+              "name": "find_sla_definitions",
+              "args": {
+                "name": "High-level response SLA",
+                "metric": "response",
+                "active": true
+              }
+            }
+          ]
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "find_sla_definitions",
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "[]",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "type": "ai_message",
+          "content": "",
+          "usage_metadata": {
+            "input_tokens": 6135,
+            "output_tokens": 1766,
+            "total_tokens": 7901,
+            "input_token_details": {
+              "audio": 0,
+              "cache_read": 5888
+            },
+            "output_token_details": {
+              "audio": 0,
+              "reasoning": 1728
+            }
+          },
+          "response_metadata": {
+            "token_usage": {
+              "completion_tokens": 1766,
+              "prompt_tokens": 6135,
+              "total_tokens": 7901,
+              "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 1728,
+                "rejected_prediction_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 5888
+              },
+              "latency_checkpoint": {
+                "engine_tbt_ms": 11,
+                "engine_ttft_ms": 337,
+                "engine_ttlt_ms": 20322,
+                "pre_inference_ms": 626,
+                "service_tbt_ms": 11,
+                "service_ttft_ms": 1106,
+                "service_ttlt_ms": 21105,
+                "total_duration_ms": 20503,
+                "user_visible_ttft_ms": 479
+              }
+            },
+            "model_provider": "openai",
+            "model_name": "Azure/gpt-5-2025-08-07",
+            "system_fingerprint": null,
+            "id": "chatcmpl-DqzZvYJP0f7PDTE5klmTx5g2you2M",
+            "service_tier": "default",
+            "finish_reason": "tool_calls",
+            "logprobs": null
+          },
+          "tool_calls": [
+            {
+              "name": "find_sla_definitions",
+              "args": {
+                "metric": "response",
+                "applies_to_priority": "high",
+                "active": true
+              }
+            }
+          ]
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "find_sla_definitions",
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "[{\"sla_def_id\": 2, \"name\": \"SLA Response - High\", \"metric\": \"response\", \"target_mins\": 30, \"pause_on_pending\": 1, \"applies_to_priority\": \"high\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:35:42\"}, {\"sla_def_id\": 11, \"name\": \"SLA Response - High (No Pause)\", \"metric\": \"response\", \"target_mins\": 25, \"pause_on_pending\": 0, \"applies_to_priority\": \"high\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:43:45\"}]",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "type": "ai_message",
+          "content": "",
+          "usage_metadata": {
+            "input_tokens": 6376,
+            "output_tokens": 34,
+            "total_tokens": 6410,
+            "input_token_details": {
+              "audio": 0,
+              "cache_read": 6016
+            },
+            "output_token_details": {
+              "audio": 0,
+              "reasoning": 0
+            }
+          },
+          "response_metadata": {
+            "token_usage": {
+              "completion_tokens": 34,
+              "prompt_tokens": 6376,
+              "total_tokens": 6410,
+              "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 0,
+                "rejected_prediction_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 6016
+              },
+              "latency_checkpoint": {
+                "engine_tbt_ms": 5,
+                "engine_ttft_ms": 339,
+                "engine_ttlt_ms": 501,
+                "pre_inference_ms": 327,
+                "service_tbt_ms": 5,
+                "service_ttft_ms": 766,
+                "service_ttlt_ms": 946,
+                "total_duration_ms": 622,
+                "user_visible_ttft_ms": 438
+              }
+            },
+            "model_provider": "openai",
+            "model_name": "Azure/gpt-5-2025-08-07",
+            "system_fingerprint": null,
+            "id": "chatcmpl-DqzaNwLTff9xSyV6DbWeoXAUSbqvs",
+            "service_tier": "default",
+            "finish_reason": "tool_calls",
+            "logprobs": null
+          },
+          "tool_calls": [
+            {
+              "name": "link_new_case_sla",
+              "args": {
+                "case_id": 1233,
+                "sla_def_id": 2,
+                "stage": "in_progress"
+              }
+            }
+          ]
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "link_new_case_sla",
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"case_sla_id\": 2465, \"case_id\": 1233, \"sla_def_id\": 2, \"stage\": \"in_progress\", \"start_time\": \"2026-06-15 11:16:04\", \"breach_time\": null, \"has_breached\": 0, \"completed_time\": null}",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "type": "ai_message",
+          "content": "Here\u2019s what I\u2019ve done for Wayne Enterprises:\n\n1) Verified account and primary contact\n- Account found: Wayne Enterprises (account_id = 7)\n- Primary contact found: contact_id = 9, was inactive \u2192 updated to active = true so they\u2019re reachable\n- Set this contact on the case\n\n2) Verified product\n- Product found and active: Windows Server 2022 Datacenter (product_id = 1)\n\n3) Created a high-priority case (called in by phone)\n- Case created: CS-0001233 (case_id = 1233)\n- Account: 7 | Contact: 9 | Product: 1\n- Channel: phone\n- Priority: high\n- Short description: SSL termination issue on Windows Server node\n- Initial state: new \u2192 updated to in_progress to reflect work has started\n\n4) Set up renewed coverage for next year\n- Support contract created (active):\n  - contract_id = 154\n  - Type: support\n  - Price: 150000 (USD)\n  - Term: 2027-01-01 through 2027-12-31\n- Premium entitlement created under this contract for the same server product:\n  - entitlement_id = 432\n  - Account: 7 | Product: 1 | Contract: 154\n  - Support level: premium\n  - Coverage hours: h24x7\n  - Max cases/month: 50\n  - Active: true\n  - Note: Coverage applies for the contract term (next year).\n\n5) Aligned the response SLA to the active case\n- Attempted to find an SLA named \u201cHigh-level response SLA\u201d \u2192 not found by exact name.\n- Applied the closest active match for high-priority response:\n  - SLA definition: SLA Response - High (sla_def_id = 2, response metric, target = 30 mins, pause_on_pending = true)\n  - Linked to case_id 1233 with stage = in_progress\n\nCurrent status\n- Case CS-0001233 is in progress with a high-priority response SLA tracking started.\n- Next year\u2019s support contract and premium entitlement are set and active for 2027.\n\nIf you intended a different specifically-named SLA, I can switch it; otherwise, we\u2019ll continue with \u201cSLA Response - High.\u201d",
+          "usage_metadata": {
+            "input_tokens": 6535,
+            "output_tokens": 2665,
+            "total_tokens": 9200,
+            "input_token_details": {
+              "audio": 0,
+              "cache_read": 6272
+            },
+            "output_token_details": {
+              "audio": 0,
+              "reasoning": 2176
+            }
+          },
+          "response_metadata": {
+            "token_usage": {
+              "completion_tokens": 2665,
+              "prompt_tokens": 6535,
+              "total_tokens": 9200,
+              "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 2176,
+                "rejected_prediction_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 6272
+              },
+              "latency_checkpoint": {
+                "engine_tbt_ms": 12,
+                "engine_ttft_ms": 328,
+                "engine_ttlt_ms": 32006,
+                "pre_inference_ms": 194,
+                "service_tbt_ms": 12,
+                "service_ttft_ms": 613,
+                "service_ttlt_ms": 32289,
+                "total_duration_ms": 32105,
+                "user_visible_ttft_ms": 419
+              }
+            },
+            "model_provider": "openai",
+            "model_name": "Azure/gpt-5-2025-08-07",
+            "system_fingerprint": null,
+            "id": "chatcmpl-DqzaPk7tvvPa5FiHIcSw9jR1xCGcl",
+            "service_tier": "default",
+            "finish_reason": "stop",
+            "logprobs": null
+          },
+          "tool_calls": []
+        }
+      ],
+      "tools_used": [
+        "find_account",
+        "find_contacts",
+        "update_contact",
+        "find_product",
+        "create_new_case",
+        "update_case",
+        "enlist_new_contract",
+        "add_new_entitlement",
+        "find_sla_definitions",
+        "link_new_case_sla"
+      ],
+      "tool_results": [
+        {
+          "tool_name": "find_account",
+          "arguments": {
+            "name": "Wayne Enterprises"
+          },
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"account_id\": 7, \"name\": \"Wayne Enterprises\", \"account_type\": \"customer\", \"email_domain\": \"wayneenterprises.com\", \"active\": 1}",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "tool_name": "find_contacts",
+          "arguments": {
+            "account_id": 7,
+            "is_primary": true
+          },
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "[{\"contact_id\": 9, \"account_id\": 7, \"portal_user_id\": 8, \"active\": 0, \"is_primary\": 1, \"sys_created_on\": \"2025-08-27 15:37:18\"}]",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "tool_name": "update_contact",
+          "arguments": {
+            "contact_id": 9,
+            "active": true
+          },
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"contact_id\": 9, \"account_id\": 7, \"portal_user_id\": 8, \"active\": 1, \"is_primary\": 1, \"sys_created_on\": \"2025-08-27 15:37:18\", \"sys_updated_on\": \"2026-06-15 11:12:54\"}",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "tool_name": "find_product",
+          "arguments": {
+            "name": "Windows Server 2022 Datacenter"
+          },
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"product_id\": 1, \"name\": \"Windows Server 2022 Datacenter\", \"category\": \"software\", \"lifecycle_state\": \"active\"}",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "tool_name": "create_new_case",
+          "arguments": {
+            "account_id": 7,
+            "contact_id": 9,
+            "product_id": 1,
+            "channel": "phone",
+            "priority": "high",
+            "state": "new",
+            "short_description": "SSL termination issue on Windows Server node"
+          },
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"case_id\": 1233, \"number\": \"CS-0001233\", \"account_id\": 7, \"contact_id\": 9, \"product_id\": 1, \"installed_product_id\": null, \"channel\": \"phone\", \"priority\": \"high\", \"state\": \"new\", \"short_description\": \"SSL termination issue on Windows Server node\", \"assignment_group_id\": null, \"assigned_to\": null, \"escalation\": 0, \"escalation_reason\": null, \"reopen_count\": 0, \"sys_created_on\": \"2026-06-15 11:14:00\", \"sys_updated_on\": \"2026-06-15 11:14:00\", \"closed_on\": null}",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "tool_name": "update_case",
+          "arguments": {
+            "case_id": 1233,
+            "state": "in_progress"
+          },
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"case_id\": 1233, \"number\": \"CS-0001233\", \"account_id\": 7, \"contact_id\": 9, \"product_id\": 1, \"installed_product_id\": null, \"channel\": \"phone\", \"priority\": \"high\", \"state\": \"in_progress\", \"short_description\": \"SSL termination issue on Windows Server node\", \"assignment_group_id\": null, \"assigned_to\": null, \"escalation\": 0, \"escalation_reason\": null, \"reopen_count\": 0, \"sys_created_on\": \"2026-06-15 11:14:00\", \"sys_updated_on\": \"2026-06-15 11:14:45\", \"closed_on\": null}",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "tool_name": "enlist_new_contract",
+          "arguments": {
+            "account_id": 7,
+            "contract_type": "support",
+            "contract_price": 150000,
+            "status": "active",
+            "start_date": "2027-01-01",
+            "end_date": "2027-12-31"
+          },
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"contract_id\": 154, \"account_id\": 7, \"contract_type\": \"support\", \"status\": \"active\", \"contract_price\": 150000, \"start_date\": \"2027-01-01\", \"end_date\": \"2027-12-31\", \"sys_created_on\": \"2026-06-15 11:15:04\", \"sys_updated_on\": \"2026-06-15 11:15:04\"}",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "tool_name": "add_new_entitlement",
+          "arguments": {
+            "account_id": 7,
+            "product_id": 1,
+            "contract_id": 154,
+            "support_level": "premium",
+            "coverage_hours": "h24x7",
+            "max_cases_per_month": 50,
+            "active": true
+          },
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"entitlement_id\": 432, \"account_id\": 7, \"product_id\": 1, \"contract_id\": 154, \"support_level\": \"premium\", \"coverage_hours\": \"h24x7\", \"max_cases_per_month\": 50, \"active\": 1, \"sys_created_on\": \"2026-06-15 11:15:32\", \"sys_updated_on\": \"2026-06-15 11:15:32\"}",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "tool_name": "find_sla_definitions",
+          "arguments": {
+            "name": "High-level response SLA",
+            "metric": "response",
+            "active": true
+          },
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "[]",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "tool_name": "find_sla_definitions",
+          "arguments": {
+            "metric": "response",
+            "applies_to_priority": "high",
+            "active": true
+          },
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "[{\"sla_def_id\": 2, \"name\": \"SLA Response - High\", \"metric\": \"response\", \"target_mins\": 30, \"pause_on_pending\": 1, \"applies_to_priority\": \"high\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:35:42\"}, {\"sla_def_id\": 11, \"name\": \"SLA Response - High (No Pause)\", \"metric\": \"response\", \"target_mins\": 25, \"pause_on_pending\": 0, \"applies_to_priority\": \"high\", \"active\": 1, \"sys_created_on\": \"2025-08-27 15:43:45\"}]",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        },
+        {
+          "tool_name": "link_new_case_sla",
+          "arguments": {
+            "case_id": 1233,
+            "sla_def_id": 2,
+            "stage": "in_progress"
+          },
+          "result": {
+            "success": true,
+            "result": {
+              "meta": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"case_sla_id\": 2465, \"case_id\": 1233, \"sla_def_id\": 2, \"stage\": \"in_progress\", \"start_time\": \"2026-06-15 11:16:04\", \"breach_time\": null, \"has_breached\": 0, \"completed_time\": null}",
+                  "annotations": null,
+                  "meta": null
+                }
+              ],
+              "structuredContent": null,
+              "isError": false
+            },
+            "error": null
+          },
+          "gym_server": "sn-csm-server"
+        }
+      ],
+      "verification_results": {
+        "Confirm the support contract for Wayne Enterprises is created with correct attributes": {
+          "passed": false,
+          "expected": 1,
+          "actual": 0,
+          "comparison_type": "equals",
+          "query": "SELECT COUNT(*) FROM contract c JOIN account a ON a.account_id = c.account_id WHERE a.name = 'Wayne Enterprises' AND c.contract_type = 'support' AND c.status = 'active' AND c.start_date = '2026-01-01' AND c.end_date = '2026-12-31' AND c.contract_price = 150000;",
+          "details": "Comparison equals: 0 vs 1"
+        },
+        "Confirm the premium 24\u00d77 entitlement exists under Wayne Enterprises with product linkage": {
+          "passed": true,
+          "expected": 1,
+          "actual": 1,
+          "comparison_type": "equals",
+          "query": "SELECT COUNT(*) FROM entitlement e JOIN account a ON a.account_id = e.account_id JOIN product p ON e.product_id = p.product_id WHERE a.name = 'Wayne Enterprises' AND e.support_level = 'premium' AND e.coverage_hours = 'h24x7' AND e.max_cases_per_month = 50 AND e.active = 1 AND p.name = 'Windows Server 2022 Datacenter';",
+          "details": "Comparison equals: 1 vs 1"
+        },
+        "Confirm the high-priority phone case was created as NEW then moved to IN_PROGRESS under an active primary contact": {
+          "passed": true,
+          "expected": 1,
+          "actual": 1,
+          "comparison_type": "equals",
+          "query": "SELECT COUNT(*) FROM customer_case cc JOIN account a ON cc.account_id = a.account_id JOIN contact c ON cc.contact_id = c.contact_id JOIN product p ON cc.product_id = p.product_id WHERE a.name = 'Wayne Enterprises' AND p.name = 'Windows Server 2022 Datacenter' AND cc.short_description = 'SSL termination issue on Windows Server node' AND cc.channel = 'phone' AND cc.priority = 'high' AND cc.state = 'in_progress' AND c.is_primary = 1 AND c.active = 1 AND cc.sys_updated_on > cc.sys_created_on;",
+          "details": "Comparison equals: 1 vs 1"
+        },
+        "Confirm the case is linked to 'SLA Response - High' (RESPONSE metric) and is in_progress": {
+          "passed": true,
+          "expected": 1,
+          "actual": 1,
+          "comparison_type": "equals",
+          "query": "SELECT COUNT(*) FROM case_sla cs JOIN customer_case cc ON cc.case_id = cs.case_id JOIN sla_definition s ON s.sla_def_id = cs.sla_def_id WHERE cc.short_description = 'SSL termination issue on Windows Server node' AND s.name = 'SLA Response - High' AND s.metric = 'response' AND cs.stage = 'in_progress';",
+          "details": "Comparison equals: 1 vs 1"
+        },
+        "Confirm the entitlement is properly linked to the new 2026 support contract": {
+          "passed": false,
+          "expected": 1,
+          "actual": 0,
+          "comparison_type": "equals",
+          "query": "SELECT COUNT(*) FROM entitlement e JOIN contract c ON e.contract_id = c.contract_id JOIN account a ON c.account_id = a.account_id WHERE a.name = 'Wayne Enterprises' AND c.contract_type = 'support' AND c.start_date = '2026-01-01' AND e.support_level = 'premium' AND e.coverage_hours = 'h24x7';",
+          "details": "Comparison equals: 0 vs 1"
+        }
+      },
+      "verification_summary": {
+        "total": 5,
+        "passed": 3,
+        "failed": 2,
+        "pass_rate": 0.6
+      },
+      "overall_success": false
+    }
+  ],
+  "statistics": {
+    "total_runs": 1,
+    "successful_runs": 0,
+    "overall_success_rate": 0.0,
+    "pass_at_1": 0.0,
+    "verifier_level_pass_rate": 0.6,
+    "total_verifiers_checked": 5,
+    "total_verifiers_passed": 3,
+    "individual_verifier_stats": {
+      "Confirm the support contract for Wayne Enterprises is created with correct attributes": {
+        "passed": 0,
+        "total": 1,
+        "pass_rate": 0.0
+      },
+      "Confirm the premium 24\u00d77 entitlement exists under Wayne Enterprises with product linkage": {
+        "passed": 1,
+        "total": 1,
+        "pass_rate": 1.0
+      },
+      "Confirm the high-priority phone case was created as NEW then moved to IN_PROGRESS under an active primary contact": {
+        "passed": 1,
+        "total": 1,
+        "pass_rate": 1.0
+      },
+      "Confirm the case is linked to 'SLA Response - High' (RESPONSE metric) and is in_progress": {
+        "passed": 1,
+        "total": 1,
+        "pass_rate": 1.0
+      },
+      "Confirm the entitlement is properly linked to the new 2026 support contract": {
+        "passed": 0,
+        "total": 1,
+        "pass_rate": 0.0
+      }
+    },
+    "mean_execution_time_ms": 334791.0,
+    "tool_usage": {
+      "find_account": 1,
+      "find_contacts": 1,
+      "update_contact": 1,
+      "find_product": 1,
+      "create_new_case": 1,
+      "update_case": 1,
+      "enlist_new_contract": 1,
+      "add_new_entitlement": 1,
+      "find_sla_definitions": 1,
+      "link_new_case_sla": 1
+    }
+  }
+}
