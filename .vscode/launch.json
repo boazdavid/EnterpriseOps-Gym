@@ -5,7 +5,7 @@
             "id": "results_folder",
             "type": "promptString",
             "description": "Output folder path",
-            "default": "results_concepts21/react/gpt-5/teams/oracle"
+            "default": "results/"
         }
     ],
     "configurations": [
@@ -65,6 +65,18 @@
             "args": [
                 "--results_folder",
                 "${input:results_folder}"
+            ],
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "name": "Scan Results",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/scan_results.py",
+            "args": [
+                "${input:results_folder}",
+                "-o", "report.csv"
             ],
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}"
