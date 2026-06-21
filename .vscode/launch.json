@@ -33,19 +33,6 @@
             "cwd": "${workspaceFolder}"
         },
         {
-            "name": "Knowledge MCP Server",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${workspaceFolder}/knowledge_tool.py",
-            "args": [
-                "--host", "127.0.0.1",
-                "--port", "8765",
-                "--folder", "${workspaceFolder}/../try_wikis/wiki"
-            ],
-            "console": "integratedTerminal",
-            "cwd": "${workspaceFolder}"
-        },
-        {
             "name": "Extract Trajectories",
             "type": "debugpy",
             "request": "launch",
