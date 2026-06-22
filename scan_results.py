@@ -44,20 +44,20 @@ def process_file(filepath):
         for msg in conv:
             if msg.get("type") == "ai_message":
                 usage = msg.get("usage_metadata", {})
-                pt = usage.get("input_tokens", 0)
-                ct = usage.get("output_tokens", 0)
-                tt = usage.get("total_tokens", 0)
-                run_prompt += pt
-                run_completion += ct
-                run_total += tt
+                in_t = usage.get("input_tokens", 0)
+                out_t = usage.get("output_tokens", 0)
+                total_t = usage.get("total_tokens", 0)
+                run_prompt += in_t
+                run_completion += out_t
+                run_total += total_t
 
-                resp_meta = msg.get("response_metadata", {})
-                token_usage = resp_meta.get("token_usage", {})
-                cached = token_usage.get("prompt_tokens_details", {}).get("cached_tokens", 0)
-                non_cached_prompt = pt - cached
+                # resp_meta = msg.get("response_metadata", {})
+                # token_usage = resp_meta.get("token_usage", {})
+                # cached = token_usage.get("prompt_tokens_details", {}).get("cached_tokens", 0)
+                # non_cached_prompt = pt - cached
 
-                # Default pricing (GPT-5 approximate): $2/1M input, $8/1M cached input, $10/1M output
-                cost = (non_cached_prompt * 2.0 + cached * 8.0 + ct * 10.0) / 1_000_000
+                # Default pricing (GPT-5 approximate): $1.25/1M input, $10/1M output
+                cost = (in_t * 1.25 + out_t * 10.0) / 1_000_000
                 run_cost += cost
 
         prompt_tokens_list.append(run_prompt)
