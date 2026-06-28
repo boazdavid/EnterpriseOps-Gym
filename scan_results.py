@@ -25,13 +25,30 @@ def process_file(filepath):
     total_tokens_list = []
     turns_list = []
     messages_list = []
+
+    knowledge_calls_list = []
+    max_msg_tokens_list = []
     costs = []
+    KB_TOOLS = {"get_article", "list_articles"}
 
     for run in runs:
         durations.append(run.get("execution_time_ms", 0) / 1000.0)
 
         conv = run.get("conversation_flow", [])
-        messages_list.append(len(conv))
+        knowledge_calls = sum(
+            1 for m in conv
+            if m.get("type") == "tool_result" and m.get("tool_name") in KB_TOOLS
+        )
+        knowledge_calls_list.append(knowledge_calls)
+        ai_messages = sum(
+            1 for m in conv
+            if m.get("type") == "ai_message"
+            and not any(
+                tc.get("name") in KB_TOOLS or tc.get("function", {}).get("name") in KB_TOOLS
+                for tc in m.get("tool_calls", [])
+            )
+        )
+        messages_list.append(ai_messages)
 
         user_turns = sum(1 for m in conv if m.get("type") == "user_message")
         turns_list.append(user_turns)
@@ -40,6 +57,7 @@ def process_file(filepath):
         run_completion = 0
         run_total = 0
         run_cost = 0.0
+        run_max_msg_tokens = 0
 
         for msg in conv:
             if msg.get("type") == "ai_message":
@@ -50,11 +68,8 @@ def process_file(filepath):
                 run_prompt += in_t
                 run_completion += out_t
                 run_total += total_t
-
-                # resp_meta = msg.get("response_metadata", {})
-                # token_usage = resp_meta.get("token_usage", {})
-                # cached = token_usage.get("prompt_tokens_details", {}).get("cached_tokens", 0)
-                # non_cached_prompt = pt - cached
+                if total_t > run_max_msg_tokens:
+                    run_max_msg_tokens = total_t
 
                 # Default pricing (GPT-5 approximate): $1.25/1M input, $10/1M output
                 cost = (in_t * 1.25 + out_t * 10.0) / 1_000_000
@@ -63,6 +78,7 @@ def process_file(filepath):
         prompt_tokens_list.append(run_prompt)
         completion_tokens_list.append(run_completion)
         total_tokens_list.append(run_total)
+        max_msg_tokens_list.append(run_max_msg_tokens)
         costs.append(run_cost)
 
     def avg(lst):
@@ -79,7 +95,9 @@ def process_file(filepath):
         "avg_completion_tokens": avg(completion_tokens_list),
         "avg_total_tokens": avg(total_tokens_list),
         "avg_turns": avg(turns_list),
-        "avg_messages": avg(messages_list),
+        "avg_ai_messages": avg(messages_list),
+        "avg_knowledge_calls": avg(knowledge_calls_list),
+        "avg_max_msg_tokens": avg(max_msg_tokens_list),
     }
 
 
@@ -102,7 +120,9 @@ def aggregate_directory(file_rows):
         "avg_completion_tokens": weighted_avg("avg_completion_tokens"),
         "avg_total_tokens": weighted_avg("avg_total_tokens"),
         "avg_turns": weighted_avg("avg_turns"),
-        "avg_messages": weighted_avg("avg_messages"),
+        "avg_ai_messages": weighted_avg("avg_ai_messages"),
+        "avg_knowledge_calls": weighted_avg("avg_knowledge_calls"),
+        "avg_max_msg_tokens": weighted_avg("avg_max_msg_tokens"),
     }
 
 
@@ -150,7 +170,8 @@ def main():
         "directory", "n", "passed", "pass@1",
         "avg_duration_s", "avg_cost",
         "avg_prompt_tokens", "avg_completion_tokens", "avg_total_tokens",
-        "avg_turns", "avg_messages",
+        "avg_turns", "avg_ai_messages", "avg_knowledge_calls",
+        "avg_max_msg_tokens",
     ]
 
     out = open(args.output, "w", newline="") if args.output else sys.stdout
