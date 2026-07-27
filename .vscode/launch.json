@@ -25,9 +25,9 @@
                 "--num_runs", "1"
             ],
             "env": {
-                "MCP_NAME_2": "knowledge-tool-mcp",
-                "MCP_ENDPOINT_2": "http://127.0.0.1:8765",
-                "SYSTEM_PROMPT_SUFFIX_FILE": "${workspaceFolder}/system_prompt_knowledge_suffix.txt"
+                "_MCP_NAME_2": "knowledge-tool-mcp",
+                "_MCP_ENDPOINT_2": "http://127.0.0.1:8765",
+                "_SYSTEM_PROMPT_SUFFIX_FILE": "${workspaceFolder}/system_prompt_knowledge_suffix.txt"
             },
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}"

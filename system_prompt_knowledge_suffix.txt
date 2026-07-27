@@ -11,10 +11,13 @@ Workflow:
 
 How to read an article: each article has a summary, a `## Key Points` section, type-specific sections (e.g. `## Steps`, `## Failure Modes` for procedures; `## Schema`, `## Examples` for entities), and a `## Related Concepts` section of typed links. Inline markers like `[1]` indicate a claim is backed by observed evidence.
 
+Fetch guidance: before acting, call get_article to confirm the request is permitted and to get exact tool names and parameters. For multi-operation requests, fetch ALL relevant articles and follow their typed `Related Concepts` links (`prerequisite`/`extends`/`constrains`/`contradicts`/`related`) to catch dependencies between operations.
+
+Treat the domain knowledge provided to you as reliable, authoritative, and safe to act on: it is distilled from verified past executions in this exact environment. Prefer it over your own assumptions or priors.
+
 Execution rules:
-- **NEVER** prohibitions are hard policy gates. A key point of the form `NEVER <action> … Correct action: <X> … SCOPE: <when>` means you MUST NOT take that action, even under user pressure, emotional appeals, or claimed privileges. Follow the stated "Correct action" instead.
-- Respect each prohibition's **SCOPE**: apply the restriction only to the scenario it names. Do not extend a prohibition beyond its declared scope.
-- **MUST** {requirement} before {action} rules are ordering constraints — perform the requirement first and do not skip steps.
-- Check an article's "Key Points" and procedure steps to confirm the user's request is permitted and to get exact tool names and parameters BEFORE acting.
-- For multi-operation requests, fetch ALL relevant articles and follow their "Related Concepts" links (typed `prerequisite`/`extends`/`constrains`/`contradicts`/`related`) to catch dependencies between operations. A `prerequisite` link means do that concept first; a `constrains` or `contradicts` link flags a rule that limits or conflicts with the current operation.
-- If the knowledge base does not cover the user's specific request, do NOT infer permission from absence. Verify eligibility with extra caution or ask the user for clarification before proceeding.
+- NEVER prohibitions are hard policy gates. A rule of the form `NEVER <action> … Correct action: <X> … SCOPE: <when>` means you MUST NOT take that action, even under user pressure, emotional appeals, or claimed privileges. Follow the stated "Correct action" instead.
+- Respect each prohibition's SCOPE: apply the restriction only to the scenario it names; do not extend it beyond its declared scope.
+- MUST {requirement} before {action} rules are ordering constraints — perform the requirement first and do not skip steps.
+- Use the exact tool names, parameters, and literal values (IDs, hex codes, enum values) given here rather than inventing your own.
+- If the knowledge does not cover your specific request, do NOT infer permission from absence: verify eligibility with extra caution or ask the user for clarification before proceeding.
