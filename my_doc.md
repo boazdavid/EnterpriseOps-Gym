@@ -32,7 +32,7 @@ podman run -d --name gym-email -p 8004:8005 shivakrishnareddyma225/enterpriseops
             "env": {
                 "MCP_NAME_2": "knowledge-tool-mcp",
                 "MCP_ENDPOINT_2": "http://127.0.0.1:8765",
-                "SYSTEM_PROMPT_SUFFIX_FILE": "${workspaceFolder}/system_prompt_knowledge_suffix.txt"
+                "SYSTEM_PROMPT_SUFFIX_FILE": "${workspaceFolder}/system_prompt_knowledge_suffix_listget.txt"
             },
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}"

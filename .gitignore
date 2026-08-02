@@ -3,6 +3,7 @@ data/*
 !data/revised/
 Domain Wise DBs and Task-DB Mappings/
 results/
+results_/
 logs/
 *.pyc
 __pycache__/
@@ -13,3 +14,4 @@ __pycache__/
 uv.lock
 trajectories/
 .ent_ops_venv/
+

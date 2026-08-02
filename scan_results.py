@@ -25,16 +25,22 @@ def process_file(filepath):
     total_tokens_list = []
     turns_list = []
     messages_list = []
+    llm_calls_list = []
+    tool_calls_list = []
 
     knowledge_calls_list = []
     max_msg_tokens_list = []
     costs = []
-    KB_TOOLS = {"get_article", "list_articles"}
+    # Knowledge-base tools across all retrieval arms (list/get + query/batch variants).
+    KB_TOOLS = {"get_article", "get_articles", "list_articles", "query_articles"}
 
     for run in runs:
         durations.append(run.get("execution_time_ms", 0) / 1000.0)
 
         conv = run.get("conversation_flow", [])
+        # Raw counts: every ai_message is one LLM call; every tool_result is one tool call.
+        llm_calls_list.append(sum(1 for m in conv if m.get("type") == "ai_message"))
+        tool_calls_list.append(sum(1 for m in conv if m.get("type") == "tool_result"))
         knowledge_calls = sum(
             1 for m in conv
             if m.get("type") == "tool_result" and m.get("tool_name") in KB_TOOLS
@@ -96,6 +102,8 @@ def process_file(filepath):
         "avg_total_tokens": avg(total_tokens_list),
         "avg_turns": avg(turns_list),
         "avg_ai_messages": avg(messages_list),
+        "avg_llm_calls": avg(llm_calls_list),
+        "avg_tool_calls": avg(tool_calls_list),
         "avg_knowledge_calls": avg(knowledge_calls_list),
         "avg_max_msg_tokens": avg(max_msg_tokens_list),
     }
@@ -121,6 +129,8 @@ def aggregate_directory(file_rows):
         "avg_total_tokens": weighted_avg("avg_total_tokens"),
         "avg_turns": weighted_avg("avg_turns"),
         "avg_ai_messages": weighted_avg("avg_ai_messages"),
+        "avg_llm_calls": weighted_avg("avg_llm_calls"),
+        "avg_tool_calls": weighted_avg("avg_tool_calls"),
         "avg_knowledge_calls": weighted_avg("avg_knowledge_calls"),
         "avg_max_msg_tokens": weighted_avg("avg_max_msg_tokens"),
     }
@@ -170,8 +180,8 @@ def main():
         "directory", "n", "passed", "pass@1",
         "avg_duration_s", "avg_cost",
         "avg_prompt_tokens", "avg_completion_tokens", "avg_total_tokens",
-        "avg_turns", "avg_ai_messages", "avg_knowledge_calls",
-        "avg_max_msg_tokens",
+        "avg_turns", "avg_ai_messages", "avg_llm_calls", "avg_tool_calls",
+        "avg_knowledge_calls", "avg_max_msg_tokens",
     ]
 
     out = open(args.output, "w", newline="") if args.output else sys.stdout
