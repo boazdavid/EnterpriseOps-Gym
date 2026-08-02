@@ -131,6 +131,10 @@ class LLMClient:
                     openai_api_base=self.custom_api_endpoint,
                     temperature=self.temperature,
                     max_tokens=self.max_tokens,
+                    # Without a timeout a hung/slow endpoint request blocks its concurrency slot
+                    # indefinitely (observed with gpt-oss-120b on csm). Fail fast and retry instead.
+                    request_timeout=300,
+                    max_retries=2,
                     model_kwargs=model_kwargs,
                 )
             elif self.provider == "qwq":
