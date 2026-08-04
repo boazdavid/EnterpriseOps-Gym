@@ -268,6 +268,13 @@ async def main():
         help="Number of runs to execute.",
     )
     parser.add_argument(
+        "--start_run",
+        type=int,
+        default=1,
+        help="First run/seed index (folders are run_<start_run> .. run_<start_run+num_runs-1>). "
+             "Use >1 to add seeds without overwriting existing run_ folders.",
+    )
+    parser.add_argument(
         "--orchestrator",
         type=str,
         default="react",
@@ -322,7 +329,7 @@ async def main():
 
     config_files = glob.glob(os.path.join(configs_folder, "*.json"))
     for idx in range(int(args.num_runs)):
-        output_folder = os.path.join(args.output_folder, f"run_{idx+1}")
+        output_folder = os.path.join(args.output_folder, f"run_{int(args.start_run)+idx}")
         os.makedirs(output_folder, exist_ok=True)
         logger.info(f"Processing {len(config_files)} config files with concurrency {args.concurrency} into folder: {output_folder}")
         worker = TaskQueueWorker(
