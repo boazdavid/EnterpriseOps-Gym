@@ -331,6 +331,21 @@ class BenchmarkExecutor:
 
         self.tool_to_server_mapping = tool_to_server_mapping
 
+    def _serialize_tool_specs(self) -> List[Dict[str, Any]]:
+        """Serialize the tool specs that were exposed to the LLM for logging.
+
+        Preserves all public fields advertised by the MCP server (name,
+        description, inputSchema, outputSchema, title, annotations, ...) and
+        drops the private ``_mcp_*`` / ``_database_id`` routing keys, replacing
+        them with a single ``server`` field.
+        """
+        specs = []
+        for tool in self.available_tools:
+            spec = {k: v for k, v in tool.items() if not k.startswith("_")}
+            spec["server"] = tool.get("_mcp_server_name")
+            specs.append(spec)
+        return specs
+
     async def execute_single_run(self, run_number: int) -> Dict[str, Any]:
         """Execute a single benchmark run"""
         logger.info(f"\n{'='*80}")
@@ -564,6 +579,7 @@ class BenchmarkExecutor:
                     ],
                     "total_gyms": len(self.gym_configs),
                     "total_tools_available": len(self.available_tools),
+                    "available_tools": self._serialize_tool_specs(),
                 },
                 "runs": all_runs,
                 "statistics": statistics,
