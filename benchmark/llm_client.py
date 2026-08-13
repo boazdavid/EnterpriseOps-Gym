@@ -37,6 +37,16 @@ class LLMClient:
         self.reasoning = reasoning
         self.llm = None
 
+        # Anthropic/Claude prompt caching is opt-in (unlike OpenAI/Azure auto-caching):
+        # nothing is cached unless the request carries `cache_control` breakpoints. We add
+        # them for Claude models (incl. `aws/claude-*` routed through the LiteLLM proxy) so
+        # the re-sent system+tools prefix and the growing conversation are billed at the
+        # cache-read rate instead of full price on every ReAct step.
+        m = (self.model or "").lower()
+        self.supports_prompt_caching = (
+            "claude" in m or "anthropic" in m or self.provider in ("anthropic", "aws_bedrock")
+        )
+
         self._initialize_llm()
 
     def _initialize_llm(self):
@@ -311,12 +321,64 @@ class LLMClient:
 
         return schema
 
+    @staticmethod
+    def _content_with_cache_control(content: Any) -> Any:
+        """Return `content` as a block list with a cache_control breakpoint on its last block.
+
+        Accepts a plain string (system prompt, tool result) or an existing list of content
+        blocks. Never mutates the input — callers pass langchain message content that the
+        orchestrator reuses across turns, so we build fresh blocks.
+        """
+        ephemeral = {"type": "ephemeral"}
+        if isinstance(content, str):
+            return [{"type": "text", "text": content, "cache_control": ephemeral}]
+        if isinstance(content, list) and content:
+            new_blocks = [dict(b) if isinstance(b, dict) else b for b in content]
+            for block in reversed(new_blocks):
+                if isinstance(block, dict):
+                    block["cache_control"] = ephemeral
+                    break
+            return new_blocks
+        return content
+
+    def _apply_prompt_caching(self, messages: List[Any]) -> List[Any]:
+        """Inject Anthropic cache_control breakpoints (≤2, well under the 4 max).
+
+        - System message: caches the tools + system prefix (rendered before messages).
+        - Last message: caches the conversation prefix so each ReAct step re-reads prior
+          turns from cache instead of re-billing them.
+        Copies only the messages it marks, so no stale breakpoints accumulate across turns.
+        """
+        if not messages:
+            return messages
+
+        out = list(messages)
+
+        # System message (first one) -> tools + system prefix.
+        for i, msg in enumerate(out):
+            if getattr(msg, "type", "") == "system":
+                out[i] = msg.model_copy(
+                    update={"content": self._content_with_cache_control(msg.content)}
+                )
+                break
+
+        # Last message -> growing conversation prefix.
+        last = out[-1]
+        out[-1] = last.model_copy(
+            update={"content": self._content_with_cache_control(last.content)}
+        )
+        return out
+
     async def invoke_with_tools(
         self, messages: List[Any], tools: List[Dict[str, Any]]
     ) -> Any:
         """Invoke LLM with tools"""
         # Convert MCP tools to LangChain format
         langchain_tools = self._convert_mcp_tools_to_langchain(tools)
+
+        # Add prompt-caching breakpoints for Claude models (no-op otherwise).
+        if self.supports_prompt_caching:
+            messages = self._apply_prompt_caching(messages)
 
         # Bind tools to LLM
         llm_with_tools = self.llm.bind_tools(langchain_tools)
