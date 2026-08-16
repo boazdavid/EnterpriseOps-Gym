@@ -295,6 +295,17 @@ class BenchmarkExecutor:
                 logger.error(f"Failed to discover tools from gym {gym_name}: {e}")
                 raise
 
+        # all_domain_tools: expose the full domain MCP tool set (constant across tasks),
+        # ignoring the per-task selected_tools subset. The env-injected knowledge/MCP_2
+        # tools are already part of merged_tools, so they remain available.
+        if self.config.all_domain_tools:
+            logger.info(
+                f"[TOOL_FILTER] 🌐 all_domain_tools=ON — exposing the full domain tool set "
+                f"({len(merged_tools)} tools from MCP tools/list), ignoring selected_tools"
+            )
+            self.available_tools = merged_tools
+            self.tool_to_server_mapping = tool_to_server_mapping
+            return
         # Filter tools based on selected_tools if configured
         if self.config.selected_tools and len(self.config.selected_tools) > 0:
             logger.info(

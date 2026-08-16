@@ -77,6 +77,10 @@ class BenchmarkConfig:
     # Other options
     selected_tools: Optional[List[str]] = None
     restricted_tools: Optional[List[str]] = None
+    # When True, expose the full domain MCP tool set (a constant set — every tool the
+    # server advertises via tools/list) to the agent, ignoring the per-task selected_tools
+    # subset. Makes the tool surface identical across tasks (oracle/plus_N collapse to "all").
+    all_domain_tools: bool = False
     temperature: float = 0.0
     max_tokens: int = 4096
     reset_database_between_runs: bool = True

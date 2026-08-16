@@ -173,6 +173,13 @@ def load_config(config_path: str = "config.json") -> BenchmarkConfig:
         config_data.setdefault("context", {})
         config_data.setdefault("temperature", 0.6)
         config_data.setdefault("max_tokens", 16384)
+        # Run-level toggle: ALL_DOMAIN_TOOLS=1 (or --all_domain_tools) exposes the full
+        # domain tool set to every task without editing per-task configs. A per-config
+        # value, if present, is preserved.
+        config_data.setdefault(
+            "all_domain_tools",
+            os.environ.get("ALL_DOMAIN_TOOLS", "").lower() in ("1", "true", "yes"),
+        )
         logger.info("✅ Configuration loaded successfully")
         logger.info(config_data)
 
@@ -287,7 +294,15 @@ async def main():
         default=None,
         help="Path to LLM config for the planner (required for planner_react and decomposing).",
     )
+    parser.add_argument(
+        "--all_domain_tools",
+        action="store_true",
+        help="Expose the full domain MCP tool set (a constant set) to the agent for every "
+             "task, ignoring per-task selected_tools (oracle/plus_N collapse to 'all tools').",
+    )
     args = parser.parse_args()
+    if args.all_domain_tools:
+        os.environ["ALL_DOMAIN_TOOLS"] = "1"
 
     os.makedirs(args.output_folder, exist_ok=True)
 
