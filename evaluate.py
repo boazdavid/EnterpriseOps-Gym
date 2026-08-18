@@ -322,9 +322,13 @@ async def main():
                     f"(config={mode}, split={domain})"
                 )
                 hf_ds = hf_load_dataset(args.hf_dataset, mode, split=domain)
+                # With --all_domain_tools the exposed tool set is identical across
+                # modes, so stamp results with "all_tools" instead of the source
+                # mode to keep them distinguishable from real oracle/plus_N runs.
+                label = "all_tools" if args.all_domain_tools else mode
                 for row in hf_ds:
                     task_id = row.get("task_id", f"task_{id(row)}")
-                    file_name = f"{mode}__{domain}__{task_id}.json"
+                    file_name = f"{label}__{domain}__{task_id}.json"
                     task_dict = {}
                     for k, v in row.items():
                         if k in hf_only_fields:
