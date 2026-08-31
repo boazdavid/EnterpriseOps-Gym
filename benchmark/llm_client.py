@@ -1,4 +1,5 @@
 import logging
+import os
 from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
@@ -134,6 +135,24 @@ class LLMClient:
                 if self.custom_api_version:
                     model_kwargs["extra_body"]["api_version"] = self.custom_api_version
 
+                # Optional default headers for OpenAI-compatible gateways that require an
+                # extra header (e.g. a context-guru token). JSON in env LLM_DEFAULT_HEADERS,
+                # e.g. {"x-context-guru-token": "..."}. Keeps secrets out of the config file.
+                import json as _json
+                _default_headers = None
+                _dh = os.environ.get("LLM_DEFAULT_HEADERS")
+                if _dh:
+                    _default_headers = _json.loads(_dh)
+
+                # Opt-in insecure TLS for internal gateways whose cert isn't in certifi's
+                # CA bundle (LLM_INSECURE_TLS=1). Must set BOTH sync and async httpx clients
+                # since the ReAct loop invokes the LLM asynchronously.
+                _http_client = _http_async_client = None
+                if os.environ.get("LLM_INSECURE_TLS", "").lower() in ("1", "true", "yes"):
+                    import httpx
+                    _http_client = httpx.Client(verify=False)
+                    _http_async_client = httpx.AsyncClient(verify=False)
+
                 # vLLM exposes an OpenAI-compatible API
                 self.llm = ChatOpenAI(
                     model=self.model,
@@ -145,6 +164,9 @@ class LLMClient:
                     # indefinitely (observed with gpt-oss-120b on csm). Fail fast and retry instead.
                     request_timeout=300,
                     max_retries=2,
+                    default_headers=_default_headers,
+                    http_client=_http_client,
+                    http_async_client=_http_async_client,
                     model_kwargs=model_kwargs,
                 )
             elif self.provider == "qwq":

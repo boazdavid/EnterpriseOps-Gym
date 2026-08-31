@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HR 4-arm learning curve</title>
+<style>
+  :root{
+    --surface:#ffffff; --ink:#111820; --ink-2:#556170; --ink-muted:#8a95a3;
+    --grid:#eceff3; --axis:#c7cdd6; --cross:#9aa4b2; --panel:#f7f9fb;
+    --native:#0072B2; --cc_stateless:#D55E00; --cc_continual:#009E73; --wiki:#CC79A7;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --surface:#0f141a; --ink:#e7ecf2; --ink-2:#a7b2c0; --ink-muted:#6f7c8c;
+      --grid:#1d242d; --axis:#39424d; --cross:#5b6773; --panel:#151b22;
+      --native:#4aa3e0; --cc_stateless:#ff8a3d; --cc_continual:#2ec98a; --wiki:#e29bd0;
+    }
+  }
+  :root[data-theme="dark"]{
+    --surface:#0f141a; --ink:#e7ecf2; --ink-2:#a7b2c0; --ink-muted:#6f7c8c;
+    --grid:#1d242d; --axis:#39424d; --cross:#5b6773; --panel:#151b22;
+    --native:#4aa3e0; --cc_stateless:#ff8a3d; --cc_continual:#2ec98a; --wiki:#e29bd0;
+  }
+  body{background:var(--surface);color:var(--ink);font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;margin:0;padding:24px;}
+  .wrap{max-width:1000px;margin:0 auto;}
+  h1{font-size:18px;margin:0 0 4px;}
+  .sub{color:var(--ink-2);font-size:13px;margin:0 0 16px;}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;margin:0 0 8px;font-size:13px;}
+  .legend .item{display:flex;align-items:center;gap:7px;cursor:pointer;user-select:none;padding:3px 6px;border-radius:6px;}
+  .legend .item:hover{background:var(--panel);}
+  .legend .item.off{opacity:.38;}
+  .legend .sw{width:22px;height:3px;border-radius:2px;display:inline-block;}
+  .controls{display:flex;align-items:center;gap:12px;margin:6px 0 4px;font-size:13px;color:var(--ink-2);}
+  .controls input[type=range]{width:240px;}
+  #chart{width:100%;overflow:visible;}
+  .gridline{stroke:var(--grid);stroke-width:1;}
+  .axisline{stroke:var(--axis);stroke-width:1;}
+  .series{fill:none;stroke-width:2;stroke-linejoin:round;stroke-linecap:round;}
+  .sep{stroke:var(--cross);stroke-width:1;stroke-dasharray:4 4;}
+  .axislabel{fill:var(--ink-muted);font-size:11px;}
+  .cross{stroke:var(--cross);stroke-width:1;}
+  .tip{position:fixed;pointer-events:none;background:var(--surface);border:1px solid var(--axis);border-radius:8px;
+       padding:8px 10px;font-size:12px;color:var(--ink);box-shadow:0 4px 14px rgba(0,0,0,.15);opacity:0;transition:opacity .08s;z-index:10;}
+  .tip b{color:var(--ink);} .tip .r{display:flex;justify-content:space-between;gap:14px;}
+  .tip .dot{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:6px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>HR — agent performance across the task stream (seed 0)</h1>
+  <p class="sub">Per-task verifier pass rate, trailing moving-average. Stream = 51 train tasks then 51 test tasks (same order for all arms; stateful arms learned along this order). Click a legend item to show/hide it. Each arm also shows its <b>test</b>-phase mean (<b>dashed</b>, test region). Panel below: the wiki KB's cumulative article count on the same task axis.</p>
+
+  <div class="legend" id="legend"></div>
+  <div class="controls">
+    <label for="win">Moving-average window</label>
+    <input type="range" id="win" min="1" max="25" value="10">
+    <span id="winlabel">10 tasks</span>
+  </div>
+
+  <svg id="chart" viewBox="0 0 1000 470" role="img" aria-label="Learning curve"></svg>
+
+  <div class="sub" style="margin:14px 0 2px;font-weight:600;color:var(--ink);">Wiki knowledge base — cumulative articles (arm 4), same task axis</div>
+  <svg id="wiki" viewBox="0 0 1000 150" role="img" aria-label="Wiki article count over the task stream"></svg>
+</div>
+<div class="tip" id="tip"></div>
+
+<script>
+const DATA = {"order_len":102,"n_train":51,"series":{"native":[0.8571,0.6,0.7143,0.25,0.6667,0.0,1.0,0.6,0.8571,0.8333,0.7143,1.0,1.0,0.6923,0.5,0.75,1.0,0.5,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,0.0,0.0,0.0,0.6,0.25,1.0,1.0,0.6,0.25,1.0,0.8333,0.8333,1.0,1.0,0.6667,0.75,0.8333,0.6,1.0,1.0,0.6667,1.0,0.6667,0.4444,0.8571,0.875,0.5,1.0,1.0,0.5,0.0,0.5,0.5,1.0,0.0,0.5,0.5,0.7778,0.6667,0.75,0.5,1.0,1.0,0.5,0.3333,1.0,0.6667,0.6667,1.0,0.0,0.7778,0.6667,0.0,0.875,1.0,0.75,0.3333,0.8333,0.75,0.5714,1.0,0.1429,0.3333,0.875,0.75,0.1667,0.5,0.5,1.0,0.0,0.3333,1.0,0.6667,0.3333,0.6667,0.8333],"cc_stateless":[0.8571,0.6,0.7143,0.25,0.6667,0.0,1.0,0.6,0.8571,0.8333,0.7143,1.0,0.0,0.6923,1.0,0.75,1.0,0.5,1.0,1.0,0.8,1.0,0.6,0.6667,0.4286,1.0,0.0,0.5,0.5714,0.6,0.25,0.75,1.0,0.6,0.5,0.5,0.1667,0.8333,1.0,1.0,0.6667,0.75,0.8333,0.6,1.0,1.0,0.6667,0.0,0.6667,0.6667,0.7143,0.875,0.5,0.2,0.7143,0.5,0.0,0.5,0.5,0.0,0.0,0.0,0.5,0.7778,0.6667,0.75,0.5,0.4286,1.0,0.0,0.3333,0.6667,0.6667,0.6667,0.7143,0.0,0.8889,0.5556,0.0,1.0,1.0,0.0,0.3333,1.0,0.75,0.5714,0.75,0.1429,0.3333,0.625,0.75,0.1667,0.5,0.5,1.0,0.0,0.3333,1.0,1.0,0.0,0.0,0.6667],"cc_continual":[0.8571,0.8,0.7143,0.25,0.6667,0.0,1.0,0.6,0.8571,0.8333,0.7143,0.6,1.0,0.8462,1.0,0.5,1.0,0.5,1.0,1.0,1.0,1.0,0.6,0.6667,0.4286,0.6667,0.0,0.5,0.5714,0.6,0.25,1.0,1.0,0.6,0.25,1.0,1.0,0.8333,1.0,1.0,0.6667,0.75,0.8333,1.0,1.0,1.0,0.6667,0.0,0.6667,0.6667,0.8571,0.875,0.5,1.0,1.0,1.0,0.0,1.0,1.0,1.0,0.0,0.0,0.5,0.7778,1.0,0.75,0.0,0.7143,1.0,0.5,0.3333,1.0,1.0,0.6667,1.0,0.0,0.8889,0.7778,0.0,1.0,1.0,1.0,0.3333,1.0,0.75,0.7143,0.75,1.0,0.8333,0.875,1.0,0.1667,0.5,0.5,1.0,0.4286,0.3333,1.0,1.0,0.3333,0.6667,1.0],"wiki":[0.8571,0.6,0.7143,0.25,1.0,0.0,1.0,0.6,0.8571,0.3333,0.7143,1.0,0.5,0.6923,1.0,0.5,0.75,0.875,1.0,1.0,1.0,1.0,1.0,0.6667,0.4286,0.6667,0.0,0.0,0.7143,0.6,0.25,1.0,1.0,0.6,0.25,1.0,0.8333,0.8333,1.0,1.0,0.6667,0.75,0.8333,1.0,1.0,1.0,0.6667,0.5,0.6667,0.4444,0.8571,0.875,0.5,1.0,1.0,0.5,0.0,1.0,0.5,1.0,0.0,0.625,0.5,0.7778,0.6667,0.75,0.75,1.0,1.0,0.5,0.3333,1.0,0.6667,0.6667,1.0,0.0,0.8889,0.7778,0.0,0.875,1.0,0.75,0.3333,1.0,0.75,1.0,1.0,0.7143,0.8333,0.75,1.0,0.1667,0.5,0.5,1.0,0.8571,0.3333,0.8,0.6667,0.3333,0.6667,1.0]}};
+const ARTICLES = [0,2,2,3,3,3,3,3,3,4,4,4,4,5,5,5,6,6,7,7,7,7,8,9,9,9,9,9,9,9,9,9,10,10,10,10,10,11,11,11,12,12,12,13,13,13,14,14,14,14,15,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16];
+const META = [
+  {key:"native",       label:"1 native (no mem)",     short:"native",     color:"var(--native)",       dash:""},
+  {key:"cc_stateless", label:"3 CC stateless",         short:"CC statel.", color:"var(--cc_stateless)", dash:"8 5"},
+  {key:"cc_continual", label:"2 CC continual (mem)",   short:"CC cont.",   color:"var(--cc_continual)", dash:""},
+  {key:"wiki",         label:"4 wiki (index cont.)",   short:"wiki",       color:"var(--wiki)",         dash:"2 5"},
+];
+const N = DATA.order_len, NT = DATA.n_train;
+const SVGNS = "http://www.w3.org/2000/svg";
+const W=1000, H=470, m={t:16,r:120,b:40,l:44};
+const px = i => m.l + (W-m.l-m.r) * (i/(N-1));
+const py = v => (H-m.b) - (H-m.t-m.b) * v;
+const hidden = {};
+const svg = document.getElementById("chart"), tip = document.getElementById("tip");
+
+function movavg(arr, w){
+  const out = new Array(arr.length).fill(null);
+  for(let i=0;i<arr.length;i++){
+    let s=0,c=0;
+    for(let j=Math.max(0,i-w+1);j<=i;j++){ if(arr[j]!=null){ s+=arr[j]; c++; } }
+    if(c>0) out[i]=s/c;
+  }
+  return out;
+}
+function el(name, attrs){ const e=document.createElementNS(SVGNS,name); for(const k in attrs) e.setAttribute(k,attrs[k]); return e; }
+
+let smoothed = {};
+function draw(){
+  const w = +document.getElementById("win").value;
+  document.getElementById("winlabel").textContent = w===1 ? "1 task (raw)" : w+" tasks";
+  svg.textContent = "";
+  // gridlines + y labels
+  [0,.25,.5,.75,1].forEach(v=>{
+    svg.appendChild(el("line",{class:"gridline",x1:m.l,x2:W-m.r,y1:py(v),y2:py(v)}));
+    const t=el("text",{class:"axislabel",x:m.l-8,y:py(v)+3,"text-anchor":"end"}); t.textContent=(v*100)+"%"; svg.appendChild(t);
+  });
+  // x ticks every 10 (1-indexed)
+  for(let i=0;i<N;i+=10){
+    const t=el("text",{class:"axislabel",x:px(i),y:H-m.b+16,"text-anchor":"middle"}); t.textContent=i+1; svg.appendChild(t);
+  }
+  svg.appendChild(el("line",{class:"axisline",x1:m.l,x2:W-m.r,y1:H-m.b,y2:H-m.b}));
+  // train|test separator
+  const xs = px(NT-0.5);
+  svg.appendChild(el("line",{class:"sep",x1:xs,x2:xs,y1:m.t,y2:H-m.b}));
+  const lt=el("text",{class:"axislabel",x:xs-6,y:m.t+10,"text-anchor":"end"}); lt.textContent="train"; svg.appendChild(lt);
+  const rt=el("text",{class:"axislabel",x:xs+6,y:m.t+10,"text-anchor":"start"}); rt.textContent="test"; svg.appendChild(rt);
+  // series
+  smoothed = {};
+  const ends = [];
+  META.forEach(s=>{
+    const sm = movavg(DATA.series[s.key], w); smoothed[s.key]=sm;
+    if(hidden[s.key]) return;
+    let d="", pen=false, lastY=null;
+    for(let i=0;i<N;i++){
+      if(sm[i]==null){ pen=false; continue; }
+      d += (pen?" L":" M") + px(i).toFixed(1) + " " + py(sm[i]).toFixed(1); pen=true; lastY=py(sm[i]);
+    }
+    const p=el("path",{class:"series",d:d.trim(),stroke:s.color}); if(s.dash) p.setAttribute("stroke-dasharray",s.dash);
+    svg.appendChild(p);
+    if(lastY!=null) ends.push({short:s.short,color:s.color,y:lastY});
+    // test-region average (dashed), over RAW per-task values
+    const ay=[]; for(let i=NT;i<N;i++){ const v=DATA.series[s.key][i]; if(v!=null) ay.push(v); }
+    if(ay.length){
+      const mean=ay.reduce((a,b)=>a+b,0)/ay.length;
+      svg.appendChild(el("line",{x1:px(NT),x2:px(N-1),y1:py(mean),y2:py(mean),stroke:s.color,"stroke-width":1.5,"stroke-dasharray":"7 4",opacity:.8}));
+    }
+  });
+  // direct end-labels (identity beyond color = secondary encoding + contrast relief), de-collided
+  ends.sort((a,b)=>a.y-b.y);
+  for(let i=1;i<ends.length;i++){ if(ends[i].y-ends[i-1].y<14) ends[i].y=ends[i-1].y+14; }
+  const lx = W-m.r+10;
+  ends.forEach(e=>{
+    svg.appendChild(el("line",{x1:lx,x2:lx+14,y1:e.y,y2:e.y,stroke:e.color,"stroke-width":2}));
+    const t=el("text",{x:lx+18,y:e.y+3,"font-size":11,fill:"var(--ink-2)"}); t.textContent=e.short; svg.appendChild(t);
+  });
+  // hover crosshair placeholder
+  svg.appendChild(el("line",{class:"cross",id:"cross",x1:0,x2:0,y1:m.t,y2:H-m.b,opacity:0}));
+}
+
+function buildLegend(){
+  const box=document.getElementById("legend");
+  META.forEach(s=>{
+    const item=document.createElement("span"); item.className="item"; item.dataset.key=s.key;
+    item.innerHTML='<span class="sw" style="background:'+s.color+'"></span>'+s.label;
+    item.onclick=()=>{ hidden[s.key]=!hidden[s.key]; item.classList.toggle("off",hidden[s.key]); draw(); };
+    box.appendChild(item);
+  });
+}
+
+// hover
+const rect = () => svg.getBoundingClientRect();
+svg.addEventListener("mousemove", ev=>{
+  const r=rect(); const sx=(ev.clientX-r.left)/r.width*W;
+  let i=Math.round((sx-m.l)/((W-m.l-m.r))*(N-1));
+  if(i<0||i>N-1){ tip.style.opacity=0; const c=document.getElementById("cross"); if(c)c.setAttribute("opacity",0); return; }
+  const c=document.getElementById("cross"); if(c){ c.setAttribute("x1",px(i)); c.setAttribute("x2",px(i)); c.setAttribute("opacity",1); }
+  let rows="";
+  META.forEach(s=>{ if(hidden[s.key]) return; const v=smoothed[s.key][i];
+    rows += '<div class="r"><span><span class="dot" style="background:'+s.color+'"></span>'+s.label+'</span><b>'+(v==null?"—":(v*100).toFixed(0)+"%")+'</b></div>'; });
+  tip.innerHTML = '<b>Task '+(i+1)+'</b> · '+(i<NT?"train":"test")+rows;
+  tip.style.opacity=1; tip.style.left=(ev.clientX+14)+"px"; tip.style.top=(ev.clientY+14)+"px";
+});
+svg.addEventListener("mouseleave", ()=>{ tip.style.opacity=0; const c=document.getElementById("cross"); if(c)c.setAttribute("opacity",0); });
+function drawWiki(){
+  const s=document.getElementById("wiki"); s.textContent="";
+  const WH=150, wb={t:14,b:26}, maxA=Math.max.apply(null,ARTICLES)||1;
+  const wy=v=>(WH-wb.b)-(WH-wb.t-wb.b)*(v/maxA);
+  [0,Math.round(maxA/2),maxA].forEach(v=>{
+    s.appendChild(el("line",{class:"gridline",x1:m.l,x2:W-m.r,y1:wy(v),y2:wy(v)}));
+    const t=el("text",{class:"axislabel",x:m.l-8,y:wy(v)+3,"text-anchor":"end"}); t.textContent=v; s.appendChild(t);
+  });
+  let d="M "+px(0).toFixed(1)+" "+wy(ARTICLES[0]).toFixed(1);
+  for(let i=1;i<N;i++){ d+=" L "+px(i).toFixed(1)+" "+wy(ARTICLES[i-1]).toFixed(1)+" L "+px(i).toFixed(1)+" "+wy(ARTICLES[i]).toFixed(1); }
+  s.appendChild(el("path",{d:d+" L "+px(N-1).toFixed(1)+" "+wy(0).toFixed(1)+" L "+px(0).toFixed(1)+" "+wy(0).toFixed(1)+" Z",fill:"var(--wiki)",opacity:.15}));
+  s.appendChild(el("path",{d:d,fill:"none",stroke:"var(--wiki)","stroke-width":2}));
+  const xs=px(NT-0.5); s.appendChild(el("line",{class:"sep",x1:xs,x2:xs,y1:wb.t,y2:WH-wb.b}));
+  for(let i=0;i<N;i+=10){ const t=el("text",{class:"axislabel",x:px(i),y:WH-wb.b+16,"text-anchor":"middle"}); t.textContent=i+1; s.appendChild(t); }
+  s.appendChild(el("line",{class:"axisline",x1:m.l,x2:W-m.r,y1:WH-wb.b,y2:WH-wb.b}));
+  const lt=el("text",{x:W-m.r+10,y:wy(ARTICLES[N-1])+3,"font-size":11,fill:"var(--ink-2)"}); lt.textContent=ARTICLES[N-1]+" articles"; s.appendChild(lt);
+}
+document.getElementById("win").addEventListener("input", draw);
+buildLegend(); draw(); drawWiki();
+</script>
+</body>
+</html>

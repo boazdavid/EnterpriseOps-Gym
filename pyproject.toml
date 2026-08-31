@@ -21,6 +21,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+claude_code = [
+    "claude-agent-sdk",
+]
 anthropic = [
     "langchain-anthropic>=0.1.0",
     "anthropic>=0.40.0",

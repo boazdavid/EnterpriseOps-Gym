@@ -10,6 +10,7 @@ from benchmark.models import BenchmarkConfig
 from langchain_core.messages import SystemMessage, HumanMessage, ToolMessage
 
 from .base import AgentOrchestrator
+from .claude_code import price_rates, compute_cache_aware_cost
 
 logger = logging.getLogger(__name__)
 
@@ -116,6 +117,7 @@ class ReactOrchestrator(AgentOrchestrator):
                     }
                 )
 
+        self._conversation_flow = conversation_flow
         return {
             "final_response": messages[-1].content if messages else "",
             "conversation_flow": conversation_flow,
@@ -123,3 +125,30 @@ class ReactOrchestrator(AgentOrchestrator):
             "tool_results": tool_results,
             "messages": messages,
         }
+
+    def get_result_metadata(self) -> Dict[str, Any]:
+        """Cache-aware cost + token totals for the run, from per-turn usage_metadata.
+
+        LangChain's usage_metadata.input_tokens is the FULL input (incl. cached); the
+        cache split lives in input_token_details. Convert to the Anthropic bucket shape
+        (uncached input, cache_read, cache_creation) so cache reads bill at the cached
+        rate — same accounting as the claude_code arm.
+        """
+        cf = getattr(self, "_conversation_flow", []) or []
+        in_total = out_total = cache_read = cache_creation = 0
+        for e in cf:
+            if e.get("type") != "ai_message":
+                continue
+            u = e.get("usage_metadata") or {}
+            in_total += u.get("input_tokens", 0) or 0
+            out_total += u.get("output_tokens", 0) or 0
+            d = u.get("input_token_details") or {}
+            cache_read += d.get("cache_read", 0) or 0
+            cache_creation += d.get("cache_creation", 0) or 0
+        usage = {
+            "input_tokens": max(in_total - cache_read - cache_creation, 0),
+            "output_tokens": out_total,
+            "cache_read_input_tokens": cache_read,
+            "cache_creation_input_tokens": cache_creation,
+        }
+        return compute_cache_aware_cost(usage, price_rates(getattr(self.llm_client, "model", None)))

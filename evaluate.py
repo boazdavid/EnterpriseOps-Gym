@@ -36,11 +36,13 @@ from utils.task_queue_worker import TaskQueueWorker
 from orchestrators.react import ReactOrchestrator
 from orchestrators.planner_react import PlannerReactOrchestrator
 from orchestrators.decomposing_planner import DecomposingPlannerOrchestrator
+from orchestrators.claude_code import ClaudeCodeOrchestrator
 
 ORCHESTRATOR_MAP = {
     "react": ReactOrchestrator,
     "planner_react": PlannerReactOrchestrator,
     "decomposing": DecomposingPlannerOrchestrator,
+    "claude_code": ClaudeCodeOrchestrator,
 }
 
 # Set up logging
@@ -285,8 +287,42 @@ async def main():
         "--orchestrator",
         type=str,
         default="react",
-        choices=["react", "planner_react", "decomposing"],
+        choices=["react", "planner_react", "decomposing", "claude_code"],
         help="Orchestration strategy.",
+    )
+    parser.add_argument(
+        "--task_id",
+        type=str,
+        nargs="+",
+        default=None,
+        help="Run only these task_id(s) from the dataset/configs folder. Lets you run "
+             "one task at a time (e.g. for debugging the claude_code arm).",
+    )
+    parser.add_argument(
+        "--limit",
+        type=int,
+        default=None,
+        help="Run at most this many task configs (applied after --task_id filtering).",
+    )
+    parser.add_argument(
+        "--split_file",
+        type=str,
+        default=None,
+        help="Path to a train/test split JSON (see scripts/make_hr_split.py). Combined "
+             "with --split and --seed to run only that partition's task_ids.",
+    )
+    parser.add_argument(
+        "--split",
+        type=str,
+        default=None,
+        choices=["train", "test"],
+        help="Which partition of --split_file to run.",
+    )
+    parser.add_argument(
+        "--seed",
+        type=int,
+        default=0,
+        help="Seed key within --split_file (default 0).",
     )
     parser.add_argument(
         "--planner_llm_config",
@@ -346,7 +382,39 @@ async def main():
             raise ValueError("Either --configs_folder or --hf_dataset must be provided")
         configs_folder = args.configs_folder
 
-    config_files = glob.glob(os.path.join(configs_folder, "*.json"))
+    config_files = sorted(glob.glob(os.path.join(configs_folder, "*.json")))
+
+    # Optional: run one (or a few) task(s) at a time. task_id / split ids are matched
+    # against the config file basename ("<label>__<domain>__<task_id>.json").
+    wanted = set(args.task_id) if args.task_id else set()
+    if args.split_file:
+        if not args.split:
+            raise ValueError("--split {train,test} is required with --split_file")
+        with open(args.split_file) as f:
+            split_data = json.load(f)
+        seed_key = str(args.seed)
+        if seed_key not in split_data.get("seeds", {}):
+            raise ValueError(
+                f"seed {seed_key} not in {args.split_file} (have {list(split_data.get('seeds', {}))})"
+            )
+        split_ids = split_data["seeds"][seed_key][args.split]
+        wanted |= set(split_ids)
+        logger.info(
+            f"Loaded {len(split_ids)} '{args.split}' task_id(s) for seed {seed_key} "
+            f"from {args.split_file}"
+        )
+    if wanted:
+        config_files = [
+            f for f in config_files
+            if any(tid in os.path.basename(f) for tid in wanted)
+        ]
+        logger.info(f"Filtered to {len(config_files)} config(s) from {len(wanted)} wanted task_id(s)")
+        if not config_files:
+            raise ValueError("No task configs matched the requested task_id(s)/split")
+    if args.limit is not None:
+        config_files = config_files[: args.limit]
+        logger.info(f"Limited to {len(config_files)} config(s) via --limit")
+
     for idx in range(int(args.num_runs)):
         output_folder = os.path.join(args.output_folder, f"run_{int(args.start_run)+idx}")
         os.makedirs(output_folder, exist_ok=True)
