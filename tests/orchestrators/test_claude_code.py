@@ -373,3 +373,84 @@ def test_procedural_memory_mode_uses_procedural_instruction_and_seed(monkeypatch
     # not the fact-based Arm-2 instruction
     assert "do not store task-specific secrets" not in cap["system_prompt"]
     assert "no task-specific" in open(os.path.join(shared, "CLAUDE.md")).read()
+
+
+# ---------------------------------------------------------------------------
+# Arm 2b — faithful auto-memory emulation (CC_MEMORY_MODE=automem)
+# ---------------------------------------------------------------------------
+
+
+def test_truncate_index_caps_at_200_lines():
+    from orchestrators.claude_code import _truncate_index
+
+    text = "\n".join(f"line {i}" for i in range(500))
+    out = _truncate_index(text)
+    lines = out.splitlines()
+    assert len(lines) == 200
+    assert lines[0] == "line 0"
+    assert lines[-1] == "line 199"
+
+
+def test_truncate_index_caps_at_25kb():
+    from orchestrators.claude_code import _truncate_index
+
+    # A few very long lines: under 200 lines but well over 25 KB.
+    text = "\n".join("x" * 10_000 for _ in range(10))  # ~100 KB, 10 lines
+    out = _truncate_index(text)
+    assert len(out.encode("utf-8")) <= 25 * 1024
+
+
+def test_truncate_index_passes_small_index_through():
+    from orchestrators.claude_code import _truncate_index
+
+    text = "# Memory index\n- [Foo](foo.md) — a foo"
+    assert _truncate_index(text) == text
+
+
+def test_auto_memory_instruction_templates_the_memory_path():
+    from orchestrators.claude_code import auto_memory_instruction
+
+    instr = auto_memory_instruction("/tmp/exp/memory")
+    # points the model at OUR store, mentions the Write tool + MEMORY.md index
+    assert "/tmp/exp/memory" in instr
+    assert "Write tool" in instr
+    assert "MEMORY.md" in instr
+    # not the arm-2 CLAUDE.md-channel instruction
+    assert "CONTINUAL MEMORY" not in instr
+
+
+def test_memory_index_reminder_wraps_current_index_in_system_reminder(tmp_path):
+    from orchestrators.claude_code import memory_index_reminder
+
+    mem_dir = str(tmp_path / "memory")
+    os.makedirs(mem_dir)
+    with open(os.path.join(mem_dir, "MEMORY.md"), "w") as f:
+        f.write("# Memory index\n- [Priority default](priority.md) — planning not moderate")
+
+    reminder = memory_index_reminder(mem_dir)
+    assert "<system-reminder>" in reminder and "</system-reminder>" in reminder
+    assert "Priority default" in reminder  # live index content is injected
+
+
+def test_memory_index_reminder_empty_when_no_index(tmp_path):
+    from orchestrators.claude_code import memory_index_reminder
+
+    assert memory_index_reminder(str(tmp_path / "memory")) == ""
+
+
+def test_execute_automem_seeds_index_not_claudemd_and_injects(monkeypatch, tmp_path):
+    monkeypatch.delenv("CC_PARALLEL_HINT", raising=False)
+    monkeypatch.setenv("CC_MEMORY_MODE", "automem")
+    shared = str(tmp_path / "automem")
+    cap = _run_capture(monkeypatch, _mk_orch(auto_memory_dir=shared))
+
+    mem_dir = os.path.join(shared, "memory")
+    # faithful store: seeds the MEMORY.md index, does NOT create a CLAUDE.md channel
+    assert os.path.isfile(os.path.join(mem_dir, "MEMORY.md"))
+    assert not os.path.exists(os.path.join(shared, "CLAUDE.md"))
+    # verbatim auto-memory scaffolding is injected (write path), not arm-2's instruction
+    assert "persistent file-based memory" in cap["system_prompt"]
+    assert "CONTINUAL MEMORY" not in cap["system_prompt"]
+    # the store is readable from the isolated scratch cwd (recall path)
+    assert mem_dir in (cap.get("add_dirs") or [])
+    assert cap["env"]["CLAUDE_CONFIG_DIR"] == shared

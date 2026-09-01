@@ -161,6 +161,42 @@ Notes / requirements:
   train-built `CLAUDE.md` and evaluate test read-only. The system prompt gains a memory
   instruction only in this mode (a deliberate deviation for the continual arm).
 
+### Memory content mode (Arm 2a)
+
+Set `CC_MEMORY_MODE=procedural` to record **only reusable procedures** (no task-specific
+facts/IDs) — the Arm 2a ablation. Default (unset) is facts+procedures (Arm 2).
+
+## 6d. Faithful auto-memory emulation (Arm 2b)
+
+`CC_MEMORY_MODE=automem` swaps Arm 2's single-blob `CLAUDE.md` for a faithful emulation of
+Claude Code's **native auto-memory** mechanism: a structured `memory/` store (one-fact
+topic files + a `MEMORY.md` index). Because the headless Agent SDK does **not** inject the
+scaffolding the interactive CLI does (see `docs/claude-code-auto-memory.md`), the
+orchestrator injects it manually — the verbatim auto-memory system prompt (write path) plus
+the current `MEMORY.md` index, truncated to the feature's **first 200 lines / 25 KB**, in a
+`<system-reminder>` block (read path). Topic files are recalled **on demand via `Read`**
+(the store is exposed through `add_dirs` so it's reachable from the isolated scratch cwd).
+
+```bash
+export CC_AUTO_MEMORY_DIR=<repo>/.cc_automem
+CC_MEMORY_MODE=automem python evaluate.py … \
+  --orchestrator claude_code --concurrency 1 \
+  --split_file data/splits/hr_train_test_split.json --seed 0 …
+```
+
+Differences from §6c: **no `CLAUDE.md` is seeded** in this mode (the auto-memory store is
+the sole channel, so the arm isolates *memory mechanism* as the only difference vs. Arm 2);
+the index injected each session is the live, truncated `MEMORY.md`. Same serial/order
+requirements as §6c. Store lands in `<dir>/memory/` (`MEMORY.md` + topic `*.md`). Suggested
+result folders: `results/claude_code/sonnet-5/hr/{train,test}_seed0_plus10_continual_automem/run_1/`.
+
+**Verify recall works (do this first, 2-task smoke).** Arm 2's recall was free
+(`CLAUDE.md` auto-loads); here it depends on the model calling `Read` on topic files at an
+absolute path outside the scratch cwd. After a short run, confirm topic files were written
+(`ls <dir>/memory/*.md`) and that later sessions issue `Read` calls hitting
+`…/memory/*.md` (grep `conversation_flow` for `Read` on the memory path). If reads are
+absent, recall is silently failing — check `add_dirs`/permissions before the full run.
+
 ## 7. Reading the output (cost is cache-aware)
 
 Each `results_*.json` run object carries, in addition to the standard fields:
