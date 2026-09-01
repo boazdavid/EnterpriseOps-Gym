@@ -123,13 +123,16 @@ window slider**, **click-to-show/hide** each line, distinct dash patterns + dire
 
 ### Unified (all 102) — accuracy, turns, cost
 
-| arm | success | verifier | avg turns | avg tool calls | runtime cost: cache-aware (full) | build |
-|---|---|---|---|---|---|---|
-| 1 native (no mem) | 31/102 (30.4%) | 367/528 (69.5%) | 5.9 | 10.8 | **$10.10** ($18.91) | — |
-| 3 CC stateless | 20/102 (19.6%) | 321/528 (60.8%) | 6.0 | 11.4 | $18.39 ($51.06) | — |
-| 2 CC continual (proc+facts mem) | 38/102 (37.3%) | 389/528 (73.7%) | 6.6 | 12.1 | $20.61 ($62.51) | $0.46 |
-| 2a CC continual (proc) | 28/102 (27.5%) | 380/528 (72.0%) | 6.6 | 12.8 | $20.76 ($59.10) | $0.13 |
-| 4 wiki (index continual) | 32/102 (31.4%) | 391/528 (74.1%) | 7.2 | 12.2 | $16.14 ($29.02) | $7.46 |
+| arm | success | verifier (pooled) | verifier (mean-of-rates) | avg turns | avg tool calls | runtime cost/task: cache-aware (full) | build/task |
+|---|---|---|---|---|---|---|---|
+| 1 native (no mem) | 31/102 (30.4%) | 367/528 (69.5%) | 67.4% | 5.9 | 10.8 | **$0.10** ($0.19) | — |
+| 3 CC stateless | 20/102 (19.6%) | 321/528 (60.8%) | 58.5% | 6.0 | 11.4 | $0.18 ($0.50) | — |
+| 2 CC continual (proc+facts mem) | 38/102 (37.3%) | 389/528 (73.7%) | 70.9% | 6.6 | 12.1 | $0.20 ($0.61) | $0.00 |
+| 2a CC continual (proc) | 28/102 (27.5%) | 380/528 (72.0%) | 68.8% | 6.6 | 12.8 | $0.20 ($0.58) | $0.00 |
+| 4 wiki (index continual) | 32/102 (31.4%) | 391/528 (74.1%) | 70.2% | 7.2 | 12.2 | $0.16 ($0.29) | $0.07 |
+
+- **verifier (pooled)** = total individual verifiers passed / total verifiers across all 102 tasks (count-weighted). **verifier (mean-of-rates)** = unweighted mean of each task's `verifier_level_pass_rate` (each task counts equally — what `compute_score.py` reports). Mean-of-rates runs ~2–4pp below pooled because it doesn't weight tasks with more verifiers more heavily; the arm ranking is identical under both.
+- **Cost is per task** (total ÷ 102). Multiply by 102 for the run totals referenced in the cost-split bullets below: native $10.10, CC-stateless $18.39, CC-continual $20.61 (+$0.46 build), CC-continual-proc $20.76 (+$0.13 build), wiki $16.14 (+$7.46 build).
 
 - **avg tool calls** ≈ 11–12 for all arms (native slightly fewer at 10.8) — confirming they do
   comparable *work*; the difference is turn-packing (native batches into 5.9 turns) and
