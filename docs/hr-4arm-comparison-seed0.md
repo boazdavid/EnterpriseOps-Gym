@@ -127,8 +127,8 @@ window slider**, **click-to-show/hide** each line, distinct dash patterns + dire
 |---|---|---|---|---|---|---|---|
 | 1 native (no mem) | 31/102 (30.4%) | 367/528 (69.5%) | 67.4% | 5.9 | 10.8 | **$0.10** ($0.19) | — |
 | 3 CC stateless | 20/102 (19.6%) | 321/528 (60.8%) | 58.5% | 6.0 | 11.4 | $0.18 ($0.50) | — |
-| 2 CC continual (proc+facts mem) | 38/102 (37.3%) | 389/528 (73.7%) | 70.9% | 6.6 | 12.1 | $0.20 ($0.61) | $0.00 |
-| 2a CC continual (proc) | 28/102 (27.5%) | 380/528 (72.0%) | 68.8% | 6.6 | 12.8 | $0.20 ($0.58) | $0.00 |
+| 2 CC continual (proc+facts mem) | 38/102 (37.3%) | 389/528 (73.7%) | 70.9% | 6.6 | 12.1 | $0.20 ($0.61) | $0.005 |
+| 2a CC continual (proc) | 28/102 (27.5%) | 380/528 (72.0%) | 68.8% | 6.6 | 12.8 | $0.20 ($0.58) | $0.001 |
 | 4 wiki (index continual) | 32/102 (31.4%) | 391/528 (74.1%) | 70.2% | 7.2 | 12.2 | $0.16 ($0.29) | $0.07 |
 
 - **verifier (pooled)** = total individual verifiers passed / total verifiers across all 102 tasks (count-weighted). **verifier (mean-of-rates)** = unweighted mean of each task's `verifier_level_pass_rate` (each task counts equally — what `compute_score.py` reports). Mean-of-rates runs ~2–4pp below pooled because it doesn't weight tasks with more verifiers more heavily; the arm ranking is identical under both.
