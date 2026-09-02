@@ -4,6 +4,7 @@ import json
 import logging
 from typing import Any, Dict, List, TYPE_CHECKING
 
+from benchmark import events
 from benchmark.mcp_client import MCPClient
 from benchmark.llm_client import LLMClient
 from benchmark.models import BenchmarkConfig
@@ -118,6 +119,10 @@ class ReactOrchestrator(AgentOrchestrator):
                 )
 
         self._conversation_flow = conversation_flow
+        # Control returns to the user: fire the turn-end event with the live LLM client and
+        # the raw request payload (verbatim messages + tools), so subscribers can branch an
+        # extraction off the identical, already-cached prefix. Non-blocking by contract.
+        events.emit_turn_end(self.llm_client, {"messages": messages, "tools": self.available_tools})
         return {
             "final_response": messages[-1].content if messages else "",
             "conversation_flow": conversation_flow,
