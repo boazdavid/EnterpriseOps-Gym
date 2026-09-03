@@ -163,7 +163,10 @@ class LLMClient:
                     # Without a timeout a hung/slow endpoint request blocks its concurrency slot
                     # indefinitely (observed with gpt-oss-120b on csm). Fail fast and retry instead.
                     request_timeout=300,
-                    max_retries=2,
+                    # Retries use the OpenAI SDK's exponential backoff+jitter (rides out
+                    # connection refusals under concurrent load); env-tunable for shared-token
+                    # gateways like context-guru that throttle parallel requests.
+                    max_retries=int(os.environ.get("LLM_MAX_RETRIES", "2")),
                     default_headers=_default_headers,
                     http_client=_http_client,
                     http_async_client=_http_async_client,
