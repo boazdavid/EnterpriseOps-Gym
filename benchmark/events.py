@@ -1,7 +1,7 @@
-"""Minimal turn-end event registry for the gym.
+"""Minimal conversation-end event registry for the gym.
 
-An orchestrator emits `turn_end` when its agent loop finishes and control returns to the
-user (the ReAct loop stops requesting tools). Handlers registered via `register_turn_end`
+An orchestrator emits `conversation_end` when its agent loop finishes and control returns to the
+user (the ReAct loop stops requesting tools). Handlers registered via `register_conversation_end`
 receive the live LLM client and the raw request payload (`{"messages": [...], "tools": [...]}`)
 — i.e. exactly what the agent last sent to the model — so a handler can branch an
 extraction call off the identical, already-cached prefix.
@@ -17,26 +17,26 @@ from typing import Any, Callable
 logger = logging.getLogger(__name__)
 
 # handler(llm_client, context) -> None ; context = {"messages": list, "tools": list}
-TurnEndHandler = Callable[[Any, dict], None]
+ConversationEndHandler = Callable[[Any, dict], None]
 
-_handlers: list[TurnEndHandler] = []
+_handlers: list[ConversationEndHandler] = []
 
 
-def register_turn_end(handler: TurnEndHandler) -> None:
-    """Register a turn-end handler (idempotent per distinct callable)."""
+def register_conversation_end(handler: ConversationEndHandler) -> None:
+    """Register a conversation-end handler (idempotent per distinct callable)."""
     if handler not in _handlers:
         _handlers.append(handler)
 
 
-def clear_turn_end_handlers() -> None:
+def clear_conversation_end_handlers() -> None:
     """Drop all registered handlers (used by tests / between runs)."""
     _handlers.clear()
 
 
-def emit_turn_end(llm_client: Any, context: dict) -> None:
+def emit_conversation_end(llm_client: Any, context: dict) -> None:
     """Notify every registered handler. Errors are logged, never raised."""
     for handler in _handlers:
         try:
             handler(llm_client, context)
         except Exception:
-            logger.exception("turn_end handler failed")
+            logger.exception("conversation_end handler failed")

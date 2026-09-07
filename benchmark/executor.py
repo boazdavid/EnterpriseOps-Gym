@@ -7,12 +7,22 @@ import os
 from datetime import datetime, timezone
 from typing import Dict, Any, List
 
+from benchmark import events
 from benchmark.llm_client import LLMClient
 from benchmark.mcp_client import MCPClient, create_database_from_file, delete_database
 from benchmark.models import BenchmarkConfig, LLMConfig, VerifierConfig
 from benchmark.verifier import VerifierEngine
 
 logger = logging.getLogger(__name__)
+
+
+def extract_task_id(config_path: str) -> str:
+    """Extract the task id (the config file's basename) from a config path.
+
+    e.g. '/var/folders/.../plus_10_tools__hr__task_20251212_175622_173_d61a01c6_62164687.json'
+         -> 'plus_10_tools__hr__task_20251212_175622_173_d61a01c6_62164687.json'
+    """
+    return os.path.basename(config_path or "")
 
 
 # ============================================================================
@@ -409,6 +419,18 @@ class BenchmarkExecutor:
             **self.orchestrator_kwargs,
         )
         task_result = await orchestrator.execute()
+
+        # fire the conversation-end event with the live LLM client and
+        # the raw request payload (verbatim messages + tools), so subscribers can branch an
+        # extraction off the identical, already-cached prefix. Non-blocking by contract.
+        events.emit_conversation_end(
+            orchestrator.llm_client,
+            {
+                "messages": task_result.get("messages", []),
+                "tools": orchestrator.available_tools,
+                "conversation_id": extract_task_id(self.config_path),
+            },
+        )
 
         # Run verifiers
         verification_results = await self._run_verifiers(task_result)
