@@ -120,7 +120,7 @@ class LLMClient:
                     max_completion_tokens=self.max_tokens,
                     model_kwargs=model_kwargs # In GPT-5.X this is a first class parameter, but passing this way is also allowed.
                 )
-            elif self.provider == "vllm" or self.provider == "openrouter":
+            elif self.provider in ("vllm", "openrouter", "rits"):
                 from langchain_openai import ChatOpenAI
 
                 model_kwargs = {}
@@ -143,6 +143,10 @@ class LLMClient:
                 _dh = os.environ.get("LLM_DEFAULT_HEADERS")
                 if _dh:
                     _default_headers = _json.loads(_dh)
+
+                if self.provider == "rits":
+                    _default_headers = _default_headers or {}
+                    _default_headers["RITS_API_KEY"] = self.api_key
 
                 # Opt-in insecure TLS for internal gateways whose cert isn't in certifi's
                 # CA bundle (LLM_INSECURE_TLS=1). Must set BOTH sync and async httpx clients
