@@ -4,7 +4,7 @@
 Given a KB/wiki directory, this script:
   1. Preflights the container runtime and the domain's MCP container.
   2. Starts the knowledge MCP server (from the try_wikis venv) serving the KB
-     via list_articles + get_article on an auto-picked free port.
+     via list_memories + get_memory on an auto-picked free port.
   3. Runs evaluate.py against ServiceNow-AI/EnterpriseOps-Gym with the KB injected
      as a second MCP server, writing trajectories to --out_dir.
   4. Always stops the knowledge server when the run ends.
@@ -23,7 +23,7 @@ PY_GYM = GYM / ".venv/bin/python"
 DATASET = "ServiceNow-AI/EnterpriseOps-Gym"
 SUFFIX_FILE = GYM / "system_prompt_knowledge_suffix_listget.txt"
 DOMAIN_CONF = GYM / "conf/ray/domain_conf.json"
-KSERVER_TOOLS = "list_articles,get_article"
+KSERVER_TOOLS = "list_memories,get_memory"
 
 
 def up(host, port):

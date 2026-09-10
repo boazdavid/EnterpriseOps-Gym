@@ -31,8 +31,12 @@ def process_file(filepath):
     knowledge_calls_list = []
     max_msg_tokens_list = []
     costs = []
-    # Knowledge-base tools across all retrieval arms (list/get + query/batch variants).
-    KB_TOOLS = {"get_article", "get_articles", "list_articles", "query_articles"}
+    # Memory tools across all retrieval arms (list/get + query/batch variants).
+    # Old article-era names kept so historical result files still scan.
+    KB_TOOLS = {
+        "get_memory", "get_memories", "list_memories", "query_memories",
+        "get_article", "get_articles", "list_articles", "query_articles",
+    }
 
     for run in runs:
         durations.append(run.get("execution_time_ms", 0) / 1000.0)

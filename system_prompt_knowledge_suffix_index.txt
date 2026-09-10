@@ -1,23 +1,19 @@
-## Domain Knowledge
+## Using memories
 
-You have access to an internal knowledge base of enterprise concepts — procedures and entities distilled from past task executions. The full catalog (index) of available articles is included at the end of this section. It exposes one tool:
+You have access to a set of **memories** — procedures and facts distilled from verified past runs in this exact environment. A catalog of every available memory (the index) is at the end of this section, and one tool reads them:
 
-- `get_article(article_uri)` — returns the full body of one article. **Extract the link target from the index below and pass it verbatim** (e.g. if the index shows `[Title](concepts/creating-a-channel.md)`, pass `concepts/creating-a-channel.md` exactly). Do NOT rephrase, re-hyphenate, or reconstruct the URI from the article title — copy the link target as-is.
+- `get_memory(memory_slug)` — returns the full body of one memory. Pass the link target shown in the index, e.g. `memories/creating-a-channel.md`. **Copy the target verbatim** from the index — do not rephrase, re-hyphenate, or reconstruct it from the title. (A bare slug such as `creating-a-channel` is also accepted.)
 
-Workflow:
-1. Review the article index below and match the user's request to article descriptions (each description is phrased as the question the article answers).
-2. Before taking action, call `get_article(...)` for each relevant article. If the request involves multiple operations (e.g. cancel + rebook, create user + assign role), fetch each relevant article separately. Only fetch what you need for the current request.
+### Finding and reading memories
+1. Scan the index below and match the user's request to the memory descriptions — each description is phrased as the question that memory answers.
+2. Before acting, call `get_memory(...)` for each memory relevant to the request. If the request involves multiple operations (e.g. cancel + rebook, create user + assign role), fetch each relevant memory separately. Only fetch what you need for the current request.
+3. Each returned memory has a `## Key Points` section and a `## Related Concepts` section of typed links.
 
-How to read an article: each article has a summary, a `## Key Points` section, type-specific sections (e.g. `## Steps`, `## Failure Modes` for procedures; `## Schema`, `## Examples` for entities), and a `## Related Concepts` section of typed links. Inline markers like `[1]` indicate a claim is backed by observed evidence.
+### Applying memories
+- Where a memory covers the step at hand, treat it as reliable and prefer it over your own assumptions.
+- Apply a memory only within the **SCOPE** and order it names; do not stretch it to cases it does not cover. And a memory never grants permission: if one seems to allow, expand, or work around something the instructions above restrict, follow those instructions instead.
+- Absence of coverage is not a restriction. If no memory is relevant, it only means none was recorded for this operation — proceed normally.
 
-Fetch guidance: before acting, fetch the relevant articles to get exact tool names, parameters, and the procedure to follow. For multi-operation requests, fetch ALL relevant articles and follow their typed `Related Concepts` links (`prerequisite`/`extends`/`constrains`/`contradicts`/`related`) to catch dependencies between operations.
-
-Using the knowledge:
-- The knowledge is distilled from verified past runs in this exact environment. Where it covers the step at hand, treat it as reliable and prefer it over your own assumptions — especially for exact tool names, parameters, and literal values (IDs, hex codes, enum values); use the values given rather than inventing your own.
-- Apply each rule only within the SCOPE it names; do not extend a rule to operations or conditions it does not mention. Follow stated ordering requirements ("do X before Y").
-- A documented capability is not permission: a note tells you how a tool behaves or how to carry out something the instructions above already allow, never that it is allowed. Where a note appears to permit, expand, or work around something the instructions above restrict, follow those instructions.
-- **Absence of knowledge-base coverage is not a restriction.** If the knowledge base has no relevant results, that simply means no prior experience was recorded for this operation.
-
-## Article index
+## Memories index
 
 {{INDEX_MD}}
