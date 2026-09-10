@@ -1,0 +1,8 @@
+{
+    "llm_provider": "rits",
+    "llm_model": "openai/gpt-oss-120b-a100",
+    "llm_api_key": "...",
+    "llm_api_endpoint": "https://inference-3scale-apicast-production.apps.rits.fmaas.res.ibm.com/gpt-oss-120b-a100/v1",
+    "temperature": 0.1,
+    "max_tokens": 16384
+}
