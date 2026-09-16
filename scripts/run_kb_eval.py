@@ -88,7 +88,7 @@ def preflight(domain, kb_dir, llm_config):
 
 
 def start_kserver(kb_dir, port, log_path):
-    cmd = [str(PY_TW), "-m", "pipeline.runtime.knowledge_server",
+    cmd = [str(PY_TW), "-m", "ojt_agent.runtime.knowledge_server",
            "--folder", str(kb_dir), "--host", "127.0.0.1", "--port", str(port),
            "--tools", KSERVER_TOOLS]
     log = open(log_path, "w")
@@ -162,7 +162,7 @@ def main():
 
     if args.dry_run:
         print("DRY RUN")
-        print(f"  kserver: {PY_TW} -m pipeline.runtime.knowledge_server --folder {kb_dir} "
+        print(f"  kserver: {PY_TW} -m ojt_agent.runtime.knowledge_server --folder {kb_dir} "
               f"--host 127.0.0.1 --port <free> --tools {KSERVER_TOOLS}  (cwd={TRY_WIKIS})")
         print(f"  eval:    {' '.join(eval_cmd(args, args.out_dir))}  (cwd={GYM})")
         print(f"  env:     MCP_NAME_2=knowledge-tool-mcp MCP_ENDPOINT_2=http://127.0.0.1:<free> "

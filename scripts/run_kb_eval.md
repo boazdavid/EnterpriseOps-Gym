@@ -18,7 +18,7 @@ baseline, run your control separately (or use `scripts/run_5d_matrix.py` in the
    - `kb_dir/index.md` exists; `conf/llm/<model>.json` exists; the prompt suffix
      and both venvs exist.
 2. **Starts the knowledge MCP server** from the `try_wikis` venv:
-   `python -m pipeline.runtime.knowledge_server --folder <kb_dir> --tools list_articles,get_article`
+   `python -m ojt_agent.runtime.knowledge_server --folder <kb_dir> --tools list_memories,get_memory`
    on an auto-picked free port, and waits for it to bind.
 3. **Runs the eval** (`evaluate.py`) against `ServiceNow-AI/EnterpriseOps-Gym`
    with `MCP_NAME_2=knowledge-tool-mcp`, `MCP_ENDPOINT_2=http://127.0.0.1:<port>`,
@@ -63,7 +63,7 @@ server port is always auto-picked.
 
 - The domain's MCP container is running (this script only checks it, never starts it).
 - `try_wikis` is a sibling of this repo, or `$TRY_WIKIS` points at it, and its
-  `.venv` is set up (that venv provides `pipeline.runtime.knowledge_server`).
+  `.venv` is set up (that venv provides `ojt_agent.runtime.knowledge_server`).
 
 ## Output
 
