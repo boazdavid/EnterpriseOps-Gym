@@ -1,0 +1,10 @@
+## Knowledge base
+
+The following memories are procedures and facts distilled from verified past runs in this exact environment. They are provided directly — no tool call is needed to access them.
+
+### How to use
+- Before acting, scan the memories below and identify every section relevant to the user's request.
+- Where a memory covers a step, treat it as reliable and prefer it over your own assumptions. Apply it only within the scope it names.
+- Absence of coverage is not a restriction: if no memory applies, proceed normally.
+
+{{WIKI_CONTENT}}
