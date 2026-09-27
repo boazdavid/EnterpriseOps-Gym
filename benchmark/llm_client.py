@@ -1,8 +1,54 @@
 import logging
 import os
+import json
+import threading
+import time
 from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
+
+_AGENT_REQ_LOCK = threading.Lock()
+
+
+def _lc_text(content: Any) -> str:
+    """Flatten a LangChain message content (str or list-of-blocks) to plain text."""
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        return "".join(
+            b.get("text", "") if isinstance(b, dict) else str(b) for b in content
+        )
+    return str(content or "")
+
+
+def _log_agent_request(messages: List[Any], tools: List[Dict[str, Any]]) -> None:
+    """Append the FULL runtime LLM request (system + messages + tool names) as one JSONL
+    line when AGENT_REQUEST_LOG is set. Lets us compare, verbatim, what the agent sends the
+    LLM in the direct/offline arm against what the proxy forwards in the sticky_msg arm.
+    Instrumentation only — must never break the agent path."""
+    path = os.environ.get("AGENT_REQUEST_LOG")
+    if not path:
+        return
+    try:
+        # Per-PID shard: run_continual launches concurrent evaluate.py PROCESSES, and the
+        # in-process lock can't serialize across them. Writing to "<stem>.<pid>.<ext>" keeps each
+        # worker's large request lines from interleaving; merge the shards afterward.
+        root, ext = os.path.splitext(path)
+        path = f"{root}.{os.getpid()}{ext or '.jsonl'}"
+        msgs = []
+        for m in messages:
+            role = getattr(m, "type", None) or m.__class__.__name__
+            msgs.append({"role": role, "content": _lc_text(getattr(m, "content", ""))})
+        rec = {
+            "ts": round(time.time(), 3),
+            "n_messages": len(msgs),
+            "tool_names": [t.get("name") or (t.get("function") or {}).get("name") for t in (tools or [])],
+            "messages": msgs,
+        }
+        with _AGENT_REQ_LOCK, open(path, "a") as f:
+            f.write(json.dumps(rec) + "\n")
+    except Exception:  # pragma: no cover - instrumentation must never break the run
+        pass
 
 
 class LLMClient:
@@ -420,5 +466,6 @@ class LLMClient:
         )
         # Invoke
         logger.info(f"Invoking {self.provider} LLM with {len(tools)} tools")
+        _log_agent_request(messages, tools)   # env-gated full-request dump (AGENT_REQUEST_LOG)
         response = await llm_with_retry.ainvoke(messages)
         return response

@@ -205,11 +205,16 @@ async def execute_sample(
     print(f"Running benchmark for config: {config_file}")
     config = load_config(config_file)
 
-    # Optionally append additional instructions to the system prompt
+    # Optionally append additional instructions to the system prompt.
+    # Conditional: skip an empty/whitespace-only suffix so an empty knowledge index injects
+    # NOTHING (no dangling "\n\n"), matching the online proxy's no-op on an empty wiki. The
+    # continual resolver emits an empty suffix when no memories have been committed yet.
     prompt_suffix_file = os.environ.get("SYSTEM_PROMPT_SUFFIX_FILE")
     if prompt_suffix_file and os.path.isfile(prompt_suffix_file):
         with open(prompt_suffix_file, "r") as f:
-            config.system_prompt = config.system_prompt + "\n\n" + f.read()
+            suffix = f.read()
+        if suffix.strip():
+            config.system_prompt = config.system_prompt + "\n\n" + suffix
 
     llm_config = random.choice(
         load_llm_configs(llm_config)
