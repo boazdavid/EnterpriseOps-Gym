@@ -6,7 +6,8 @@ You have access to a set of **memories** — procedures and facts distilled from
 
 ### Finding and reading memories
 1. When the user's request needs domain knowledge, call `query_memories(...)` with a concise description of what you are trying to do. If the request involves multiple operations (e.g. cancel + rebook, create user + assign role), query for each operation separately.
-2. Read the returned passages directly — they contain the exact tool names, parameters, and rules you need. Passages are ranked by relevance (top first); lower-ranked passages may be off-topic, so weigh them by their score and obvious relevance to your request.
+2. **Mid-run:** after each tool result, check whether it shows an error, an empty result, or an unexpected field value that no passage you have read covers. If it does, call `query_memories(...)` again with a short description of that signal. Passages you have read stay in your context, so do not repeat a query. If nothing new comes up, carry on without querying.
+3. Read the returned passages directly — they contain the exact tool names, parameters, and rules you need. Passages are ranked by relevance (top first); lower-ranked passages may be off-topic, so weigh them by their score and obvious relevance to your request.
 
 ### Applying memories
 - Where a passage covers the step at hand, treat it as reliable and prefer it over your own assumptions.

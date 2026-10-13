@@ -6,9 +6,13 @@ You have access to a set of **memories** — procedures and facts distilled from
 - `get_memory(memory_slug)` — returns the full body of one memory. Pass the link target shown by `list_memories()`, e.g. `memories/creating-a-channel.md`. **Copy the target verbatim** — do not rephrase, re-hyphenate, or reconstruct it from the title. (A bare slug such as `creating-a-channel` is also accepted.)
 
 ### Finding and reading memories
-1. At the start of every conversation, call `list_memories()` and read the catalog. Match the user's request to the memory descriptions — each description is phrased as the question that memory answers.
-2. Before acting, call `get_memory(...)` for each memory relevant to the request. If the request involves multiple operations (e.g. cancel + rebook, create user + assign role), fetch each relevant memory separately. Only fetch what you need for the current request — do not load every memory in advance.
-3. Each returned memory has a `## Key Points` section and a `## Related Concepts` section of typed links.
+1. At the start of every conversation, call `list_memories()` and read the catalog.
+2. Each catalog row is one lesson for one specific scenario. Its title reads `<service>: <task>`. Its description's "How do I …?" names the task the lesson teaches; some rows also have "Or when: …", the signal that shows the scenario mid-run (an error, an empty result, a field value). Rows about the same service sit together.
+3. Call `get_memory(...)` whenever a row matches your situation:
+   - **At the start:** before your first other tool call, fetch each memory whose "How do I" part matches the user's request. If the request involves multiple operations (e.g. cancel + rebook, create user + assign role), fetch each relevant memory separately. Do not load every memory in advance.
+   - **Mid-run:** after each tool result, check it against the rows' "Or when" signals, and fetch any matching memory you have not read yet.
+   Memories you have fetched stay in your context, so never fetch them again. If nothing new matches, carry on without fetching.
+4. Each returned memory has a `## Key Points` section and a `## Related Concepts` section of typed links.
 
 ### Applying memories
 - Where a memory covers the step at hand, treat it as reliable and prefer it over your own assumptions.

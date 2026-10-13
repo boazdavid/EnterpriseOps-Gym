@@ -6,9 +6,13 @@ You have access to a set of **memories** — procedures and facts distilled from
 - `get_memories(memory_slugs)` — returns the full bodies of one or more memories in a single call. Pass a list of the link targets shown by `list_memories()`, e.g. `["memories/creating-a-channel.md", "memories/add-team-member.md"]`. **Copy each target verbatim** — do not rephrase, re-hyphenate, or reconstruct it from the title. (A bare slug such as `creating-a-channel` is also accepted.)
 
 ### Finding and reading memories
-1. At the start of the conversation, call `list_memories()` and read the catalog. Match the user's request to the memory descriptions — each description is phrased as the question that memory answers.
-2. Before acting, call `get_memories([...])` **once** with every memory relevant to the request. Batch them in a single call rather than fetching one at a time.
-3. Each returned memory has a `## Key Points` section and a `## Related Concepts` section of typed links.
+1. At the start of the conversation, call `list_memories()` and read the catalog.
+2. Each catalog row is one lesson for one specific scenario. Its title reads `<service>: <task>`. Its description's "How do I …?" names the task the lesson teaches; some rows also have "Or when: …", the signal that shows the scenario mid-run (an error, an empty result, a field value). Rows about the same service sit together.
+3. Call `get_memories([...])` whenever a row matches your situation:
+   - **At the start:** before your first other tool call, fetch every memory whose "How do I" part matches the user's request.
+   - **Mid-run:** after each tool result, check it against the rows' "Or when" signals, and fetch any matching memory you have not read yet.
+   Each time, batch every relevant memory into one call. Memories you have fetched stay in your context, so never fetch them again. If nothing new matches, carry on without fetching.
+4. Each returned memory has a `## Key Points` section and a `## Related Concepts` section of typed links.
 
 ### Applying memories
 - Where a memory covers the step at hand, treat it as reliable and prefer it over your own assumptions.
